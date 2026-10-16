@@ -47,6 +47,19 @@ $values = [
   </div>
 </section>
 
+<?php $offices = Content::offices(); if ($offices): ?>
+<section class="section" aria-labelledby="where-title">
+  <div class="container">
+    <div class="section-head center">
+      <h2 class="display-2" id="where-title">Where we work</h2>
+      <span class="bar center"></span>
+      <p class="lead">Local teams in <?= e(implode(', ', array_slice(array_column($offices, 'country'), 0, -1)) . (count($offices) > 1 ? ' and ' : '') . end($offices)['country']) ?>, working together for clients around the world.</p>
+    </div>
+    <?= partial('offices', ['offices' => $offices]) ?>
+  </div>
+</section>
+<?php endif; ?>
+
 <section class="section section-soft">
   <div class="container">
     <div class="section-head center">

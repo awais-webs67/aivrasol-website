@@ -59,6 +59,9 @@ try {
         foreach (require __DIR__ . '/data/plans.php' as $plan) {
             insert_row($pdo, 'plans', $plan);
         }
+        foreach (require __DIR__ . '/data/offices.php' as $office) {
+            insert_row($pdo, 'offices', $office);
+        }
         foreach (array_keys($migrations) as $m) {
             $mark->execute([$m]);
         }

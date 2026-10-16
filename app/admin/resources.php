@@ -140,4 +140,23 @@ return [
             'is_active' => ['label' => 'Show on website', 'type' => 'bool'],
         ],
     ],
+    'offices' => [
+        'label' => 'Offices',
+        'singular' => 'office',
+        'table' => 'offices',
+        'order' => 'is_head_office DESC, sort_order, id',
+        'columns' => ['country' => 'Country', 'city' => 'City', 'is_head_office' => 'Head office', 'is_active' => 'Live'],
+        'public' => fn ($r) => 'contact',
+        'fields' => [
+            'country' => ['label' => 'Country', 'type' => 'text', 'max' => 80, 'required' => true],
+            'city' => ['label' => 'City', 'type' => 'text', 'max' => 80],
+            'address' => ['label' => 'Street address', 'type' => 'textarea', 'max' => 300, 'help' => 'Leave empty to show only the country and city.'],
+            'phone' => ['label' => 'Phone or WhatsApp', 'type' => 'text', 'max' => 40],
+            'email' => ['label' => 'Email', 'type' => 'email', 'max' => 190],
+            'map_url' => ['label' => 'Google Maps link', 'type' => 'url', 'max' => 500, 'help' => 'Optional. Without it, a map link is made from the address.'],
+            'is_head_office' => ['label' => 'Head office (shown first)', 'type' => 'bool'],
+            'sort_order' => ['label' => 'Order', 'type' => 'int'],
+            'is_active' => ['label' => 'Show on website', 'type' => 'bool'],
+        ],
+    ],
 ];

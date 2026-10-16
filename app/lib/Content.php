@@ -119,10 +119,23 @@ final class Content
         ));
     }
 
-    /** Offices from settings, one per line: "Label | Address". */
+    /** Live offices, head office first. Each row also gets a map link. */
     public static function offices(): array
     {
-        return pairs(setting('offices'));
+        return self::remember('offices', function () {
+            try {
+                $rows = Database::all('SELECT * FROM offices WHERE is_active = 1 ORDER BY is_head_office DESC, sort_order, id');
+            } catch (Throwable $e) {
+                return [];
+            }
+            foreach ($rows as &$r) {
+                $place = trim(implode(', ', array_filter([$r['address'], $r['city'], $r['country']])));
+                $r['map'] = $r['map_url'] !== '' && preg_match('#^https://#i', $r['map_url'])
+                    ? $r['map_url']
+                    : ($r['address'] !== '' || $r['city'] !== '' ? 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($place) : '');
+            }
+            return $rows;
+        });
     }
 
     public static function stats(): array

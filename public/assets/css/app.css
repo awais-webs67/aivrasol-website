@@ -591,3 +591,18 @@ button { cursor: pointer; }
 @media print {
   .site-header, .site-footer, .fab, .cookie, .modal { display: none !important; }
 }
+
+/* Offices */
+.offices { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+.office-card { display: flex; flex-direction: column; gap: 16px; padding: 24px 22px; background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-md); overflow-wrap: anywhere; transition: border-color .2s, box-shadow .2s; }
+.office-card:hover { border-color: #FFD0C2; box-shadow: var(--shadow-card); }
+.office-head { display: flex; align-items: center; gap: 14px; }
+.office-head h3 { margin: 0; font-size: 18px; font-weight: 600; }
+.office-city { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
+.office-head .office-tag { margin-left: auto; }
+.office-tag { display: inline-block; padding: 2px 9px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--orange-text); background: #FFF1EC; border-radius: 999px; vertical-align: middle; white-space: nowrap; }
+.office-card .contact-lines { gap: 10px; font-size: 15px; }
+.office-card .link-arrow { margin-top: auto; }
+.footer-mid .office h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.footer-mid .office p { margin: 0 0 2px; }
+.footer-mid .office a { color: var(--body); text-decoration: none; }

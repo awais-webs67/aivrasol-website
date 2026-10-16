@@ -15,6 +15,13 @@ $org = [
     'email' => setting('email_info'),
     'sameAs' => array_column(Content::socials(), 'url'),
 ];
+$locations = [];
+foreach (Content::offices() as $o) {
+    $locations[] = array_filter(['@type' => 'PostalAddress', 'addressCountry' => $o['country'], 'addressLocality' => $o['city'], 'streetAddress' => $o['address']]);
+}
+if ($locations) {
+    $org['address'] = $locations;
+}
 if (setting('phone') !== '') {
     $org['telephone'] = setting('phone');
 }

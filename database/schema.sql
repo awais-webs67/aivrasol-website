@@ -186,6 +186,21 @@ CREATE TABLE IF NOT EXISTS audit_log (
   KEY idx_audit_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS offices (
+  id             INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  country        VARCHAR(80)  NOT NULL,
+  city           VARCHAR(80)  NOT NULL DEFAULT '',
+  address        VARCHAR(300) NOT NULL DEFAULT '',
+  phone          VARCHAR(40)  NOT NULL DEFAULT '',
+  email          VARCHAR(190) NOT NULL DEFAULT '',
+  map_url        VARCHAR(500) NOT NULL DEFAULT '',
+  is_head_office TINYINT(1)   NOT NULL DEFAULT 0,
+  sort_order     INT          NOT NULL DEFAULT 0,
+  is_active      TINYINT(1)   NOT NULL DEFAULT 1,
+  updated_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_offices_active (is_active, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS email_log (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   type       VARCHAR(40)  NOT NULL,

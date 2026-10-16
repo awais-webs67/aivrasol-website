@@ -44,7 +44,8 @@ function admin_launch_checklist(): array
     $t = (int) Database::value('SELECT COUNT(*) FROM testimonials WHERE is_active = 1');
     $items[] = [$t > 0, $t > 0 ? "$t client testimonials live" : 'Add real client testimonials (the section is hidden until you do)', url('admin/content/testimonials')];
     $items[] = [setting('phone') !== '' || setting('whatsapp') !== '', 'Add a phone or WhatsApp number', url('admin/settings')];
-    $items[] = [setting('offices') !== '', 'Add your office addresses', url('admin/settings')];
+    $withAddress = (int) Database::value("SELECT COUNT(*) FROM offices WHERE is_active = 1 AND (address <> '' OR city <> '')");
+    $items[] = [$withAddress > 0, $withAddress > 0 ? "$withAddress offices have an address" : 'Add cities and addresses to your offices', url('admin/content/offices')];
     $items[] = [setting('contact_person_name') !== '', 'Add your sales contact person', url('admin/settings')];
     $items[] = [Content::stats() !== [], 'Add company numbers (projects, clients, team)', url('admin/settings')];
     $items[] = [(string) config('mail.host') !== '', 'Set SMTP details in app/config.php so lead emails arrive reliably', null];
@@ -378,6 +379,11 @@ function admin_collect_fields(array $fields, ?array $row): array
                     $errors[$name] = 'Please choose a valid option.';
                 }
                 break;
+            case 'email':
+                if ($value !== '' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                    $errors[$name] = 'Please enter a valid email address.';
+                }
+                break;
             case 'url':
                 if ($value !== '' && (!filter_var($value, FILTER_VALIDATE_URL) || !preg_match('#^https://#i', $value))) {
                     $errors[$name] = 'Please enter a full link starting with https://';
@@ -423,7 +429,6 @@ function admin_settings_schema(): array
             'phone' => ['Phone', 'text'],
             'whatsapp' => ['WhatsApp number', 'text', 'With country code, e.g. +92 300 1234567'],
             'office_hours' => ['Office hours', 'text'],
-            'offices' => ['Offices', 'textarea', 'One per line, written as: City | Full address'],
             'booking_url' => ['Booking link (Calendly etc.)', 'url'],
         ],
         'Sales contact card' => [

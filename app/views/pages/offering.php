@@ -98,8 +98,6 @@ $others = array_values(array_filter(Content::offerings($type), fn ($o) => $o['sl
 </section>
 <?php endif; ?>
 
-<?= partial('faq', ['faqs' => $faqs]) ?>
-
 <?php if ($others): ?>
 <section class="section section-soft" aria-labelledby="more-title">
   <div class="container">
@@ -120,5 +118,8 @@ $others = array_values(array_filter(Content::offerings($type), fn ($o) => $o['sl
   </div>
 </section>
 <?php endif; ?>
+
+<?= partial('faq', ['faqs' => $faqs]) ?>
+
 
 <?= partial('contact-split', ['interest' => $item['short_title']]) ?>

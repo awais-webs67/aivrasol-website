@@ -50,7 +50,8 @@ On XAMPP: `C:\xampp\php\php.exe database/install.php`. The database user needs A
 | Services & hire pages: add, edit, hide or reorder | Menus, home page tabs, footer, the page itself, contact form choices, sitemap, and the developer list in hire pricing |
 | Pricing plans | Pricing page (grouped as "Build a project" or "Hire developers") and the home page (plans marked "Show on home page"). Each hire page links to the hiring plans with its role preselected |
 | Portfolio projects, testimonials, jobs, FAQs | Their sections and pages. Empty sections stay hidden |
-| Settings | Company name, hero text and photo, contact details, offices, numbers, social links, analytics, and which home page sections show |
+| Offices | Office cards on the Contact page, "Where we work" on the About page, the footer, and Google's business data. Head office is shown first |
+| Settings | Company name, hero text and photo, contact details, numbers, social links, analytics, and which home page sections show |
 | Email | Who receives enquiries and applications, how emails are sent, and the automatic reply texts |
 
 In a pricing plan, write `[hire-roles]` in an options list to show every live "Hire a developer" page automatically. Every plan question and the contact form also offer an "Other" choice: picking it opens a text box, and what the visitor types is saved with the lead.

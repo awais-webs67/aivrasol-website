@@ -49,4 +49,25 @@ return [
             $pdo->prepare("INSERT IGNORE INTO settings (setting_key, setting_value) VALUES ('notify_emails', ?)")->execute([$old]);
         }
     },
+    '2026_10_17_offices' => function (PDO $pdo): void {
+        // schema.sql has already created the offices table.
+        if ((int) $pdo->query('SELECT COUNT(*) FROM offices')->fetchColumn() > 0) {
+            return;
+        }
+        // Move anything typed in the old Settings "Offices" box ("City | address" per line).
+        $old = (string) $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'offices'")->fetchColumn();
+        $order = 0;
+        foreach (preg_split('/\R/', $old) ?: [] as $line) {
+            $parts = array_map('trim', explode('|', $line, 2));
+            if ($parts[0] === '') {
+                continue;
+            }
+            insert_row($pdo, 'offices', ['country' => $parts[0], 'address' => $parts[1] ?? '', 'sort_order' => ++$order]);
+        }
+        if ($order === 0) {
+            foreach (require __DIR__ . '/data/offices.php' as $office) {
+                insert_row($pdo, 'offices', $office);
+            }
+        }
+    },
 ];

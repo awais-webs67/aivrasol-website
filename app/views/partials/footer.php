@@ -46,7 +46,11 @@ $whatsapp = setting('whatsapp');
     <?php if ($offices || $socials || $whatsapp !== '' || setting('office_hours') !== ''): ?>
     <div class="footer-mid">
       <?php foreach ($offices as $o): ?>
-      <div><h3><?= e($o['title']) ?></h3><p><?= e($o['text']) ?></p></div>
+      <div class="office">
+        <h3><?= e($o['country']) ?><?php if ($o['is_head_office']): ?> <span class="office-tag">Head office</span><?php endif; ?></h3>
+        <?php if ($o['city'] !== '' || $o['address'] !== ''): ?><p><?= e(trim($o['address'] . ($o['address'] !== '' && $o['city'] !== '' ? ', ' : '') . $o['city'])) ?></p><?php endif; ?>
+        <?php if ($o['phone'] !== ''): ?><p><a href="<?= e(phone_href($o['phone'])) ?>"><?= e($o['phone']) ?></a></p><?php endif; ?>
+      </div>
       <?php endforeach; ?>
       <?php if (setting('office_hours') !== ''): ?>
       <div><h3>Office hours</h3><p><?= e(setting('office_hours')) ?></p></div>

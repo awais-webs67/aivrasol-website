@@ -28,12 +28,18 @@ $offices = Content::offices();
     <?php if (setting('office_hours') !== ''): ?>
     <article class="info-card"><span class="mega-icon"><?= icon('clock') ?></span><h3>Office hours</h3><p><?= e(setting('office_hours')) ?></p></article>
     <?php endif; ?>
-    <?php foreach ($offices as $o): ?>
-    <article class="info-card"><span class="mega-icon"><?= icon('pin') ?></span><h3><?= e($o['title']) ?></h3><p><?= e($o['text']) ?></p>
-      <a class="link-arrow small" href="https://www.google.com/maps/search/?api=1&amp;query=<?= e(rawurlencode($o['text'])) ?>" target="_blank" rel="noopener">Open in Maps <?= icon('external') ?></a>
-    </article>
-    <?php endforeach; ?>
+
   </div>
 </section>
+
+<?php if ($offices): ?>
+<section class="section-tight" aria-labelledby="offices-title">
+  <div class="container">
+    <h2 class="display-3" id="offices-title">Our offices</h2>
+    <span class="bar"></span>
+    <?= partial('offices', ['offices' => $offices]) ?>
+  </div>
+</section>
+<?php endif; ?>
 
 <?= partial('contact-split') ?>
