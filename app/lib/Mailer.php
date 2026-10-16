@@ -262,9 +262,13 @@ final class Mailer
 /** Encrypts small secrets (like the SMTP password) with the app_key before they are stored in the database. */
 final class Secret
 {
+    /**
+     * New values use AES-256-GCM from OpenSSL, which every PHP host has (XAMPP does not turn sodium on by default).
+     * Values saved earlier with sodium ("enc:") still open when sodium is available.
+     */
     private static function key(): string
     {
-        return sodium_crypto_generichash((string) config('app_key'), '', SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
+        return hash('sha256', 'secret|' . config('app_key'), true);
     }
 
     public static function encrypt(string $plain): string
@@ -272,20 +276,35 @@ final class Secret
         if ($plain === '') {
             return '';
         }
-        $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-        return 'enc:' . base64_encode($nonce . sodium_crypto_secretbox($plain, $nonce, self::key()));
+        $iv = random_bytes(12);
+        $tag = '';
+        $cipher = openssl_encrypt($plain, 'aes-256-gcm', self::key(), OPENSSL_RAW_DATA, $iv, $tag, '', 16);
+        if ($cipher === false) {
+            throw new RuntimeException('Encryption is not available on this server (OpenSSL is missing).');
+        }
+        return 'enc2:' . base64_encode($iv . $tag . $cipher);
     }
 
     public static function decrypt(string $stored): string
     {
-        if (!str_starts_with($stored, 'enc:')) {
-            return '';
+        if (str_starts_with($stored, 'enc2:')) {
+            $raw = base64_decode(substr($stored, 5), true);
+            if ($raw === false || strlen($raw) < 29) {
+                return '';
+            }
+            $plain = openssl_decrypt(substr($raw, 28), 'aes-256-gcm', self::key(), OPENSSL_RAW_DATA, substr($raw, 0, 12), substr($raw, 12, 16));
+            return $plain === false ? '' : $plain;
         }
-        $raw = base64_decode(substr($stored, 4), true);
-        if ($raw === false || strlen($raw) <= SODIUM_CRYPTO_SECRETBOX_NONCEBYTES) {
-            return '';
+        if (str_starts_with($stored, 'enc:') && function_exists('sodium_crypto_secretbox_open')) {
+            $raw = base64_decode(substr($stored, 4), true);
+            $n = SODIUM_CRYPTO_SECRETBOX_NONCEBYTES;
+            if ($raw === false || strlen($raw) <= $n) {
+                return '';
+            }
+            $key = sodium_crypto_generichash((string) config('app_key'), '', SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
+            $plain = sodium_crypto_secretbox_open(substr($raw, $n), substr($raw, 0, $n), $key);
+            return $plain === false ? '' : $plain;
         }
-        $plain = sodium_crypto_secretbox_open(substr($raw, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES), substr($raw, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES), self::key());
-        return $plain === false ? '' : $plain;
+        return '';
     }
 }

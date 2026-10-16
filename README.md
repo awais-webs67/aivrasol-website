@@ -34,7 +34,7 @@ Clients never use the team panel. They have their own sign-in at `/portal`.
 
 ## Requirements
 
-- PHP 8.1 or newer with `pdo_mysql`, `mbstring`, `fileinfo`, `gd` (with WebP), `openssl`, `sodium`, `zlib` and `zip` (zip is only needed for full backups). All are on by default on cPanel hosts
+- PHP 8.1 or newer with `pdo_mysql`, `mbstring`, `fileinfo`, `gd` (with WebP), `openssl`, `zlib` and `zip` (zip is only needed for full backups; on XAMPP remove the `;` before `extension=zip` in php.ini). All are on by default on cPanel hosts
 - MySQL 8 or MariaDB 10.6+
 - Apache with `mod_rewrite` (cPanel)
 - An SSL certificate (free Let's Encrypt is fine)
