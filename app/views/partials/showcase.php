@@ -16,9 +16,9 @@ if ($frame === 'none'): ?>
 <div class="showcase sc-none"><?= $shot($main !== '' ? $main : 'assets/img/projects/placeholder.svg', $alt) ?></div>
 <?php return; endif;
 $bgSrc = $frame === 'mobile' && $main === '' ? $phone : ($main !== '' ? $main : $phone);
-$tabletPortrait = $frame === 'tablet' && image_ratio($main) > 0 && image_ratio($main) < 1;
+$fit = ratio_class($frame === 'mobile' && $main === '' ? $phone : $main);
 ?>
-<div class="showcase sc-<?= e($frame) ?>">
+<div class="showcase sc-<?= e($frame) ?> <?= $fit ?>">
   <img class="sc-bg" src="<?= e(asset($bgSrc)) ?>" alt="" aria-hidden="true" decoding="async"<?= $load ?>>
   <?php if ($frame === 'browser' || $frame === 'desktop'): ?>
   <div class="dev dev-window">
@@ -31,11 +31,11 @@ $tabletPortrait = $frame === 'tablet' && image_ratio($main) > 0 && image_ratio($
     <div class="dev-base"></div>
   </div>
   <?php if ($frame === 'combo'): ?>
-  <div class="dev dev-phone dev-phone-front"><span class="dev-notch"></span><div class="dev-screen"><?= $shot($phone, $project['title'] . ' on mobile') ?></div></div>
+  <div class="dev dev-phone dev-phone-front <?= ratio_class($phone, 'pr') ?>"><span class="dev-notch"></span><div class="dev-screen"><?= $shot($phone, $project['title'] . ' on mobile') ?></div></div>
   <?php endif; ?>
   <?php elseif ($frame === 'tablet'): ?>
-  <div class="dev dev-tablet<?= $tabletPortrait ? ' is-portrait' : '' ?>"><div class="dev-screen"><?= $shot($main, $alt) ?></div></div>
+  <div class="dev dev-tablet"><div class="dev-screen"><?= $shot($main, $alt) ?></div></div>
   <?php else: ?>
-  <div class="dev dev-phone"><span class="dev-notch"></span><div class="dev-screen"><?= $shot($main !== '' ? $main : $phone, $alt) ?></div></div>
+  <div class="dev dev-phone<?= image_ratio($main !== '' ? $main : $phone) > 1 ? ' is-landscape' : '' ?>"><span class="dev-notch"></span><div class="dev-screen"><?= $shot($main !== '' ? $main : $phone, $alt) ?></div></div>
   <?php endif; ?>
 </div>

@@ -397,3 +397,11 @@ function project_frame(array $p): string
     }
     return trim((string) ($p['url'] ?? '')) !== '' ? 'browser' : 'desktop';
 }
+
+/** CSS class for an image's shape, in steps of 0.05 (r-160 = 16:10). Unknown images count as 16:10. */
+function ratio_class(string $path, string $prefix = 'r'): string
+{
+    $r = image_ratio($path);
+    $k = $r > 0 ? (int) (round(max(0.35, min(3.0, $r)) * 20) * 5) : 160;
+    return $prefix . '-' . $k;
+}
