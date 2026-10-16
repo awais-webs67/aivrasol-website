@@ -18,6 +18,20 @@ Company website and admin panel for AivraSol, built with PHP 8 and MySQL. No fra
 - Apache with `mod_rewrite` (cPanel)
 - An SSL certificate (free Let's Encrypt is fine)
 
+## Run on your computer with XAMPP (Windows)
+
+1. Install XAMPP from apachefriends.org and start **Apache** and **MySQL** in the XAMPP Control Panel.
+2. Copy this project folder to `C:\xampp\htdocs\aivrasol`.
+3. Open `http://localhost/phpmyadmin`, create a database named `aivrasol` (collation `utf8mb4_unicode_ci`), then import `database/schema.sql` and after it `database/seed.sql`.
+4. Copy `app/config.sample.php` to `app/config.php` and set:
+   - `'env' => 'development'`
+   - `'base_url' => 'http://localhost/aivrasol'`
+   - database `user` => `root`, `password` => `''` (XAMPP default)
+   - any long random text for `app_key` and `setup_token`
+5. Open `http://localhost/aivrasol`. Create your admin account at `http://localhost/aivrasol/admin/setup`.
+
+Emails will not send on XAMPP. Leads are still saved and appear in the admin panel.
+
 ## Deploy from GitHub with cPanel (recommended)
 
 1. In cPanel, open **Git Version Control** and click **Create**.
