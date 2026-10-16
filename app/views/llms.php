@@ -79,7 +79,7 @@ if ($full) {
     if ($faqs) {
         $out .= "\n## Frequently asked questions\n\n";
         foreach ($faqs as $f) {
-            $out .= '**' . $line($f['question']) . "**\n" . $line($f['answer']) . "\n\n";
+            $out .= '**' . $line($f['question']) . "**\n" . $line(Seo::plainText($f['answer'])) . "\n\n";
         }
     }
 } else {

@@ -19,9 +19,9 @@
   <div class="container case-body">
     <div class="prose">
       <h2>The challenge</h2>
-      <p><?= nl2br(e($project['challenge'])) ?></p>
+      <div class="rich"><?= Seo::markdown($project['challenge']) ?></div>
       <h2>Our solution</h2>
-      <p><?= nl2br(e($project['solution'])) ?></p>
+      <div class="rich"><?= Seo::markdown($project['solution']) ?></div>
       <?php if (lines($project['results'])): ?>
       <h2>The results</h2>
       <ul class="check-list"><?php foreach (lines($project['results']) as $r): ?><li><?= icon('check') ?><span><?= e($r) ?></span></li><?php endforeach; ?></ul>

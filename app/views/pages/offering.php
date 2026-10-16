@@ -56,7 +56,7 @@ $others = array_values(array_filter(Content::offerings($type), fn ($o) => $o['sl
     <div>
       <h2 class="display-2" id="expertise-title"><?= e($item['expertise_title']) ?></h2>
       <span class="bar"></span>
-      <p class="lead"><?= e($item['expertise_text']) ?></p>
+      <div class="lead rich"><?= Seo::markdown($item['expertise_text']) ?></div>
       <?php if ($tech): ?>
       <h3 class="small muted">Technologies we use</h3>
       <ul class="chips"><?php foreach ($tech as $t): ?><li><?= e($t) ?></li><?php endforeach; ?></ul>

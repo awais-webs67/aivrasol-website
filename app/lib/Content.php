@@ -171,10 +171,12 @@ final class Content
         return $stats;
     }
 
+    public const SOCIALS = ['linkedin' => 'LinkedIn', 'facebook' => 'Facebook', 'instagram' => 'Instagram', 'x' => 'X (Twitter)', 'youtube' => 'YouTube', 'tiktok' => 'TikTok', 'github' => 'GitHub', 'behance' => 'Behance', 'dribbble' => 'Dribbble'];
+
     public static function socials(): array
     {
         $out = [];
-        foreach (['linkedin' => 'LinkedIn', 'facebook' => 'Facebook', 'instagram' => 'Instagram', 'x' => 'X', 'github' => 'GitHub'] as $key => $label) {
+        foreach (self::SOCIALS as $key => $label) {
             $link = setting('social_' . $key);
             if ($link !== '' && preg_match('#^https://#i', $link)) {
                 $out[] = ['icon' => $key, 'label' => $label, 'url' => $link];

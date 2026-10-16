@@ -69,3 +69,11 @@ $router->any('/admin/campaigns/{id}', fn (string $id) => admin_campaign_edit($id
 $router->any('/admin/backups', fn () => admin_backups());
 $router->get('/admin/backups/download', fn () => admin_backup_download((string) ($_GET['name'] ?? '')));
 $router->any('/admin/system', fn () => admin_system());
+$router->post('/admin/preview', function () {
+    $user = Auth::user();
+    if (!$user || !Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+        json_response(['ok' => false], 403);
+    }
+    $text = mb_substr(str_replace("\r\n", "\n", (string) ($_POST['text'] ?? '')), 0, 60000);
+    json_response(['ok' => true, 'html' => Seo::markdown($text)]);
+});

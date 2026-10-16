@@ -214,9 +214,9 @@ function phone_href(string $phone): string
     return 'tel:' . preg_replace('/[^0-9+]/', '', $phone);
 }
 
-function whatsapp_href(string $phone): string
+function whatsapp_href(string $phone, string $message = ''): string
 {
-    return 'https://wa.me/' . preg_replace('/[^0-9]/', '', $phone);
+    return 'https://wa.me/' . preg_replace('/[^0-9]/', '', $phone) . ($message !== '' ? '?text=' . rawurlencode($message) : '');
 }
 
 function is_active_path(string $path): bool
@@ -266,7 +266,11 @@ function icon(string $name, string $class = 'icon'): string
         'linkedin' => '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7"/>',
         'facebook' => '<path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8z"/>',
         'instagram' => '<rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><circle cx="12" cy="12" r="4"/><path d="M17 7v.01"/>',
-        'x' => '<path d="M4 4l16 16M20 4L4 20"/>',
+        'x' => '<path d="M4 4l11.7 16H20L8.3 4z"/><path d="M4 20l6.6-7M13.4 11L20 4"/>',
+        'youtube' => '<rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="M10 9.2v5.6l4.8-2.8z"/>',
+        'tiktok' => '<path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 3c.4 2.6 2.1 4.3 5 4.6"/>',
+        'behance' => '<path d="M3 7h5a2.5 2.5 0 0 1 0 5H3zM3 12h5.5a2.75 2.75 0 0 1 0 5.5H3zM3 7v10.5"/><path d="M14 13.5h7a3.5 3.5 0 1 0-1 2.5M15 8h5"/>',
+        'dribbble' => '<circle cx="12" cy="12" r="9"/><path d="M8.5 3.7c3.5 4.5 5.8 10 6.8 16.6M3.3 10c6 .3 11-1 15-4.8M4.5 17.5c3-4.5 8.5-6.7 16.2-4.6"/>',
         'github' => '<path d="M9 19c-4 1.3-4-2-6-2.5M15 21v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.3 4.3 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12 12 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.3 4.3 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/>',
         'download' => '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
         'plus' => '<path d="M12 5v14M5 12h14"/>',

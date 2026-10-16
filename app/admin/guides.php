@@ -65,7 +65,8 @@ function admin_guide(string $template, array $data): ?array
             'intro' => 'Everything here changes the live website as soon as you click Save settings.',
             'sections' => [
                 ['h' => 'Brand and home page', 'p' => 'Company name is used everywhere: page titles, emails, ID cards, letters and Google. The hero heading uses | to split it into two lines.'],
-                ['h' => 'Contact details and offices', 'p' => 'Phone, WhatsApp and emails show in the footer, the contact page and Google data. Office addresses are managed in Website content, Offices.'],
+                ['h' => 'Contact details and offices', 'p' => 'Phone, WhatsApp and emails show in the footer, the contact page and Google data. Each office can have its own phone, WhatsApp and email in Website content, Offices.'],
+                ['h' => 'Social links and the WhatsApp button', 'list' => ['Paste the full link of each social page (starting with https://). Only filled ones appear as icons in the footer.', 'The floating WhatsApp button uses the WhatsApp number in Contact details. Write the message that is filled in when someone taps it, or untick the box to hide the button.']],
                 ['h' => 'Get verified on Google', 'list' => [
                     'Open search.google.com/search-console and click Add property. Choose "URL prefix" and enter ' . rtrim(absolute_url(), '/') . '.',
                     'Choose the "HTML tag" method and copy the whole tag.',
@@ -219,7 +220,7 @@ function admin_guide(string $template, array $data): ?array
             'plans' => ['Group "Build a project" or "Hire developers" decides where it shows on the Pricing page.', 'Write [hire-roles] in an options list to show every live hire page automatically.', 'Every question also gets an "Other" choice with a text box.'],
             'jobs' => ['Open jobs show on Careers and are marked up so Google Jobs can list them.', 'Location "Remote" marks it as a remote job for Google.'],
             'faqs' => ['Scope "general" shows on the home page, "pricing" on Pricing and hire pages, "careers" on Careers.', 'Use a page address (for example web-development) to show a question only on that service page.'],
-            'offices' => ['The head office is shown first everywhere.', 'Offices appear on Contact, About, the footer, letters, ID cards and in Google data.'],
+            'offices' => ['Give each office its own phone, WhatsApp number and email. They appear as small Call, WhatsApp and Email buttons on its card on the Contact and About pages.', 'The head office is shown first everywhere.', 'Offices appear on Contact, About, the footer, letters, ID cards and in Google data.'],
             'testimonials' => ['Use real reviews with the client\'s permission. The reviews section stays hidden until you add one.'],
             'email-templates' => ['Templates are starting points for campaigns. Editing a template does not change campaigns already created.', 'Plain layout looks like a personal email and is best for cold outreach.'],
         ];

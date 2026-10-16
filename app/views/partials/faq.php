@@ -9,7 +9,7 @@ $schema = [
     'mainEntity' => array_map(fn ($f) => [
         '@type' => 'Question',
         'name' => $f['question'],
-        'acceptedAnswer' => ['@type' => 'Answer', 'text' => $f['answer']],
+        'acceptedAnswer' => ['@type' => 'Answer', 'text' => Seo::plainText($f['answer'])],
     ], $faqs),
 ];
 ?>
@@ -23,7 +23,7 @@ $schema = [
       <?php foreach ($faqs as $i => $f): ?>
       <details<?= $i === 0 ? ' open' : '' ?>>
         <summary><?= e($f['question']) ?></summary>
-        <p><?= nl2br(e($f['answer'])) ?></p>
+        <div class="rich"><?= Seo::markdown($f['answer']) ?></div>
       </details>
       <?php endforeach; ?>
     </div>

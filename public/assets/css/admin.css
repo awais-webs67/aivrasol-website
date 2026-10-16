@@ -214,3 +214,17 @@ tr.is-current td { background: var(--orange-tint); }
 .cl-done summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--success); }
 .cl-done .checklist { margin-top: 10px; }
 .frame-preview .showcase { max-width: 720px; border-radius: var(--radius-md); margin-bottom: 10px; }
+
+/* Writing toolbar */
+.md-toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; background: var(--grey-soft); border: 1px solid var(--line-strong); border-bottom: 0; border-radius: var(--radius) var(--radius) 0 0; }
+.md-toolbar + .textarea { border-top-left-radius: 0; border-top-right-radius: 0; }
+.md-btn { min-width: 34px; height: 32px; padding: 0 10px; font-size: 13px; font-weight: 600; color: var(--slate); background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; }
+.md-btn:hover:not(:disabled) { color: var(--orange-text); border-color: var(--orange); }
+.md-btn:disabled { opacity: .45; cursor: default; }
+.md-b { font-weight: 800; }
+.md-i { font-style: italic; font-family: Georgia, serif; }
+.md-preview-btn { margin-left: auto; color: var(--white); background: var(--slate); border-color: var(--slate); }
+.md-preview-btn:hover { color: var(--white) !important; background: var(--ink); }
+.md-preview-btn[aria-pressed="true"] { background: var(--orange-text); border-color: var(--orange-text); }
+.md-preview { max-width: none; padding: 16px 18px; background: var(--white); border: 1px solid var(--line-strong); border-radius: 0 0 var(--radius) var(--radius); font-size: 15.5px; line-height: 1.7; overflow-wrap: anywhere; }
+.md-preview img { max-width: 100%; height: auto; }

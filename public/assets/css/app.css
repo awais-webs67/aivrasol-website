@@ -912,3 +912,46 @@ button { cursor: pointer; }
   .fx .section-head[data-fx]:not(.center) .bar { transform-origin: left; }
   .fx .section-head[data-fx].is-in .bar { transform: none; }
 }
+
+/* Office contact buttons */
+.office-card { display: flex; flex-direction: column; }
+.office-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--line); }
+.oa { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; font-size: 13px; font-weight: 500; line-height: 1; color: var(--slate); text-decoration: none; background: var(--grey-soft); border: 1px solid var(--line); border-radius: 999px; transition: background-color .2s, color .2s, border-color .2s; }
+.oa .icon { width: 16px; height: 16px; color: var(--orange); }
+.oa:hover { color: var(--white); background: var(--orange-text); border-color: var(--orange-text); }
+.oa:hover .icon { color: var(--white); }
+.oa-wa .icon { color: #1DA851; }
+.oa-wa:hover { background: #1DA851; border-color: #1DA851; }
+
+/* Floating WhatsApp button */
+.fab-wa { right: 20px; width: auto; height: 52px; padding: 0 18px 0 14px; gap: 8px; display: inline-flex; align-items: center; background: #25D366; border-radius: 999px; font-weight: 600; font-size: 14.5px; text-decoration: none; }
+.fab-wa:hover { background: #1DA851; color: var(--white); }
+.fab-wa .icon { width: 26px; height: 26px; stroke-width: 1.8; }
+.fab-label { color: var(--white); }
+@media (max-width: 639px) { .fab-wa { width: 52px; padding: 0; justify-content: center; } .fab-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
+.fab-top.above-wa { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+@media (min-width: 1024px) { .fab-wa { right: 40px; bottom: 40px; height: 54px; } .fab-top.above-wa { bottom: 108px; } }
+
+/* Formatted text written in the admin editor */
+.rich > :first-child { margin-top: 0; }
+.rich > :last-child { margin-bottom: 0; }
+.rich p { margin: 0 0 1em; }
+.rich a, .prose a { color: var(--orange-text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; font-weight: 500; }
+.rich a:hover, .prose a:hover { color: var(--orange); text-decoration-thickness: 2px; }
+.rich strong { color: var(--ink); font-weight: 600; }
+.rich ul, .rich ol { margin: 0 0 1em; padding-left: 1.3em; }
+.rich li { margin-bottom: .35em; }
+.rich ul li::marker { color: var(--orange); }
+.rich ol li::marker { color: var(--orange-text); font-weight: 600; }
+.rich blockquote { margin: 1.2em 0; padding: 12px 18px; background: var(--grey-soft); border-left: 4px solid var(--orange); }
+.rich blockquote p { margin: 0; }
+.rich hr, .prose hr { border: 0; height: 1px; margin: 1.6em 0; background: var(--line); }
+.rich h2 { font-size: 22px; margin: 1.4em 0 .5em; }
+.rich h3 { font-size: 18px; margin: 1.2em 0 .4em; }
+.text-justify { text-align: justify; hyphens: auto; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.lead.rich { font-size: inherit; }
+.lead.rich p { margin-bottom: .8em; }
+.office-head h3 { overflow-wrap: normal; word-break: normal; }
+.office-city .office-tag { margin-left: 4px; vertical-align: 1px; }

@@ -119,4 +119,9 @@ return [
             $pdo->exec("ALTER TABLE projects ADD COLUMN theme VARCHAR(10) NOT NULL DEFAULT 'auto' AFTER frame");
         }
     },
+    '2026_10_27_office_whatsapp' => function (PDO $pdo) use ($hasColumn): void {
+        if (!$hasColumn($pdo, 'offices', 'whatsapp')) {
+            $pdo->exec("ALTER TABLE offices ADD COLUMN whatsapp VARCHAR(40) NOT NULL DEFAULT '' AFTER email");
+        }
+    },
 ];

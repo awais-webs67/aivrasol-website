@@ -90,12 +90,14 @@ final class Seo
         $para = [];
         $list = null;
         $items = [];
+        // A single Enter keeps a line break, a blank line starts a new paragraph.
         $flushPara = function () use (&$para, &$out): void {
             if ($para) {
-                $out[] = '<p>' . self::inline(implode(' ', $para)) . '</p>';
+                $out[] = '<p>' . implode('<br>', array_map([self::class, 'inline'], $para)) . '</p>';
                 $para = [];
             }
         };
+        $boxes = 0;
         $flushList = function () use (&$list, &$items, &$out): void {
             if ($list) {
                 $out[] = "<$list>" . implode('', array_map(fn ($i) => '<li>' . self::inline($i) . '</li>', $items)) . "</$list>";
@@ -114,6 +116,26 @@ final class Seo
                 continue;
             }
             $t = trim($line);
+            if (preg_match('/^:::\s*(justify|center|right)$/i', $t, $mm)) {
+                $flushPara();
+                $flushList();
+                $out[] = '<div class="text-' . strtolower($mm[1]) . '">';
+                $boxes++;
+                continue;
+            }
+            if (preg_match('/^(-{3,}|\*{3,})$/', $t)) {
+                $flushPara();
+                $flushList();
+                $out[] = '<hr>';
+                continue;
+            }
+            if ($t === ':::' && $boxes > 0) {
+                $flushPara();
+                $flushList();
+                $out[] = '</div>';
+                $boxes--;
+                continue;
+            }
             if (str_starts_with($t, '```')) {
                 $flushPara();
                 $flushList();
@@ -148,6 +170,7 @@ final class Seo
         }
         $flushPara();
         $flushList();
+        $out = array_merge($out, array_fill(0, $boxes, '</div>'));
         return implode("\n", $out);
     }
 
@@ -160,7 +183,7 @@ final class Seo
 
     public static function plainText(string $markdown): string
     {
-        $t = preg_replace(['/```.*?```/s', '/!\[[^\]]*\]\([^)]*\)/', '/\[([^\]]+)\]\([^)]*\)/', '/[#*`>]/'], ['', '', '$1', ''], $markdown) ?? '';
+        $t = preg_replace(['/```.*?```/s', '/!\[[^\]]*\]\([^)]*\)/', '/\[([^\]]+)\]\([^)]*\)/', '/^:::.*$/m', '/[#*`>]/'], ['', '', '$1', '', ''], $markdown) ?? '';
         return trim(preg_replace('/\s+/', ' ', $t) ?? '');
     }
 
@@ -173,7 +196,7 @@ final class Seo
      * Inline formatting. Code, images and links are cut out into placeholders first, built as complete HTML,
      * and put back only at the end, so no later rule can ever run inside an attribute.
      */
-    private static function inline(string $s): string
+    public static function inline(string $s): string
     {
         $s = str_replace("\x00", '', $s);
         $parts = [];

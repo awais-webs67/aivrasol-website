@@ -227,6 +227,7 @@ CREATE TABLE IF NOT EXISTS offices (
   address        VARCHAR(300) NOT NULL DEFAULT '',
   phone          VARCHAR(40)  NOT NULL DEFAULT '',
   email          VARCHAR(190) NOT NULL DEFAULT '',
+  whatsapp       VARCHAR(40)  NOT NULL DEFAULT '',
   map_url        VARCHAR(500) NOT NULL DEFAULT '',
   is_head_office TINYINT(1)   NOT NULL DEFAULT 0,
   sort_order     INT          NOT NULL DEFAULT 0,

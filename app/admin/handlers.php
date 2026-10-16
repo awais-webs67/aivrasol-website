@@ -569,12 +569,10 @@ function admin_settings_schema(): array
             'stat_team' => ['Team members', 'text'],
             'stat_years' => ['Years of experience', 'text'],
         ],
-        'Social links' => [
-            'social_linkedin' => ['LinkedIn', 'url'],
-            'social_facebook' => ['Facebook', 'url'],
-            'social_instagram' => ['Instagram', 'url'],
-            'social_x' => ['X (Twitter)', 'url'],
-            'social_github' => ['GitHub', 'url'],
+        'Social links (shown in the footer and in Google data; leave empty to hide)' => array_map(fn ($label) => [$label . ' page link', 'url', ''], array_combine(array_map(fn ($k) => 'social_' . $k, array_keys(Content::SOCIALS)), Content::SOCIALS)),
+        'WhatsApp chat button' => [
+            'whatsapp_button' => ['Show a floating WhatsApp button on every page', 'bool', 'Uses the WhatsApp number from Contact details above.'],
+            'whatsapp_message' => ['Message filled in when a visitor taps it', 'text', 'For example: Hi AivraSol, I would like to discuss a project.'],
         ],
         'Google and AI search' => [
             'search_indexing' => ['Let search engines and AI tools index the website', 'bool', 'Untick only while you test a copy of the site. Live sites must keep this on.'],
