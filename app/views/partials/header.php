@@ -25,7 +25,6 @@ $simple = ['/about' => 'About', '/portfolio' => 'Portfolio', '/careers' => 'Care
               </a>
               <?php endforeach; ?>
             </div>
-            <div class="mega-footer"><span>Not sure which service fits? We will help you choose.</span><a class="link-arrow" href="<?= e(url('services')) ?>">View all services <?= icon('arrow-right') ?></a><a class="link-arrow" href="<?= e(url('contact')) ?>" data-modal-open="consult-modal">Free consultation <?= icon('arrow-right') ?></a></div>
           </div>
         </li>
         <li class="nav-item">
@@ -39,7 +38,6 @@ $simple = ['/about' => 'About', '/portfolio' => 'Portfolio', '/careers' => 'Care
               </a>
               <?php endforeach; ?>
             </div>
-            <div class="mega-footer"><span>Vetted developers, start within a week.</span><a class="link-arrow" href="<?= e(url('pricing')) ?>#hire-plans">Hiring plans and pricing <?= icon('arrow-right') ?></a><a class="link-arrow" href="<?= e(url('hire')) ?>">All roles <?= icon('arrow-right') ?></a></div>
           </div>
         </li>
         <?php foreach ($simple as $path => $label): ?>

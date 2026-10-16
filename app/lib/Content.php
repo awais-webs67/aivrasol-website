@@ -77,7 +77,11 @@ final class Content
                 $out[] = $line;
             }
         }
-        return array_values(array_unique($out));
+        $out = array_values(array_unique($out));
+        if (!array_filter($out, 'is_other_option')) {
+            $out[] = 'Other';
+        }
+        return $out;
     }
 
     public static function plan(int $id): ?array

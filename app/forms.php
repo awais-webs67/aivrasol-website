@@ -71,7 +71,8 @@ function save_lead(string $type, array $data, array $details = []): int
         $fields[ucfirst(str_replace('_', ' ', (string) $k))] = $v;
     }
     $fields['Sent from page'] = form_back();
-    send_form_emails($type, setting('notify_emails', setting('email_info')), $fields, $data['message'] ?? null, 'admin/leads/' . $id, $data['name'], $data['email'], $details);
+    $summary = array_map(fn ($v) => preg_replace('/^(other|something else):.*$/is', '$1 (as you described)', (string) $v), $details);
+    send_form_emails($type, setting('notify_emails', setting('email_info')), $fields, $data['message'] ?? null, 'admin/leads/' . $id, $data['name'], $data['email'], $summary);
     return $id;
 }
 
@@ -96,6 +97,28 @@ function send_form_emails(string $type, string $recipients, array $fields, ?stri
     }
 }
 
+/**
+ * When a dropdown answer is "Other", the visitor must type what they mean in the extra box.
+ * The typed text is added to the answer, for example "Other: Shopify store migration".
+ */
+function apply_other(array &$data, array &$errors, string $field): void
+{
+    if (($data[$field] ?? '') === '' || !is_other_option($data[$field])) {
+        return;
+    }
+    $raw = $_POST[$field . '_other'] ?? '';
+    $text = is_string($raw) ? trim(preg_replace('/\s+/', ' ', str_replace("\0", '', $raw)) ?? '') : '';
+    if ($text === '') {
+        $errors[$field . '_other'] = 'Please tell us what you need.';
+    } elseif (mb_strlen($text) > 150) {
+        $errors[$field . '_other'] = 'Please keep this under 150 characters.';
+    } elseif (preg_match('#https?://|www\.#i', $text)) {
+        $errors[$field . '_other'] = 'Please describe it without links.';
+    } else {
+        $data[$field] .= ': ' . $text;
+    }
+}
+
 function handle_consultation(): never
 {
     form_guard('consultation', 8, 600);
@@ -116,7 +139,7 @@ function handle_contact(): never
     $interestOptions = array_merge(
         array_column(Content::offerings('service'), 'short_title'),
         array_column(Content::offerings('hire'), 'short_title'),
-        ['General question']
+        ['General question', 'Other']
     );
     $v = (new Validator($_POST))
         ->options('interest', $interestOptions)
@@ -131,6 +154,11 @@ function handle_contact(): never
         form_fail('Please check the highlighted fields.', $v->errors());
     }
     $data = $v->clean();
+    $errors = [];
+    apply_other($data, $errors, 'interest');
+    if ($errors) {
+        form_fail('Please check the highlighted fields.', $errors);
+    }
     $isHire = in_array($data['interest'], array_column(Content::offerings('hire'), 'short_title'), true);
     save_lead($isHire ? 'hire' : 'contact', $data, $data['interest'] !== '' ? ['interest' => $data['interest']] : []);
     form_ok('Thank you for your message. Our team will reply within one business day.');
@@ -157,6 +185,12 @@ function handle_quote(): never
         form_fail('Please check the highlighted fields.', $v->errors());
     }
     $data = $v->clean();
+    $errors = [];
+    apply_other($data, $errors, 'q1');
+    apply_other($data, $errors, 'q2');
+    if ($errors) {
+        form_fail('Please check the highlighted fields.', $errors);
+    }
     save_lead('quote', $data, [
         'plan' => $plan['title'],
         rtrim($plan['q1_label'], '?') => $data['q1'],

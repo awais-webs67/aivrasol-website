@@ -84,15 +84,16 @@ $others = array_values(array_filter(Content::offerings($type), fn ($o) => $o['sl
   </div>
 </section>
 
-<?php if ($isHire && !empty($plans)): ?>
-<section class="section" aria-labelledby="models-title">
+<?php if ($isHire): ?>
+<section class="section-tight">
   <div class="container">
-    <div class="section-head center">
-      <h2 class="display-2" id="models-title">Hire <?= e($item['short_title']) ?>s your way</h2>
-      <span class="bar center"></span>
-      <p class="lead">Full-time, part-time or a whole team. Pick a plan and get a free quote within one business day.</p>
+    <div class="pricing-strip">
+      <div>
+        <h2>Full-time, part-time or a whole team</h2>
+        <p>See our hiring plans and get a free quote for <?= e($item['short_title']) ?>s within one business day.</p>
+      </div>
+      <a class="btn" href="<?= e(url('pricing')) ?>?role=<?= e(rawurlencode($item['short_title'])) ?>#hire-plans">See hiring plans</a>
     </div>
-    <?= partial('plans', ['plans' => $plans, 'preselect' => $item['short_title']]) ?>
   </div>
 </section>
 <?php endif; ?>

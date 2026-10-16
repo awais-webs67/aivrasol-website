@@ -15,16 +15,18 @@
     <form class="plan-form" action="<?= e(url('pricing')) ?>" method="get" data-quote-card data-plan-title="<?= e($plan['title']) ?>">
       <input type="hidden" name="plan" value="<?= $pid ?>">
       <label><?= e($plan['q1_label']) ?>
-        <select class="select" name="q1" required>
+        <select class="select" name="q1" required data-has-other>
           <option value="">Select an option</option>
           <?php foreach (Content::planOptions($plan, 'q1') as $o): ?><option<?= $preselect !== '' && $o === $preselect ? ' selected' : '' ?>><?= e($o) ?></option><?php endforeach; ?>
         </select>
+        <?= other_input('q1') ?>
       </label>
       <label><?= e($plan['q2_label']) ?>
-        <select class="select" name="q2" required>
+        <select class="select" name="q2" required data-has-other>
           <option value="">Select an option</option>
           <?php foreach (Content::planOptions($plan, 'q2') as $o): ?><option><?= e($o) ?></option><?php endforeach; ?>
         </select>
+        <?= other_input('q2') ?>
       </label>
       <button class="btn btn-block plan-cta" type="submit">Get a free quote</button>
     </form>

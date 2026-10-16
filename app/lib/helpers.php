@@ -339,3 +339,16 @@ function home_section(string $name): bool
 {
     return setting('home_show_' . $name, '1') === '1';
 }
+
+/** True for dropdown choices like "Other" or "Something else" that need the visitor to type a detail. */
+function is_other_option(string $value): bool
+{
+    return (bool) preg_match('/^(other|something else)\b/i', trim($value));
+}
+
+/** Text box shown when "Other" is picked in the dropdown with the given name. */
+function other_input(string $for, string $value = '', bool $disabled = false, string $class = 'input'): string
+{
+    return '<input class="' . e($class) . ' other-input" type="text" name="' . e($for) . '_other" data-other-for="' . e($for) . '" value="' . e($value) . '"'
+        . ' placeholder="Please tell us what you need" maxlength="150" aria-label="Please specify"' . ($disabled ? ' disabled' : '') . '>';
+}

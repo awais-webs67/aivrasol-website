@@ -32,6 +32,8 @@
       <input type="hidden" name="plan_id" value="">
       <input type="hidden" name="q1" value="">
       <input type="hidden" name="q2" value="">
+      <input type="hidden" name="q1_other" value="">
+      <input type="hidden" name="q2_other" value="">
       <p class="modal-summary" data-quote-summary></p>
       <label class="field"><span>Name</span><input class="input" type="text" name="name" autocomplete="name" required maxlength="100"></label>
       <label class="field"><span>Email</span><input class="input" type="email" name="email" autocomplete="email" required maxlength="190"></label>

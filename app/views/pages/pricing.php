@@ -22,7 +22,7 @@ $current = $selected ?? ($plans[0] ?? null);
       <span class="bar center"></span>
       <p class="lead"><?= e($gText) ?></p>
     </div>
-    <?= partial('plans', ['plans' => $group]) ?>
+    <?= partial('plans', ['plans' => $group, 'preselect' => $cat === 'hire' ? $role : '']) ?>
   </div>
 </section>
 <?php endforeach; ?>
@@ -48,17 +48,19 @@ $current = $selected ?? ($plans[0] ?? null);
         <?php foreach ($plans as $p): $active = (int) $p['id'] === (int) $current['id']; ?>
         <div class="cell" data-plan-fields="<?= (int) $p['id'] ?>"<?= $active ? '' : ' hidden' ?>>
           <label class="sr-only" for="qf-q1-<?= (int) $p['id'] ?>"><?= e($p['q1_label']) ?></label>
-          <select class="select" id="qf-q1-<?= (int) $p['id'] ?>" name="q1"<?= $active ? '' : ' disabled' ?>>
+          <select class="select" id="qf-q1-<?= (int) $p['id'] ?>" name="q1"<?= $active ? '' : ' disabled' ?> data-has-other>
             <option value=""><?= e($p['q1_label']) ?></option>
             <?php foreach (Content::planOptions($p, 'q1') as $o): ?><option<?= $active && $q1 === $o ? ' selected' : '' ?>><?= e($o) ?></option><?php endforeach; ?>
           </select>
+          <?= other_input('q1', $active ? $q1Other : '', !$active) ?>
         </div>
         <div class="cell" data-plan-fields="<?= (int) $p['id'] ?>"<?= $active ? '' : ' hidden' ?>>
           <label class="sr-only" for="qf-q2-<?= (int) $p['id'] ?>"><?= e($p['q2_label']) ?></label>
-          <select class="select" id="qf-q2-<?= (int) $p['id'] ?>" name="q2"<?= $active ? '' : ' disabled' ?>>
+          <select class="select" id="qf-q2-<?= (int) $p['id'] ?>" name="q2"<?= $active ? '' : ' disabled' ?> data-has-other>
             <option value=""><?= e($p['q2_label']) ?></option>
             <?php foreach (Content::planOptions($p, 'q2') as $o): ?><option<?= $active && $q2 === $o ? ' selected' : '' ?>><?= e($o) ?></option><?php endforeach; ?>
           </select>
+          <?= other_input('q2', $active ? $q2Other : '', !$active) ?>
         </div>
         <?php endforeach; ?>
         <div class="cell"><label class="sr-only" for="qf-name">Name</label><input class="input" id="qf-name" type="text" name="name" placeholder="Name *" autocomplete="name" required maxlength="100" value="<?= e(old('name')) ?>"></div>

@@ -54,6 +54,21 @@
   doc.addEventListener('click', function (e) {
     if (desktop.matches && !e.target.closest('.nav-item')) closeDropdowns();
   });
+  // Desktop: open on hover and wait a moment before closing, so the pointer can travel into the panel.
+  $$('.nav-item').forEach(function (item) {
+    if (!$('.mega', item)) return;
+    var timer;
+    item.addEventListener('mouseenter', function () {
+      if (!desktop.matches) return;
+      clearTimeout(timer);
+      $$('.nav-item.is-open').forEach(function (o) { if (o !== item) o.classList.remove('is-open'); });
+      item.classList.add('is-open');
+    });
+    item.addEventListener('mouseleave', function () {
+      if (!desktop.matches) return;
+      timer = setTimeout(function () { item.classList.remove('is-open'); }, 220);
+    });
+  });
   doc.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
     var openBtn = dropdowns.filter(function (b) { return b.getAttribute('aria-expanded') === 'true'; })[0];
@@ -83,14 +98,45 @@
     });
   });
 
+  /* "Other" choices: show a text box to describe it */
+  var OTHER = /^(other|something else)\b/i;
+  function syncOther(select) {
+    var box = select.closest('label, .cell, .field') || select.parentNode;
+    var input = $('[data-other-for="' + select.name + '"]', box);
+    if (!input) return;
+    var show = !select.disabled && OTHER.test(select.value);
+    input.hidden = !show;
+    input.disabled = select.disabled;
+    if (show) input.setAttribute('required', ''); else input.removeAttribute('required');
+    return show;
+  }
+  $$('select[data-has-other]').forEach(function (select) {
+    syncOther(select);
+    select.addEventListener('change', function () {
+      if (syncOther(select)) {
+        var box = select.closest('label, .cell, .field') || select.parentNode;
+        var input = $('[data-other-for="' + select.name + '"]', box);
+        if (input) input.focus();
+      }
+    });
+  });
+
   /* Pricing cards open the quote modal with the chosen options */
   $$('[data-quote-card]').forEach(function (form) {
     form.addEventListener('submit', function (e) {
       var q1 = form.elements.q1, q2 = form.elements.q2;
+      var o1 = form.elements.q1_other, o2 = form.elements.q2_other;
       if (!q1.value || !q2.value) {
         e.preventDefault();
         (q1.value ? q2 : q1).focus();
         toast('Please choose both options to get your quote.', 'error');
+        return;
+      }
+      var missing = [[q1, o1], [q2, o2]].filter(function (p) { return p[1] && OTHER.test(p[0].value) && !p[1].value.trim(); })[0];
+      if (missing) {
+        e.preventDefault();
+        missing[1].focus();
+        toast('Please tell us what you need in the box under "Other".', 'error');
         return;
       }
       var dlg = doc.getElementById('quote-modal');
@@ -100,7 +146,11 @@
       target.elements.plan_id.value = form.elements.plan.value;
       target.elements.q1.value = q1.value;
       target.elements.q2.value = q2.value;
-      $('[data-quote-summary]', dlg).textContent = form.getAttribute('data-plan-title') + ': ' + q1.value + ', ' + q2.value;
+      var t1 = o1 && OTHER.test(q1.value) ? o1.value.trim() : '';
+      var t2 = o2 && OTHER.test(q2.value) ? o2.value.trim() : '';
+      target.elements.q1_other.value = t1;
+      target.elements.q2_other.value = t2;
+      $('[data-quote-summary]', dlg).textContent = form.getAttribute('data-plan-title') + ': ' + (t1 ? q1.value + ' (' + t1 + ')' : q1.value) + ', ' + (t2 ? q2.value + ' (' + t2 + ')' : q2.value);
       openModal('quote-modal');
     });
   });
@@ -112,7 +162,8 @@
       $$('[data-plan-fields]').forEach(function (cell) {
         var on = cell.getAttribute('data-plan-fields') === planSelect.value;
         cell.hidden = !on;
-        $$('select', cell).forEach(function (s) { s.disabled = !on; });
+        $$('select, input', cell).forEach(function (s) { s.disabled = !on; });
+        $$('select[data-has-other]', cell).forEach(syncOther);
       });
     });
   }
@@ -180,6 +231,7 @@
       }).then(function (data) {
         if (data.ok) {
           form.reset();
+          $$('select[data-has-other]', form).forEach(syncOther);
           showStatus(form, data.message, true);
           toast(data.message, 'success');
           var dlg = form.closest('dialog');

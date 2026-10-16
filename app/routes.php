@@ -49,7 +49,6 @@ $router->get('/hire/{slug}', function (string $slug) {
         'metaDescription' => $item['meta_description'] ?: $item['summary'],
         'item' => $item,
         'type' => 'hire',
-        'plans' => Content::plans('hire'),
         'faqs' => Content::faqs($slug) ?: Content::faqs('pricing'),
     ]);
 });
@@ -80,6 +79,9 @@ $router->get('/pricing', function () {
         'selected' => $selected,
         'q1' => is_string($_GET['q1'] ?? null) ? $_GET['q1'] : '',
         'q2' => is_string($_GET['q2'] ?? null) ? $_GET['q2'] : '',
+        'q1Other' => is_string($_GET['q1_other'] ?? null) ? mb_substr($_GET['q1_other'], 0, 150) : '',
+        'q2Other' => is_string($_GET['q2_other'] ?? null) ? mb_substr($_GET['q2_other'], 0, 150) : '',
+        'role' => in_array($_GET['role'] ?? '', array_column(Content::offerings('hire'), 'short_title'), true) ? $_GET['role'] : '',
         'faqs' => Content::faqs('pricing'),
     ]);
 });

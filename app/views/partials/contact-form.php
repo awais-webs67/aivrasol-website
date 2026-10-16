@@ -17,7 +17,7 @@ $groups = [
     <div class="cell"><label class="sr-only" for="<?= e($p) ?>-phone">Phone number</label><input class="input" id="<?= e($p) ?>-phone" type="tel" name="phone" placeholder="Phone or WhatsApp" autocomplete="tel" maxlength="40" value="<?= e(old('phone')) ?>"></div>
     <div class="cell span-2">
       <label class="sr-only" for="<?= e($p) ?>-interest">What do you need help with?</label>
-      <select class="select" id="<?= e($p) ?>-interest" name="interest">
+      <select class="select" id="<?= e($p) ?>-interest" name="interest" data-has-other>
         <option value="">What do you need help with?</option>
         <?php foreach ($groups as $label => $options): ?>
         <optgroup label="<?= e($label) ?>">
@@ -25,7 +25,9 @@ $groups = [
         </optgroup>
         <?php endforeach; ?>
         <option value="General question"<?= $interest === 'General question' ? ' selected' : '' ?>>General question</option>
+        <option value="Other"<?= $interest === 'Other' ? ' selected' : '' ?>>Other</option>
       </select>
+      <?= other_input('interest', old('interest_other')) ?>
     </div>
     <div class="cell span-2"><label class="sr-only" for="<?= e($p) ?>-message">Your message</label><textarea class="textarea" id="<?= e($p) ?>-message" name="message" placeholder="Your message *" required minlength="10" maxlength="5000"><?= e(old('message')) ?></textarea></div>
   </div>
