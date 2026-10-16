@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require APP_PATH . '/admin/handlers.php';
+require APP_PATH . '/admin/staff.php';
 
 /** @var Router $router */
 $router->any('/admin/login', fn () => admin_login());
@@ -28,3 +29,16 @@ $router->any('/admin/email', fn () => admin_email());
 $router->any('/admin/users', fn () => admin_users());
 $router->any('/admin/profile', fn () => admin_profile());
 $router->get('/admin/account', fn () => redirect(url('admin/profile')));
+
+$router->get('/admin/employees', fn () => admin_employees());
+$router->any('/admin/employees/new', fn () => admin_employee_edit());
+$router->any('/admin/employees/{id}', fn (string $id) => admin_employee_edit($id));
+$router->post('/admin/employees/{id}/login', fn (string $id) => admin_employee_login($id));
+$router->get('/admin/employees/{id}/photo', fn (string $id) => admin_employee_photo($id));
+$router->get('/admin/employees/{id}/card', fn (string $id) => admin_employee_card($id));
+$router->any('/admin/employees/{id}/letter', fn (string $id) => admin_employee_letter($id));
+$router->get('/admin/letters/{id}', fn (string $id) => admin_document_pdf($id));
+$router->post('/admin/letters/{id}/revoke', fn (string $id) => admin_document_revoke($id));
+$router->any('/admin/documents', fn () => admin_documents_settings());
+$router->get('/admin/documents/image/{which}', fn (string $which) => admin_documents_image($which));
+$router->get('/admin/documents/sample/{kind}', fn (string $kind) => admin_documents_sample($kind));

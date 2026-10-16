@@ -85,4 +85,7 @@ return [
             }
         }
     },
+    '2026_10_20_employees' => function (PDO $pdo): void {
+        // schema.sql has already created the employees and employee_documents tables.
+    },
 ];

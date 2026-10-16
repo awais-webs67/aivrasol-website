@@ -188,6 +188,25 @@ $router->get('/indexnow-key.txt', function () {
     return Seo::indexNowKey();
 });
 
+$router->get('/verify/{token}', function (string $token) {
+    require_once APP_PATH . '/lib/Documents.php';
+    header('X-Robots-Tag: noindex, nofollow');
+    $data = ['pageTitle' => 'Verify a document | ' . setting('site_name', 'AivraSol'), 'metaRobots' => 'noindex, nofollow', 'emp' => null, 'doc' => null, 'limited' => false];
+    if (!Security::rateLimit('verify', 40, 600)) {
+        http_response_code(429);
+        $data['limited'] = true;
+    } elseif (preg_match('/^[a-z0-9]{16}$/', $token)) {
+        $data['emp'] = Database::one('SELECT employee_code, full_name, designation, department, status, join_date, end_date FROM employees WHERE verify_token = ?', [$token]);
+        if (!$data['emp']) {
+            $data['doc'] = Database::one('SELECT d.ref_no, d.title, d.issued_at, d.revoked_at, d.data, e.employee_code FROM employee_documents d JOIN employees e ON e.id = d.employee_id WHERE d.verify_token = ?', [$token]);
+        }
+    }
+    if (!$data['limited'] && !$data['emp'] && !$data['doc']) {
+        http_response_code(404);
+    }
+    return view('pages/verify', $data);
+});
+
 $router->get('/sitemap.xml', function () {
     header('Content-Type: application/xml; charset=utf-8');
     return render('sitemap', [

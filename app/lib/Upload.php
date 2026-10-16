@@ -43,6 +43,86 @@ final class Upload
     }
 
     /**
+     * Stores an image outside the web root (staff photos, signatures, stamps), re-encoded so no hidden
+     * payload survives. PNG keeps transparency for signatures. $ratio crops to width/height first, e.g. 0.8 for 4:5.
+     * Returns "folder/name.ext" relative to storage/private.
+     */
+    public static function privateImage(array $file, string $folder, int $maxWidth, string $format = 'png', ?float $ratio = null): string
+    {
+        self::assertUploaded($file, 4 * 1024 * 1024, '4 MB');
+        $mime = self::mime($file['tmp_name']);
+        if (!isset(self::IMAGE_TYPES[$mime])) {
+            throw new InvalidArgumentException('Please upload a JPG, PNG or WebP image.');
+        }
+        $info = @getimagesize($file['tmp_name']);
+        if (!$info || $info[0] < 1 || $info[1] < 1 || $info[0] * $info[1] > 40_000_000) {
+            throw new InvalidArgumentException('That image could not be read or is too large.');
+        }
+        $src = match ($mime) {
+            'image/jpeg' => @imagecreatefromjpeg($file['tmp_name']),
+            'image/png' => @imagecreatefrompng($file['tmp_name']),
+            'image/webp' => @imagecreatefromwebp($file['tmp_name']),
+        };
+        if (!$src) {
+            throw new InvalidArgumentException('That image could not be read.');
+        }
+        [$w, $h] = [imagesx($src), imagesy($src)];
+        [$sx, $sy, $sw, $sh] = [0, 0, $w, $h];
+        if ($ratio !== null) {
+            if ($w / $h > $ratio) {
+                $sw = (int) round($h * $ratio);
+                $sx = (int) (($w - $sw) / 2);
+            } else {
+                $sh = (int) round($w / $ratio);
+                $sy = (int) max(0, ($h - $sh) / 3);
+            }
+        }
+        $scale = min(1, $maxWidth / $sw);
+        $nw = max(1, (int) round($sw * $scale));
+        $nh = max(1, (int) round($sh * $scale));
+        $dst = imagecreatetruecolor($nw, $nh);
+        if ($format === 'png') {
+            imagealphablending($dst, false);
+            imagesavealpha($dst, true);
+            imagefill($dst, 0, 0, imagecolorallocatealpha($dst, 255, 255, 255, 127));
+        } else {
+            imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));
+        }
+        imagecopyresampled($dst, $src, 0, 0, $sx, $sy, $nw, $nh, $sw, $sh);
+        $folder = preg_replace('/[^a-z0-9-]/', '', $folder) ?: 'misc';
+        $dir = STORAGE_PATH . '/private/' . $folder;
+        if (!is_dir($dir) && !mkdir($dir, 0750, true)) {
+            throw new RuntimeException('Private folder is not writable.');
+        }
+        $name = bin2hex(random_bytes(12)) . ($format === 'png' ? '.png' : '.jpg');
+        $ok = $format === 'png' ? imagepng($dst, $dir . '/' . $name, 6) : imagejpeg($dst, $dir . '/' . $name, 86);
+        imagedestroy($src);
+        imagedestroy($dst);
+        if (!$ok) {
+            throw new RuntimeException('Could not save the image.');
+        }
+        @chmod($dir . '/' . $name, 0640);
+        return $folder . '/' . $name;
+    }
+
+    /** Absolute path of a private image, or null when the stored name is empty or unsafe. */
+    public static function privatePath(string $stored): ?string
+    {
+        if (!preg_match('#^[a-z0-9-]+/[a-f0-9]{24}\.(png|jpg)$#', $stored)) {
+            return null;
+        }
+        $path = STORAGE_PATH . '/private/' . $stored;
+        return is_file($path) ? $path : null;
+    }
+
+    public static function deletePrivate(string $stored): void
+    {
+        if ($path = self::privatePath($stored)) {
+            @unlink($path);
+        }
+    }
+
+    /**
      * Re-encodes an image to WebP (which strips hidden payloads and metadata),
      * resizes it to a maximum width and stores it under public/uploads/{folder}.
      * Returns the public path relative to /public.

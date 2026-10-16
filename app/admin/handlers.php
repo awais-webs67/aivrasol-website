@@ -770,7 +770,9 @@ function admin_profile(): string
             }
         }
     }
-    return admin_view('profile', ['errors' => $errors, 'forced' => $forced, 'pageTitle' => 'My profile']);
+    $employee = Database::one('SELECT * FROM employees WHERE user_id = ?', [$user['id']]);
+    $letters = $employee ? Database::all('SELECT id, ref_no, title, issued_at FROM employee_documents WHERE employee_id = ? AND revoked_at IS NULL ORDER BY id DESC', [$employee['id']]) : [];
+    return admin_view('profile', ['errors' => $errors, 'forced' => $forced, 'employee' => $employee, 'letters' => $letters, 'pageTitle' => 'My profile']);
 }
 
 /* ---------- Email settings ---------- */

@@ -7,7 +7,7 @@
     <legend><?= e($group) ?></legend>
     <?php foreach ($fields as $key => $def): [$label, $type] = $def; $help = $def[2] ?? ''; $val = $posted !== null && $type !== 'image' ? (string) ($posted[$key] ?? '') : setting($key, $type === 'bool' ? '1' : ''); $err = $errors[$key] ?? null; ?>
     <?php if ($type === 'bool'): ?>
-    <label class="check"><input type="checkbox" name="<?= e($key) ?>" value="1"<?= ($posted !== null ? isset($posted[$key]) : $val === '1') ? ' checked' : '' ?>> <span><?= e($label) ?></span></label>
+    <label class="check span-2"><input type="checkbox" name="<?= e($key) ?>" value="1"<?= ($posted !== null ? isset($posted[$key]) : $val === '1') ? ' checked' : '' ?>> <span><?= e($label) ?><?php if ($help !== ''): ?><br><span class="small muted"><?= e($help) ?></span><?php endif; ?></span></label>
     <?php continue; endif; ?>
     <div class="field<?= in_array($type, ['textarea', 'image'], true) ? ' span-2' : '' ?>">
       <label for="s-<?= e($key) ?>"><span><?= e($label) ?></span></label>

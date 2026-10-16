@@ -11,6 +11,10 @@ foreach (admin_resources() as $k => $r) {
         $contentNav['admin/content/' . $k] = $r['label'];
     }
 }
+$people = array_filter([
+    'admin/employees' => ['users', 'Employees', 'employees'],
+    'admin/documents' => ['file', 'Letters and ID cards', 'settings'],
+], fn ($n) => $can($n[2]));
 $system = array_filter([
     'admin/settings' => ['settings', 'Settings', 'settings'],
     'admin/email' => ['mail', 'Email', 'settings'],
@@ -50,6 +54,14 @@ $newLeads = $can('leads') ? (int) Database::value("SELECT COUNT(*) FROM leads WH
       <ul>
         <?php foreach ($contentNav as $path => $label): ?>
         <li><a href="<?= e(url($path)) ?>"<?= $isOn($path) ? ' aria-current="page"' : '' ?>><?= icon('file') ?><span><?= e($label) ?></span></a></li>
+        <?php endforeach; ?>
+      </ul>
+      <?php endif; ?>
+      <?php if ($people): ?>
+      <p class="admin-side-label">People</p>
+      <ul>
+        <?php foreach ($people as $path => [$ic, $label]): ?>
+        <li><a href="<?= e(url($path)) ?>"<?= $isOn($path) ? ' aria-current="page"' : '' ?>><?= icon($ic) ?><span><?= e($label) ?></span></a></li>
         <?php endforeach; ?>
       </ul>
       <?php endif; ?>

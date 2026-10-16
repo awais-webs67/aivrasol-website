@@ -656,3 +656,14 @@ button { cursor: pointer; }
 .side-cta p { font-size: 14.5px; }
 .side-cta { background: var(--white); border-top: 4px solid var(--orange); }
 .post-cover-lg:has(.post-cover-art) { aspect-ratio: 3 / 1; }
+
+/* Document verification */
+.verify-wrap { max-width: 640px; }
+.verify-wrap .display-2 { margin: 6px 0 20px; }
+.verify-badge { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 8px 14px; border-radius: 999px; font-weight: 600; font-size: 15px; }
+.verify-badge .icon { width: 18px; height: 18px; }
+.verify-badge.is-ok { background: #E8F5EE; color: var(--success); }
+.verify-badge.is-warn { background: #FDECEA; color: var(--danger); }
+.verify-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 22px; margin: 0 0 22px; padding: 20px; background: var(--grey-soft); border-radius: var(--radius-md); }
+.verify-dl dt { color: var(--muted); }
+.verify-dl dd { margin: 0; color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }

@@ -232,6 +232,52 @@ CREATE TABLE IF NOT EXISTS offices (
   KEY idx_offices_active (is_active, sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS employees (
+  id              INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id         INT UNSIGNED NULL UNIQUE,
+  employee_code   VARCHAR(20)  NOT NULL UNIQUE,
+  verify_token    CHAR(16)     NOT NULL UNIQUE,
+  full_name       VARCHAR(100) NOT NULL,
+  father_name     VARCHAR(100) NOT NULL DEFAULT '',
+  pronoun         VARCHAR(10)  NOT NULL DEFAULT 'they',
+  national_id     VARCHAR(255) NOT NULL DEFAULT '' COMMENT 'Encrypted',
+  designation     VARCHAR(100) NOT NULL,
+  department      VARCHAR(80)  NOT NULL DEFAULT '',
+  employment_type VARCHAR(30)  NOT NULL DEFAULT 'Full-time',
+  office_id       INT UNSIGNED NULL,
+  work_email      VARCHAR(190) NOT NULL DEFAULT '',
+  personal_email  VARCHAR(190) NOT NULL DEFAULT '',
+  phone           VARCHAR(40)  NOT NULL DEFAULT '',
+  emergency_contact VARCHAR(120) NOT NULL DEFAULT '',
+  blood_group     VARCHAR(5)   NOT NULL DEFAULT '',
+  join_date       DATE         NOT NULL,
+  end_date        DATE         NULL,
+  status          VARCHAR(20)  NOT NULL DEFAULT 'active',
+  photo           VARCHAR(120) NOT NULL DEFAULT '',
+  notes           TEXT         NULL,
+  created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_emp_status (status),
+  CONSTRAINT fk_emp_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_emp_office FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS employee_documents (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  employee_id  INT UNSIGNED NOT NULL,
+  doc_type     VARCHAR(30)  NOT NULL,
+  ref_no       VARCHAR(40)  NOT NULL UNIQUE,
+  verify_token CHAR(16)     NOT NULL UNIQUE,
+  title        VARCHAR(120) NOT NULL,
+  data         MEDIUMTEXT   NOT NULL COMMENT 'JSON snapshot used to rebuild the PDF',
+  issued_by    INT UNSIGNED NULL,
+  issued_at    DATE         NOT NULL,
+  revoked_at   DATETIME     NULL,
+  created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_doc_emp (employee_id),
+  CONSTRAINT fk_doc_emp FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS email_log (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   type       VARCHAR(40)  NOT NULL,

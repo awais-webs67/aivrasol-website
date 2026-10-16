@@ -1,6 +1,29 @@
 <?php $role = Auth::ROLES[$user['role']] ?? null; ?>
 <?php foreach ($errors as $err): ?><p class="form-status is-error" role="alert"><?= e($err) ?></p><?php endforeach; ?>
 <?php if ($forced): ?><p class="form-status is-error" role="alert">Your account was given a temporary password. Choose your own password to continue.</p><?php endif; ?>
+<?php if (!empty($employee) && !$forced): require_once APP_PATH . '/lib/Documents.php'; ?>
+<section class="card emp-summary">
+  <div class="emp-photo"><?php if (Upload::privatePath($employee['photo'])): ?><img src="<?= e(url('admin/employees/' . $employee['id'] . '/photo')) ?>" alt="" width="96" height="120"><?php else: ?><span><?= e(mb_strtoupper(mb_substr($employee['full_name'], 0, 1))) ?></span><?php endif; ?></div>
+  <div class="emp-info">
+    <p class="project-meta"><?= e($employee['employee_code']) ?></p>
+    <h2><?= e($employee['full_name']) ?></h2>
+    <p class="muted"><?= e($employee['designation']) ?><?= $employee['department'] !== '' ? ', ' . e($employee['department']) : '' ?> · since <?= e(date('M Y', strtotime($employee['join_date']))) ?></p>
+  </div>
+  <div class="btn-group emp-actions">
+    <a class="btn btn-sm" href="<?= e(url('admin/employees/' . $employee['id'] . '/card')) ?>"><?= icon('download') ?>My ID card (PDF)</a>
+  </div>
+</section>
+<?php if ($letters): ?>
+<section class="card">
+  <h2>My documents</h2>
+  <ul class="doc-list">
+    <?php foreach ($letters as $l): ?>
+    <li><span><strong><?= e($l['title']) ?></strong><br><span class="small muted"><?= e($l['ref_no']) ?> · issued <?= e(date('j M Y', strtotime($l['issued_at']))) ?></span></span><a class="btn btn-sm btn-outline" href="<?= e(url('admin/letters/' . $l['id'])) ?>"><?= icon('download') ?>Download PDF</a></li>
+    <?php endforeach; ?>
+  </ul>
+</section>
+<?php endif; ?>
+<?php endif; ?>
 <div class="admin-grid">
   <section class="card">
     <h2>My details</h2>
