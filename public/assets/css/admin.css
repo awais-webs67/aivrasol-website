@@ -181,3 +181,35 @@ fieldset.form-grid { border: 0; margin: 0; padding: 0; min-width: 0; }
 .check-row { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; overflow-wrap: anywhere; }
 .check-row > div { min-width: 0; }
 tr.is-current td { background: var(--orange-tint); }
+
+/* Launch checklist */
+.cl-bar { height: 8px; margin: -4px 0 16px; background: var(--grey); border-radius: 999px; overflow: hidden; }
+.cl-bar span { display: block; height: 100%; background: var(--success); border-radius: inherit; }
+.cl-bar .w-0 { width: 0%; }
+.cl-bar .w-5 { width: 5%; }
+.cl-bar .w-10 { width: 10%; }
+.cl-bar .w-15 { width: 15%; }
+.cl-bar .w-20 { width: 20%; }
+.cl-bar .w-25 { width: 25%; }
+.cl-bar .w-30 { width: 30%; }
+.cl-bar .w-35 { width: 35%; }
+.cl-bar .w-40 { width: 40%; }
+.cl-bar .w-45 { width: 45%; }
+.cl-bar .w-50 { width: 50%; }
+.cl-bar .w-55 { width: 55%; }
+.cl-bar .w-60 { width: 60%; }
+.cl-bar .w-65 { width: 65%; }
+.cl-bar .w-70 { width: 70%; }
+.cl-bar .w-75 { width: 75%; }
+.cl-bar .w-80 { width: 80%; }
+.cl-bar .w-85 { width: 85%; }
+.cl-bar .w-90 { width: 90%; }
+.cl-bar .w-95 { width: 95%; }
+.cl-bar .w-100 { width: 100%; }
+.cl-hint { display: block; margin-top: 2px; font-size: 13px; color: var(--muted); }
+.cl-head { margin: 18px 0 8px; font-size: 12.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.checklist li.is-later { color: var(--body); }
+.checklist li.is-later .icon { color: var(--muted); }
+.cl-done { margin-top: 16px; }
+.cl-done summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--success); }
+.cl-done .checklist { margin-top: 10px; }

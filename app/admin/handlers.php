@@ -38,27 +38,46 @@ function admin_resource(string $key): array
     return admin_resources()[$key] ?? abort(404);
 }
 
+/**
+ * Launch checklist. Each item: [state, text, hint, link]. state is "done", "todo",
+ * or "later" for things that only apply on the live server (shown greyed on a test computer).
+ */
 function admin_launch_checklist(): array
 {
+    $local = in_array(parse_url((string) config('base_url'), PHP_URL_HOST), ['localhost', '127.0.0.1'], true);
     $items = [];
+    $add = function (bool $done, string $doneText, string $todoText, string $hint, ?string $link, bool $liveOnly = false) use (&$items, $local): void {
+        $state = $done ? 'done' : ($liveOnly && $local ? 'later' : 'todo');
+        $items[] = [$state, $done ? $doneText : $todoText, $hint, $link];
+    };
     $samples = (int) Database::value('SELECT COUNT(*) FROM projects WHERE is_sample = 1 AND is_active = 1');
-    $items[] = [$samples === 0, $samples === 0 ? 'Portfolio has only real projects' : "Replace $samples sample portfolio projects with real work", url('admin/content/projects')];
+    $add($samples === 0, 'Portfolio shows only real projects', "Replace the $samples sample portfolio projects with your real work", 'Edit each project, add your real details and cover image, then untick "Sample content". Or untick "Show on website" to hide it.', url('admin/content/projects'));
     $t = (int) Database::value('SELECT COUNT(*) FROM testimonials WHERE is_active = 1');
-    $items[] = [$t > 0, $t > 0 ? "$t client testimonials live" : 'Add real client testimonials (the section is hidden until you do)', url('admin/content/testimonials')];
-    $items[] = [setting('phone') !== '' || setting('whatsapp') !== '', 'Add a phone or WhatsApp number', url('admin/settings')];
+    $add($t > 0, "$t client testimonials are live", 'Add real client testimonials', 'The reviews section stays hidden until you add at least one. Use real reviews with permission.', url('admin/content/testimonials/new'));
+    $add(setting('phone') !== '' || setting('whatsapp') !== '', 'Phone or WhatsApp number added', 'Add a phone or WhatsApp number', 'Settings, Contact details. Shown in the footer, the contact page and Google data.', url('admin/settings'));
     $withAddress = (int) Database::value("SELECT COUNT(*) FROM offices WHERE is_active = 1 AND (address <> '' OR city <> '')");
-    $items[] = [$withAddress > 0, $withAddress > 0 ? "$withAddress offices have an address" : 'Add cities and addresses to your offices', url('admin/content/offices')];
-    $items[] = [setting('contact_person_name') !== '', 'Add your sales contact person', url('admin/settings')];
-    $items[] = [Content::stats() !== [], 'Add company numbers (projects, clients, team)', url('admin/settings')];
-    $items[] = [Seo::indexingOn(), Seo::indexingOn() ? 'Search engines can index the website' : 'Search indexing is OFF. Turn it on in Settings before launch', url('admin/settings')];
-    $items[] = [setting('google_site_verification') !== '', 'Verify the site in Google Search Console, then submit /sitemap.xml there', url('admin/settings')];
-    $items[] = [setting('bing_site_verification') !== '', 'Verify the site in Bing Webmaster Tools (also feeds ChatGPT search and Copilot)', url('admin/settings')];
+    $add($withAddress > 0, "$withAddress office" . ($withAddress === 1 ? ' has' : 's have') . ' an address', 'Add cities and addresses to your offices', 'Website content, Offices. Open each office and fill in the city and street address.', url('admin/content/offices'));
+    $add(setting('contact_person_name') !== '', 'Sales contact person added', 'Add your sales contact person', 'Settings, Sales contact card: name, role, email and a square photo. Shown next to the contact forms.', url('admin/settings'));
+    $add(Content::stats() !== [], 'Company numbers added', 'Add company numbers (projects, clients, team)', 'Settings, Company numbers, for example 120+ projects. The numbers strip stays hidden until you add them.', url('admin/settings'));
+    $cfg = Mailer::settings();
+    $mailOk = $cfg['host'] !== '' && filter_var($cfg['from_email'], FILTER_VALIDATE_EMAIL);
+    $add((bool) $mailOk, 'Email sending is set up (' . $cfg['host'] . ')', 'Set up email sending (SMTP)', 'Admin, Email: create a mailbox in cPanel, enter its SMTP details, then click Send test email.', url('admin/email'));
+    $sig = setting('doc_signature') !== '' && setting('doc_signatory_name') !== '';
+    $add($sig, 'Signature for letters and ID cards added', 'Add the signatory and signature for letters and ID cards', 'Letters and ID cards: name, title, signature image and company stamp.', url('admin/documents'));
+    $key = (string) config('app_key');
+    $add(strlen($key) >= 32 && !str_starts_with($key, 'replace'), 'Unique security key (app_key) is set', 'Set a unique security key (app_key)', 'In app/config.php replace app_key with 64 random characters (run: php -r "echo bin2hex(random_bytes(32));"). Set it before saving passwords, then never change it.', null);
+    $add(Seo::indexingOn(), 'Search engines can index the website', 'Search indexing is OFF', 'Settings, Google and AI search: tick "Let search engines and AI tools index the website".', url('admin/settings'));
     $lastPost = (string) Database::value('SELECT MAX(published_at) FROM posts WHERE is_active = 1 AND published_at <= UTC_DATE()');
     $fresh = $lastPost !== '' && strtotime($lastPost) > time() - 35 * 86400;
-    $items[] = [$fresh, $fresh ? 'Blog has a post from the last 5 weeks' : 'Publish a new blog post (aim for two a month)', url('admin/content/posts/new')];
-    $items[] = [(string) config('mail.host') !== '', 'Set SMTP details in app/config.php so lead emails arrive reliably', null];
-    $items[] = [Security::isHttps(), 'Serve the site over HTTPS', null];
-    $items[] = [!str_starts_with((string) config('app_key'), 'replace'), 'Set a unique app_key in app/config.php', null];
+    $add($fresh, 'Blog has a post from the last 5 weeks', 'Publish a new blog post', 'Aim for two useful posts a month. New posts help Google and AI tools find you.', url('admin/content/posts/new'));
+    $add(Security::isHttps(), 'The site is served over HTTPS', 'Serve the site over HTTPS', 'Live server: cPanel, SSL/TLS Status, Run AutoSSL. Then remove the # before the three "Force HTTPS" lines in public/.htaccess.', null, true);
+    $add(setting('google_site_verification') !== '', 'Google Search Console verified', 'Verify the site in Google Search Console and submit /sitemap.xml', 'Live server: see "How this works" on the Settings page for the exact steps.', url('admin/settings'), true);
+    $add(setting('bing_site_verification') !== '', 'Bing Webmaster Tools verified', 'Verify the site in Bing Webmaster Tools (also feeds ChatGPT search and Copilot)', 'Live server: in Bing choose "Import from Google Search Console". It takes one minute.', url('admin/settings'), true);
+    $seen = setting('cron_last_seen');
+    $add($seen !== '' && strtotime($seen . ' UTC') > time() - 900, 'Background tasks (cron job) are running', 'Add the cron job for campaigns and daily backups', 'Live server: see "How this works" on Email campaigns.', url('admin/campaigns'), true);
+    // Unfinished first, then live-server items, then done.
+    $order = ['todo' => 0, 'later' => 1, 'done' => 2];
+    usort($items, fn ($x, $y) => $order[$x[0]] <=> $order[$y[0]]);
     return $items;
 }
 
