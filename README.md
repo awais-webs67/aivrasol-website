@@ -22,7 +22,7 @@ Company website and admin panel for AivraSol, built with PHP 8 and MySQL. No fra
 
 1. Install XAMPP from apachefriends.org and start **Apache** and **MySQL** in the XAMPP Control Panel.
 2. Copy this project folder to `C:\xampp\htdocs\aivrasol`.
-3. Open `http://localhost/phpmyadmin`, create a database named `aivrasol` (collation `utf8mb4_unicode_ci`), then import `database/schema.sql` and after it `database/seed.sql`.
+3. Fill in `app/config.php` (next step), then open a terminal in the project folder and run `C:\xampp\php\php.exe database/install.php`. It creates the database, the tables and the starter content. (Or import `database/schema.sql` and then `database/seed.sql` in phpMyAdmin.)
 4. Copy `app/config.sample.php` to `app/config.php` and set:
    - `'env' => 'development'`
    - `'base_url' => 'http://localhost/aivrasol'`
