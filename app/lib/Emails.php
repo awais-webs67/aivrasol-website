@@ -80,6 +80,24 @@ final class Emails
         return [$subject, $text, render('emails/layout', ['content' => $html, 'preheader' => mb_substr(strtok($body, "\n") ?: '', 0, 120)])];
     }
 
+    /** Simple branded message with an optional button. Returns [text, html]. */
+    public static function notice(string $title, string $body, ?string $button = null, ?string $link = null, string $footnote = ''): array
+    {
+        $html = '<h1 style="margin:0 0 16px;font-size:22px;line-height:30px;color:#191F24;">' . e($title) . '</h1>' . self::paragraphs($body);
+        $text = "$title\n\n$body\n";
+        if ($button !== null && $link !== null) {
+            $html .= '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 18px;"><tr><td style="background:#E32B00;border-radius:4px;">'
+                . '<a href="' . e($link) . '" style="display:inline-block;padding:13px 24px;color:#FFFFFF;font-weight:bold;text-decoration:none;font-size:15px;">' . e($button) . '</a></td></tr></table>'
+                . '<p style="margin:0 0 16px;font-size:13px;color:#5F666B;">If the button does not work, copy this link into your browser:<br><span style="word-break:break-all;color:#B8380F;">' . e($link) . '</span></p>';
+            $text .= "\n$button: $link\n";
+        }
+        if ($footnote !== '') {
+            $html .= '<p style="margin:18px 0 0;font-size:13px;color:#5F666B;">' . e($footnote) . '</p>';
+            $text .= "\n$footnote\n";
+        }
+        return [$text, render('emails/layout', ['content' => $html, 'preheader' => $title])];
+    }
+
     public static function test(): array
     {
         $html = '<h1 style="margin:0 0 14px;font-size:22px;color:#191F24;">Your email settings work</h1>'

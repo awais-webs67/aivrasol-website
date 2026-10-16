@@ -70,4 +70,11 @@ return [
             }
         }
     },
+    '2026_10_18_user_roles' => function (PDO $pdo) use ($hasColumn): void {
+        // More roles than admin and editor, and a flag that asks for a new password at first sign in.
+        $pdo->exec("ALTER TABLE users MODIFY role VARCHAR(20) NOT NULL DEFAULT 'editor'");
+        if (!$hasColumn($pdo, 'users', 'must_change_password')) {
+            $pdo->exec('ALTER TABLE users ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active');
+        }
+    },
 ];

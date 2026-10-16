@@ -58,8 +58,8 @@ function admin_launch_checklist(): array
 
 function admin_login(): string
 {
-    if (Auth::user()) {
-        redirect(url('admin'));
+    if ($u = Auth::user()) {
+        redirect(Auth::home($u));
     }
     $error = null;
     if (is_post()) {
@@ -69,7 +69,7 @@ function admin_login(): string
             $email = trim((string) ($_POST['email'] ?? ''));
             $error = Auth::attempt($email, (string) ($_POST['password'] ?? ''));
             if ($error === null) {
-                redirect(url('admin'));
+                redirect(Auth::home(Auth::user() ?? ['role' => '']));
             }
         }
     }
@@ -119,27 +119,104 @@ function admin_setup(): string
 
 /* ---------- Dashboard ---------- */
 
+function admin_send_password_link(array $u, bool $invite): ?string
+{
+    $minutes = $invite ? 2880 : 60;
+    $token = Auth::createResetToken('user', (int) $u['id'], $minutes);
+    $link = absolute_url('admin/reset/' . $token);
+    $site = setting('site_name', 'AivraSol');
+    $first = strtok(Emails::safeName($u['name']), ' ') ?: 'there';
+    if ($invite) {
+        $subject = "Your $site team account";
+        $body = "Hi $first,\n\nAn account has been created for you on the $site team panel. Your role is " . Auth::roleLabel($u['role']) . ".\n\nUse the button below to choose your password. The link works for 48 hours and only once.";
+        [$text, $html] = Emails::notice("Welcome to $site", $body, 'Set my password', $link, 'Your sign-in email is ' . $u['email'] . '. Sign in at ' . absolute_url('admin/login'));
+    } else {
+        $subject = "Reset your $site password";
+        $body = "Hi $first,\n\nWe received a request to reset the password for your $site team account.\n\nUse the button below to choose a new one. The link works for 60 minutes and only once.";
+        [$text, $html] = Emails::notice('Reset your password', $body, 'Choose a new password', $link, 'If you did not ask for this, you can ignore this email. Your password stays the same.');
+    }
+    return Mailer::send($u['email'], $subject, $text, $html, null, $invite ? 'invite' : 'password_reset');
+}
+
+function admin_forgot(): string
+{
+    admin_headers();
+    $sent = false;
+    $error = null;
+    if (is_post()) {
+        $email = strtolower(trim((string) ($_POST['email'] ?? '')));
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $error = 'Your session expired. Please try again.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = 'Please enter a valid email.';
+        } elseif (!Security::rateLimit('forgot_ip', 6, 3600)) {
+            $error = 'Too many requests. Please wait an hour and try again.';
+        } else {
+            $u = Database::one('SELECT id, name, email, role FROM users WHERE email = ? AND is_active = 1', [$email]);
+            // The same answer is shown whether or not the account exists.
+            if ($u && Security::rateLimit('forgot_user', 3, 3600, (string) $u['id'])) {
+                $err = admin_send_password_link($u, false);
+                Auth::audit((int) $u['id'], $err === null ? 'password_reset_sent' : 'password_reset_failed', $email);
+            }
+            $sent = true;
+        }
+    }
+    return view('admin/forgot', ['sent' => $sent, 'error' => $error, 'pageTitle' => 'Forgot password'], 'admin/layout-bare');
+}
+
+function admin_reset(string $token): string
+{
+    admin_headers();
+    $id = Auth::findResetToken('user', $token);
+    $u = $id ? Database::one('SELECT id, name, email FROM users WHERE id = ? AND is_active = 1', [$id]) : null;
+    $errors = [];
+    if ($u && is_post()) {
+        $new = (string) ($_POST['new_password'] ?? '');
+        if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+            $errors[] = 'Your session expired. Please try again.';
+        } elseif ($new !== (string) ($_POST['confirm_password'] ?? '')) {
+            $errors[] = 'The two passwords do not match.';
+        } elseif ($p = Auth::passwordProblem($new)) {
+            $errors[] = $p;
+        }
+        if (!$errors) {
+            Database::run('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?', [Auth::hash($new), $u['id']]);
+            Auth::clearResetTokens('user', (int) $u['id']);
+            Auth::audit((int) $u['id'], 'password_reset', $u['email']);
+            flash('error', 'Your new password is saved. Please sign in.');
+            redirect(url('admin/login'));
+        }
+    }
+    return view('admin/reset', ['valid' => (bool) $u, 'errors' => $errors, 'pageTitle' => 'Choose a password'], 'admin/layout-bare');
+}
+
 function admin_dashboard(): string
 {
-    Auth::require();
-    return admin_view('dashboard', [
-        'pageTitle' => 'Dashboard',
-        'counts' => [
-            'new_leads' => (int) Database::value("SELECT COUNT(*) FROM leads WHERE status = 'new'"),
-            'leads_30' => (int) Database::value('SELECT COUNT(*) FROM leads WHERE created_at > UTC_TIMESTAMP() - INTERVAL 30 DAY AND status <> ?', ['spam']),
-            'new_apps' => (int) Database::value("SELECT COUNT(*) FROM applications WHERE status = 'new'"),
-            'open_jobs' => (int) Database::value('SELECT COUNT(*) FROM jobs WHERE is_active = 1'),
-        ],
-        'recent' => Database::all('SELECT id, type, name, email, status, created_at FROM leads ORDER BY created_at DESC LIMIT 8'),
-        'checklist' => admin_launch_checklist(),
-    ]);
+    $user = Auth::require();
+    $data = ['pageTitle' => 'Dashboard', 'counts' => [], 'recent' => [], 'recentApps' => [], 'checklist' => []];
+    if (Auth::can('leads', $user)) {
+        $data['counts']['new_leads'] = ['New leads', (int) Database::value("SELECT COUNT(*) FROM leads WHERE status = 'new'"), 'admin/leads?status=new'];
+        $data['counts']['leads_30'] = ['Leads in last 30 days', (int) Database::value('SELECT COUNT(*) FROM leads WHERE created_at > UTC_TIMESTAMP() - INTERVAL 30 DAY AND status <> ?', ['spam']), 'admin/leads'];
+        $data['recent'] = Database::all('SELECT id, type, name, email, status, created_at FROM leads ORDER BY created_at DESC LIMIT 8');
+    }
+    if (Auth::can('applications', $user)) {
+        $data['counts']['new_apps'] = ['New applications', (int) Database::value("SELECT COUNT(*) FROM applications WHERE status = 'new'"), 'admin/applications?status=new'];
+        $data['recentApps'] = Database::all('SELECT id, name, email, position, status, created_at FROM applications ORDER BY created_at DESC LIMIT 6');
+    }
+    if (Auth::can('content:jobs', $user)) {
+        $data['counts']['open_jobs'] = ['Open jobs', (int) Database::value('SELECT COUNT(*) FROM jobs WHERE is_active = 1'), 'admin/content/jobs'];
+    }
+    if (Auth::can('settings', $user)) {
+        $data['checklist'] = admin_launch_checklist();
+    }
+    return admin_view('dashboard', $data);
 }
 
 /* ---------- Leads ---------- */
 
 function admin_leads(): string
 {
-    Auth::require();
+    Auth::require('leads');
     [$where, $params, $filters] = admin_lead_filters();
     $page = max(1, (int) ($_GET['page'] ?? 1));
     $per = 25;
@@ -177,7 +254,7 @@ function admin_lead_filters(): array
 
 function admin_lead(string $id): string
 {
-    $user = Auth::require();
+    $user = Auth::require('leads');
     $lead = ctype_digit($id) ? Database::one('SELECT * FROM leads WHERE id = ?', [(int) $id]) : null;
     if (!$lead) {
         abort(404);
@@ -201,7 +278,7 @@ function admin_lead(string $id): string
 
 function admin_leads_export(): never
 {
-    $user = Auth::require();
+    $user = Auth::require('leads');
     [$where, $params] = admin_lead_filters();
     Auth::audit((int) $user['id'], 'lead_export');
     admin_headers();
@@ -225,7 +302,7 @@ function admin_leads_export(): never
 
 function admin_applications(): string
 {
-    Auth::require();
+    Auth::require('applications');
     $status = isset(APP_STATUSES[$_GET['status'] ?? '']) ? $_GET['status'] : '';
     $rows = $status
         ? Database::all('SELECT id, position, name, email, status, created_at FROM applications WHERE status = ? ORDER BY created_at DESC LIMIT 200', [$status])
@@ -235,7 +312,7 @@ function admin_applications(): string
 
 function admin_application(string $id): string
 {
-    $user = Auth::require();
+    $user = Auth::require('applications');
     $app = ctype_digit($id) ? Database::one('SELECT * FROM applications WHERE id = ?', [(int) $id]) : null;
     if (!$app) {
         abort(404);
@@ -261,7 +338,7 @@ function admin_application(string $id): string
 
 function admin_application_cv(string $id): never
 {
-    $user = Auth::require();
+    $user = Auth::require('applications');
     $app = ctype_digit($id) ? Database::one('SELECT id, cv_file, cv_original FROM applications WHERE id = ?', [(int) $id]) : null;
     if (!$app || !preg_match('/^[a-f0-9]{32}\.(pdf|docx?)$/', $app['cv_file'], $m)) {
         abort(404);
@@ -284,7 +361,7 @@ function admin_application_cv(string $id): never
 
 function admin_content_list(string $key): string
 {
-    Auth::require();
+    Auth::require('content:' . $key);
     $res = admin_resource($key);
     $rows = Database::all("SELECT * FROM `{$res['table']}` ORDER BY {$res['order']}");
     return admin_view('content-list', ['key' => $key, 'res' => $res, 'rows' => $rows, 'pageTitle' => $res['label']]);
@@ -292,7 +369,7 @@ function admin_content_list(string $key): string
 
 function admin_content_edit(string $key, ?string $id = null): string
 {
-    $user = Auth::require();
+    $user = Auth::require('content:' . $key);
     $res = admin_resource($key);
     $row = null;
     if ($id !== null) {
@@ -458,7 +535,7 @@ function admin_settings_schema(): array
 
 function admin_settings(): string
 {
-    $user = Auth::require();
+    $user = Auth::require('settings');
     $schema = admin_settings_schema();
     $errors = [];
     if (is_post()) {
@@ -507,80 +584,154 @@ function admin_settings(): string
 
 function admin_users(): string
 {
-    $user = Auth::require('admin');
+    $user = Auth::require('users');
     $errors = [];
     if (is_post()) {
         admin_csrf();
         $action = $_POST['action'] ?? '';
+        $id = ctype_digit((string) ($_POST['id'] ?? '')) ? (int) $_POST['id'] : 0;
+        $target = $id ? Database::one('SELECT id, name, email, role, is_active FROM users WHERE id = ?', [$id]) : null;
+        $activeAdmins = (int) Database::value("SELECT COUNT(*) FROM users WHERE role = 'admin' AND is_active = 1");
         if ($action === 'create') {
             $name = trim((string) ($_POST['name'] ?? ''));
             $email = strtolower(trim((string) ($_POST['email'] ?? '')));
             $password = (string) ($_POST['password'] ?? '');
-            $role = ($_POST['role'] ?? '') === 'editor' ? 'editor' : 'admin';
+            $invite = ($_POST['invite'] ?? '') === '1';
+            $role = isset(Auth::ROLES[$_POST['role'] ?? '']) ? $_POST['role'] : 'editor';
             if ($name === '' || mb_strlen($name) > 80) $errors[] = 'Please enter a name.';
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Please enter a valid email.';
-            if ($p = Auth::passwordProblem($password)) $errors[] = $p;
+            if ($password === '' && !$invite) $errors[] = 'Enter a temporary password, or tick "Email them a link".';
+            if ($password !== '' && ($p = Auth::passwordProblem($password))) $errors[] = $p;
             if (!$errors) {
                 try {
-                    Database::insert('users', ['name' => $name, 'email' => $email, 'password_hash' => Auth::hash($password), 'role' => $role]);
-                    Auth::audit((int) $user['id'], 'user_create', $email);
-                    flash('success', 'User added.');
+                    $newId = Database::insert('users', [
+                        'name' => $name,
+                        'email' => $email,
+                        'password_hash' => Auth::hash($password !== '' ? $password : bin2hex(random_bytes(24))),
+                        'role' => $role,
+                        'must_change_password' => $password !== '' ? 1 : 0,
+                    ]);
+                    Auth::audit((int) $user['id'], 'user_create', $email . ' (' . $role . ')');
+                    $msg = 'User added.';
+                    if ($invite) {
+                        $err = admin_send_password_link(['id' => $newId, 'name' => $name, 'email' => $email, 'role' => $role], true);
+                        $msg = $err === null ? "User added and a set-password link was emailed to $email." : 'User added, but the email failed: ' . $err;
+                    }
+                    flash('success', $msg);
                     redirect(url('admin/users'));
                 } catch (PDOException $e) {
                     $errors[] = 'A user with that email already exists.';
                 }
             }
-        } elseif ($action === 'toggle' && ctype_digit((string) ($_POST['id'] ?? ''))) {
-            $id = (int) $_POST['id'];
+        } elseif (!$target) {
+            flash('error', 'User not found.');
+            redirect(url('admin/users'));
+        } elseif ($action === 'toggle') {
             if ($id === (int) $user['id']) {
-                flash('error', 'You cannot deactivate your own account.');
+                flash('error', 'You cannot disable your own account.');
+            } elseif ($target['role'] === 'admin' && $target['is_active'] && $activeAdmins <= 1) {
+                flash('error', 'Keep at least one active admin.');
             } else {
                 Database::run('UPDATE users SET is_active = 1 - is_active WHERE id = ?', [$id]);
-                Auth::audit((int) $user['id'], 'user_toggle', '#' . $id);
-                flash('success', 'User updated.');
+                Auth::audit((int) $user['id'], 'user_toggle', $target['email']);
+                flash('success', $target['is_active'] ? 'User disabled. They are signed out straight away.' : 'User enabled.');
+            }
+            redirect(url('admin/users'));
+        } elseif ($action === 'role') {
+            $role = (string) ($_POST['role'] ?? '');
+            if (!isset(Auth::ROLES[$role])) {
+                flash('error', 'Choose a valid role.');
+            } elseif ($id === (int) $user['id']) {
+                flash('error', 'You cannot change your own role. Ask another admin.');
+            } elseif ($target['role'] === 'admin' && $role !== 'admin' && $activeAdmins <= 1) {
+                flash('error', 'Keep at least one active admin.');
+            } else {
+                Database::run('UPDATE users SET role = ? WHERE id = ?', [$role, $id]);
+                Auth::audit((int) $user['id'], 'user_role', $target['email'] . ' -> ' . $role);
+                flash('success', $target['name'] . ' is now ' . Auth::roleLabel($role) . '.');
+            }
+            redirect(url('admin/users'));
+        } elseif ($action === 'password') {
+            $password = (string) ($_POST['password'] ?? '');
+            if ($p = Auth::passwordProblem($password)) {
+                flash('error', $p);
+            } else {
+                Database::run('UPDATE users SET password_hash = ?, must_change_password = ? WHERE id = ?', [Auth::hash($password), $id === (int) $user['id'] ? 0 : 1, $id]);
+                Auth::clearResetTokens('user', $id);
+                if ($id === (int) $user['id']) {
+                    Auth::refreshSession($id);
+                }
+                Auth::audit((int) $user['id'], 'user_password_set', $target['email']);
+                flash('success', 'Temporary password set. ' . $target['name'] . ' will be asked to change it at the next sign in.');
+            }
+            redirect(url('admin/users'));
+        } elseif ($action === 'link') {
+            if (!$target['is_active']) {
+                flash('error', 'Enable the user first.');
+            } elseif (!Security::rateLimit('user_link', 5, 3600, (string) $id)) {
+                flash('error', 'Too many links sent to this user. Please wait an hour.');
+            } else {
+                $err = admin_send_password_link($target, false);
+                Auth::audit((int) $user['id'], 'user_reset_link', $target['email']);
+                $err === null ? flash('success', 'Password reset link emailed to ' . $target['email'] . '.') : flash('error', 'The email failed: ' . $err);
             }
             redirect(url('admin/users'));
         }
     }
     return admin_view('users', [
-        'rows' => Database::all('SELECT id, name, email, role, is_active, last_login_at FROM users ORDER BY id'),
+        'rows' => Database::all('SELECT id, name, email, role, is_active, must_change_password, last_login_at FROM users ORDER BY is_active DESC, name'),
         'errors' => $errors,
-        'pageTitle' => 'Admin users',
+        'pageTitle' => 'Team and roles',
         'audit' => Database::all('SELECT a.action, a.target, a.created_at, u.name FROM audit_log a LEFT JOIN users u ON u.id = a.user_id ORDER BY a.id DESC LIMIT 25'),
     ]);
 }
 
-function admin_account(): string
+function admin_profile(): string
 {
-    $user = Auth::require();
+    $user = Auth::require('profile');
     $errors = [];
+    $forced = (int) $user['must_change_password'] === 1;
     if (is_post()) {
         admin_csrf();
-        $row = Database::one('SELECT password_hash FROM users WHERE id = ?', [$user['id']]);
-        $new = (string) ($_POST['new_password'] ?? '');
-        if (!$row || !password_verify((string) ($_POST['current_password'] ?? ''), $row['password_hash'])) {
-            $errors[] = 'Your current password is not correct.';
-        } elseif ($new !== (string) ($_POST['confirm_password'] ?? '')) {
-            $errors[] = 'The new passwords do not match.';
-        } elseif ($p = Auth::passwordProblem($new)) {
-            $errors[] = $p;
-        }
-        if (!$errors) {
-            Database::run('UPDATE users SET password_hash = ? WHERE id = ?', [Auth::hash($new), $user['id']]);
-            session_regenerate_id(true);
-            Auth::audit((int) $user['id'], 'password_change');
-            flash('success', 'Password changed.');
-            redirect(url('admin/account'));
+        if (($_POST['action'] ?? '') === 'name') {
+            $name = trim((string) ($_POST['name'] ?? ''));
+            if ($name === '' || mb_strlen($name) > 80) {
+                $errors[] = 'Please enter your name (80 characters at most).';
+            } else {
+                Database::run('UPDATE users SET name = ? WHERE id = ?', [$name, $user['id']]);
+                flash('success', 'Your name is updated.');
+                redirect(url('admin/profile'));
+            }
+        } else {
+            $row = Database::one('SELECT password_hash FROM users WHERE id = ?', [$user['id']]);
+            $new = (string) ($_POST['new_password'] ?? '');
+            if (!$row || !password_verify((string) ($_POST['current_password'] ?? ''), $row['password_hash'])) {
+                $errors[] = 'Your current password is not correct.';
+            } elseif ($new !== (string) ($_POST['confirm_password'] ?? '')) {
+                $errors[] = 'The new passwords do not match.';
+            } elseif (password_verify($new, $row['password_hash'])) {
+                $errors[] = 'Choose a password that is different from the current one.';
+            } elseif ($p = Auth::passwordProblem($new)) {
+                $errors[] = $p;
+            }
+            if (!$errors) {
+                Database::run('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?', [Auth::hash($new), $user['id']]);
+                Auth::clearResetTokens('user', (int) $user['id']);
+                Auth::refreshSession((int) $user['id']);
+                Auth::audit((int) $user['id'], 'password_change');
+                flash('success', 'Password changed. Any other device signed in with your account has been signed out.');
+                redirect($forced ? Auth::home($user) : url('admin/profile'));
+            }
         }
     }
-    return admin_view('account', ['errors' => $errors, 'pageTitle' => 'My account']);
+    return admin_view('profile', ['errors' => $errors, 'forced' => $forced, 'pageTitle' => 'My profile']);
 }
 
 /* ---------- Email settings ---------- */
 
 function admin_email(): string
 {
-    $user = Auth::require('admin');
+    $user = Auth::require('settings');
     $errors = [];
     $testResult = null;
     if (is_post()) {

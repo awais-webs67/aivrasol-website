@@ -1,11 +1,14 @@
+<p class="role-note muted">Signed in as <strong><?= e($user['name']) ?></strong>, <?= e(Auth::roleLabel($user['role'])) ?>.</p>
+<?php if ($counts): ?>
 <div class="stat-cards">
-  <a class="stat-card" href="<?= e(url('admin/leads?status=new')) ?>"><span>New leads</span><strong><?= $counts['new_leads'] ?></strong></a>
-  <a class="stat-card" href="<?= e(url('admin/leads')) ?>"><span>Leads in last 30 days</span><strong><?= $counts['leads_30'] ?></strong></a>
-  <a class="stat-card" href="<?= e(url('admin/applications?status=new')) ?>"><span>New applications</span><strong><?= $counts['new_apps'] ?></strong></a>
-  <a class="stat-card" href="<?= e(url('admin/content/jobs')) ?>"><span>Open jobs</span><strong><?= $counts['open_jobs'] ?></strong></a>
+  <?php foreach ($counts as [$label, $n, $path]): ?>
+  <a class="stat-card" href="<?= e(url($path)) ?>"><span><?= e($label) ?></span><strong><?= (int) $n ?></strong></a>
+  <?php endforeach; ?>
 </div>
+<?php endif; ?>
 
 <div class="admin-grid">
+  <?php if (Auth::can('leads', $user)): ?>
   <section class="card">
     <div class="card-head"><h2>Latest leads</h2><a class="link-arrow small" href="<?= e(url('admin/leads')) ?>">All leads <?= icon('arrow-right') ?></a></div>
     <?php if (!$recent): ?>
@@ -21,6 +24,25 @@
     </table></div>
     <?php endif; ?>
   </section>
+  <?php endif; ?>
+  <?php if (Auth::can('applications', $user)): ?>
+  <section class="card">
+    <div class="card-head"><h2>Latest applications</h2><a class="link-arrow small" href="<?= e(url('admin/applications')) ?>">All applications <?= icon('arrow-right') ?></a></div>
+    <?php if (!$recentApps): ?>
+    <p class="muted">No applications yet.</p>
+    <?php else: ?>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>Name</th><th>Job</th><th>Status</th></tr></thead>
+      <tbody>
+      <?php foreach ($recentApps as $a): ?>
+      <tr><td><a href="<?= e(url('admin/applications/' . $a['id'])) ?>"><?= e($a['name']) ?></a><br><span class="small muted"><?= e(date('j M Y', strtotime($a['created_at'] . ' UTC'))) ?></span></td><td><?= e($a['position']) ?></td><td><span class="status status-<?= e($a['status']) ?>"><?= e(APP_STATUSES[$a['status']] ?? $a['status']) ?></span></td></tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table></div>
+    <?php endif; ?>
+  </section>
+  <?php endif; ?>
+  <?php if ($checklist): ?>
   <section class="card">
     <div class="card-head"><h2>Launch checklist</h2></div>
     <ul class="checklist">
@@ -29,4 +51,5 @@
       <?php endforeach; ?>
     </ul>
   </section>
+  <?php endif; ?>
 </div>

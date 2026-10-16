@@ -6,12 +6,43 @@ final class Auth
     private const MAX_FAILS = 5;
     private const LOCK_SECONDS = 900;
 
+    /** Roles and what each one may open. "content" covers every website content editor. */
+    public const ROLES = [
+        'admin' => ['label' => 'Admin', 'about' => 'Full access to everything', 'caps' => ['*']],
+        'hr' => ['label' => 'HR', 'about' => 'Job applications, employees, ID cards, letters and job posts', 'caps' => ['dashboard', 'applications', 'employees', 'content:jobs', 'profile']],
+        'sales' => ['label' => 'Sales', 'about' => 'Leads, clients and email campaigns', 'caps' => ['dashboard', 'leads', 'clients', 'campaigns', 'profile']],
+        'pm' => ['label' => 'Project manager', 'about' => 'Clients, projects, updates, chat and payments', 'caps' => ['dashboard', 'clients', 'projects', 'finance', 'profile']],
+        'editor' => ['label' => 'Content editor', 'about' => 'Website content, portfolio and blog', 'caps' => ['dashboard', 'content', 'blog', 'profile']],
+        'employee' => ['label' => 'Employee', 'about' => 'Own profile, ID card and documents only', 'caps' => ['profile']],
+    ];
+
+    public static function can(string $cap, ?array $user = null): bool
+    {
+        $user ??= self::user();
+        if (!$user) {
+            return false;
+        }
+        $caps = self::ROLES[$user['role']]['caps'] ?? [];
+        if (in_array('*', $caps, true) || in_array($cap, $caps, true)) {
+            return true;
+        }
+        return str_starts_with($cap, 'content:') && in_array('content', $caps, true);
+    }
+
+    /** Where a user lands after signing in. */
+    public static function home(array $user): string
+    {
+        return self::can('dashboard', $user) ? url('admin') : url('admin/profile');
+    }
+
+    private static array|null|false $cached = false;
+
     public static function user(): ?array
     {
-        static $user = false;
-        if ($user !== false) {
-            return $user;
+        if (self::$cached !== false) {
+            return self::$cached;
         }
+        self::$cached = null;
         $user = null;
         $id = (int) ($_SESSION['admin_id'] ?? 0);
         if ($id <= 0) {
@@ -25,18 +56,46 @@ final class Auth
             return null;
         }
         $_SESSION['admin_seen'] = time();
-        $row = Database::one('SELECT id, name, email, role FROM users WHERE id = ? AND is_active = 1', [$id]);
-        $user = $row;
-        return $user;
+        $row = Database::one('SELECT id, name, email, role, must_change_password, password_hash FROM users WHERE id = ? AND is_active = 1', [$id]);
+        // A password change or reset signs out every other session of that user.
+        if (!$row || !hash_equals((string) ($_SESSION['admin_pv'] ?? ''), self::passwordVersion($row['password_hash']))) {
+            self::logout();
+            return null;
+        }
+        unset($row['password_hash']);
+        self::$cached = $row;
+        return self::$cached;
     }
 
-    public static function require(?string $role = null): array
+    /** Short fingerprint of the stored hash, kept in the session. */
+    public static function passwordVersion(string $hash): string
+    {
+        return substr(hash_hmac('sha256', $hash, (string) config('app_key')), 0, 32);
+    }
+
+    /** Call after the signed-in user changes their own password so this session stays valid. */
+    public static function refreshSession(int $userId): void
+    {
+        session_regenerate_id(true);
+        $_SESSION['admin_pv'] = self::passwordVersion((string) Database::value('SELECT password_hash FROM users WHERE id = ?', [$userId]));
+        self::$cached = false;
+    }
+
+    /** Signed-in staff member with the given permission, or a redirect / 403. */
+    public static function require(string $cap = 'dashboard'): array
     {
         $user = self::user();
         if (!$user) {
             redirect(url('admin/login'));
         }
-        if ($role !== null && $user['role'] !== $role) {
+        if ((int) $user['must_change_password'] === 1 && $cap !== 'profile') {
+            flash('error', 'Please choose a new password before you continue.');
+            redirect(url('admin/profile'));
+        }
+        if (!self::can($cap, $user)) {
+            if ($cap === 'dashboard') {
+                redirect(url('admin/profile'));
+            }
             abort(403);
         }
         return $user;
@@ -69,9 +128,11 @@ final class Auth
         }
         Security::clearRate('login_email', $emailKey);
         session_regenerate_id(true);
+        self::$cached = false;
         $_SESSION['admin_id'] = (int) $user['id'];
         $_SESSION['admin_seen'] = time();
         $_SESSION['admin_fp'] = hash('sha256', ($_SERVER['HTTP_USER_AGENT'] ?? '') . config('app_key'));
+        $_SESSION['admin_pv'] = self::passwordVersion((string) Database::value('SELECT password_hash FROM users WHERE id = ?', [$user['id']]));
         unset($_SESSION['_csrf']);
         Database::run('UPDATE users SET last_login_at = UTC_TIMESTAMP() WHERE id = ?', [$user['id']]);
         self::audit((int) $user['id'], 'login', $email);
@@ -80,7 +141,8 @@ final class Auth
 
     public static function logout(): void
     {
-        unset($_SESSION['admin_id'], $_SESSION['admin_seen'], $_SESSION['admin_fp'], $_SESSION['_csrf']);
+        unset($_SESSION['admin_id'], $_SESSION['admin_seen'], $_SESSION['admin_fp'], $_SESSION['admin_pv'], $_SESSION['_csrf']);
+        self::$cached = false;
         session_regenerate_id(true);
     }
 
@@ -103,6 +165,40 @@ final class Auth
             return 'Password must contain letters and numbers.';
         }
         return null;
+    }
+
+    /** One-time link token for setting a password. Only its hash is stored. */
+    public static function createResetToken(string $type, int $accountId, int $minutes): string
+    {
+        Database::run('DELETE FROM password_resets WHERE (account_type = ? AND account_id = ?) OR expires_at < UTC_TIMESTAMP() - INTERVAL 7 DAY', [$type, $accountId]);
+        $token = bin2hex(random_bytes(32));
+        Database::insert('password_resets', [
+            'account_type' => $type,
+            'account_id' => $accountId,
+            'token_hash' => hash('sha256', $token),
+            'expires_at' => gmdate('Y-m-d H:i:s', time() + $minutes * 60),
+        ]);
+        return $token;
+    }
+
+    /** The account id for a valid, unused, unexpired token, or null. */
+    public static function findResetToken(string $type, string $token): ?int
+    {
+        if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
+            return null;
+        }
+        $id = Database::value('SELECT account_id FROM password_resets WHERE account_type = ? AND token_hash = ? AND used_at IS NULL AND expires_at > UTC_TIMESTAMP()', [$type, hash('sha256', $token)]);
+        return $id === null || $id === false ? null : (int) $id;
+    }
+
+    public static function clearResetTokens(string $type, int $accountId): void
+    {
+        Database::run('DELETE FROM password_resets WHERE account_type = ? AND account_id = ?', [$type, $accountId]);
+    }
+
+    public static function roleLabel(string $role): string
+    {
+        return self::ROLES[$role]['label'] ?? ucfirst($role);
     }
 
     public static function audit(?int $userId, string $action, string $target = ''): void

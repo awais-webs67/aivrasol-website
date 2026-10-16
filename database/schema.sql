@@ -162,10 +162,22 @@ CREATE TABLE IF NOT EXISTS users (
   name          VARCHAR(80)  NOT NULL,
   email         VARCHAR(190) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  role          ENUM('admin','editor') NOT NULL DEFAULT 'admin',
+  role          VARCHAR(20)  NOT NULL DEFAULT 'editor',
   is_active     TINYINT(1)   NOT NULL DEFAULT 1,
+  must_change_password TINYINT(1) NOT NULL DEFAULT 0,
   last_login_at TIMESTAMP    NULL,
   created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS password_resets (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  account_type VARCHAR(10)  NOT NULL DEFAULT 'user',
+  account_id   INT UNSIGNED NOT NULL,
+  token_hash   CHAR(64)     NOT NULL UNIQUE,
+  expires_at   DATETIME     NOT NULL,
+  used_at      DATETIME     NULL,
+  created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_pr_account (account_type, account_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS rate_limits (

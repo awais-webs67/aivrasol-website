@@ -1,14 +1,25 @@
 <?php
-$nav = [
-    'admin' => ['home', 'Dashboard'],
-    'admin/leads' => ['inbox', 'Leads'],
-    'admin/applications' => ['briefcase', 'Applications'],
-];
+$can = fn (string $cap) => Auth::can($cap, $user);
+$main = array_filter([
+    'admin' => ['home', 'Dashboard', 'dashboard'],
+    'admin/leads' => ['inbox', 'Leads', 'leads'],
+    'admin/applications' => ['briefcase', 'Applications', 'applications'],
+], fn ($n) => $can($n[2]));
 $contentNav = [];
-foreach (admin_resources() as $k => $r) { $contentNav['admin/content/' . $k] = $r['label']; }
+foreach (admin_resources() as $k => $r) {
+    if ($can('content:' . $k)) {
+        $contentNav['admin/content/' . $k] = $r['label'];
+    }
+}
+$system = array_filter([
+    'admin/settings' => ['settings', 'Settings', 'settings'],
+    'admin/email' => ['mail', 'Email', 'settings'],
+    'admin/users' => ['users', 'Team and roles', 'users'],
+    'admin/profile' => ['user', 'My profile', 'profile'],
+], fn ($n) => $can($n[2]));
 $current = trim(request_path(), '/');
 $isOn = fn (string $p) => $p === 'admin' ? $current === 'admin' : str_starts_with($current, $p);
-$newLeads = (int) Database::value("SELECT COUNT(*) FROM leads WHERE status = 'new'");
+$newLeads = $can('leads') ? (int) Database::value("SELECT COUNT(*) FROM leads WHERE status = 'new'") : 0;
 ?><!doctype html>
 <html lang="en">
 <head>
@@ -25,29 +36,28 @@ $newLeads = (int) Database::value("SELECT COUNT(*) FROM leads WHERE status = 'ne
 <a class="skip-link" href="#admin-main">Skip to content</a>
 <div class="admin-shell">
   <aside class="admin-side" id="admin-side">
-    <a class="admin-brand" href="<?= e(url('admin')) ?>"><img src="<?= e(asset('assets/img/logo-white.svg')) ?>" alt="<?= e(setting('site_name', 'AivraSol')) ?>" width="130" height="25"><span>Admin</span></a>
+    <a class="admin-brand" href="<?= e(Auth::home($user)) ?>"><img src="<?= e(asset('assets/img/logo-white.svg')) ?>" alt="<?= e(setting('site_name', 'AivraSol')) ?>" width="130" height="25"><span>Admin</span></a>
     <nav aria-label="Admin">
+      <?php if ($main): ?>
       <ul>
-        <?php foreach ($nav as $path => [$ic, $label]): ?>
+        <?php foreach ($main as $path => [$ic, $label]): ?>
         <li><a href="<?= e(url($path)) ?>"<?= $isOn($path) ? ' aria-current="page"' : '' ?>><?= icon($ic) ?><span><?= e($label) ?></span><?php if ($path === 'admin/leads' && $newLeads): ?><b class="pill"><?= $newLeads ?></b><?php endif; ?></a></li>
         <?php endforeach; ?>
       </ul>
+      <?php endif; ?>
+      <?php if ($contentNav): ?>
       <p class="admin-side-label">Website content</p>
       <ul>
         <?php foreach ($contentNav as $path => $label): ?>
         <li><a href="<?= e(url($path)) ?>"<?= $isOn($path) ? ' aria-current="page"' : '' ?>><?= icon('file') ?><span><?= e($label) ?></span></a></li>
         <?php endforeach; ?>
       </ul>
+      <?php endif; ?>
       <p class="admin-side-label">System</p>
       <ul>
-        <li><a href="<?= e(url('admin/settings')) ?>"<?= $isOn('admin/settings') ? ' aria-current="page"' : '' ?>><?= icon('settings') ?><span>Settings</span></a></li>
-        <?php if (($user['role'] ?? '') === 'admin'): ?>
-        <li><a href="<?= e(url('admin/email')) ?>"<?= $isOn('admin/email') ? ' aria-current="page"' : '' ?>><?= icon('mail') ?><span>Email</span></a></li>
-        <?php endif; ?>
-        <?php if (($user['role'] ?? '') === 'admin'): ?>
-        <li><a href="<?= e(url('admin/users')) ?>"<?= $isOn('admin/users') ? ' aria-current="page"' : '' ?>><?= icon('users') ?><span>Admin users</span></a></li>
-        <?php endif; ?>
-        <li><a href="<?= e(url('admin/account')) ?>"<?= $isOn('admin/account') ? ' aria-current="page"' : '' ?>><?= icon('user') ?><span>My account</span></a></li>
+        <?php foreach ($system as $path => [$ic, $label]): ?>
+        <li><a href="<?= e(url($path)) ?>"<?= $isOn($path) ? ' aria-current="page"' : '' ?>><?= icon($ic) ?><span><?= e($label) ?></span></a></li>
+        <?php endforeach; ?>
         <li><a href="<?= e(url('/')) ?>" target="_blank" rel="noopener"><?= icon('external') ?><span>View website</span></a></li>
       </ul>
     </nav>

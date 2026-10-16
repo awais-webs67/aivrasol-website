@@ -7,6 +7,8 @@ require APP_PATH . '/admin/handlers.php';
 $router->any('/admin/login', fn () => admin_login());
 $router->post('/admin/logout', fn () => admin_logout());
 $router->any('/admin/setup', fn () => admin_setup());
+$router->any('/admin/forgot', fn () => admin_forgot());
+$router->any('/admin/reset/{token}', fn (string $token) => admin_reset($token));
 $router->get('/admin', fn () => admin_dashboard());
 
 $router->get('/admin/leads', fn () => admin_leads());
@@ -24,4 +26,5 @@ $router->any('/admin/content/{key}/{id}', fn (string $key, string $id) => admin_
 $router->any('/admin/settings', fn () => admin_settings());
 $router->any('/admin/email', fn () => admin_email());
 $router->any('/admin/users', fn () => admin_users());
-$router->any('/admin/account', fn () => admin_account());
+$router->any('/admin/profile', fn () => admin_profile());
+$router->get('/admin/account', fn () => redirect(url('admin/profile')));
