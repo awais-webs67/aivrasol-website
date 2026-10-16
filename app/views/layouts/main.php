@@ -41,8 +41,8 @@ if (setting('phone') !== '') {
 <link rel="manifest" href="<?= e(url('site.webmanifest')) ?>">
 <link rel="preload" href="<?= e(url('assets/fonts/bebas-neue.woff2')) ?>" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="<?= e(url('assets/fonts/inter-var.woff2')) ?>" as="font" type="font/woff2" crossorigin>
-<?php if (!empty($isHome)): ?>
-<link rel="preload" as="image" href="<?= e(url('assets/img/hero-office.webp')) ?>" imagesrcset="<?= e(url('assets/img/hero-office-420.webp')) ?> 420w, <?= e(url('assets/img/hero-office.webp')) ?> 703w" imagesizes="(min-width: 1024px) 500px, 92vw">
+<?php if (!empty($isHome)): $photo = site_photo(); ?>
+<link rel="preload" as="image" href="<?= e($photo['src']) ?>"<?php if ($photo['srcset'] !== ''): ?> imagesrcset="<?= e($photo['srcset']) ?>" imagesizes="(min-width: 1024px) 500px, 92vw"<?php endif; ?>>
 <?php endif; ?>
 <link rel="stylesheet" href="<?= e(asset('assets/css/app.css')) ?>">
 <script type="application/ld+json"><?= json_encode($org, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>

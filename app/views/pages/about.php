@@ -21,7 +21,7 @@ $values = [
         <a class="btn btn-outline" href="<?= e(url('careers')) ?>">Join the team</a>
       </div>
     </div>
-    <div class="about-photo"><img src="<?= e(url('assets/img/hero-office.webp')) ?>" alt="The AivraSol office reception" width="703" height="771"></div>
+    <div class="about-photo"><?php $photo = site_photo(); ?><img src="<?= e($photo['src']) ?>" alt="The AivraSol office reception" width="<?= $photo['w'] ?>" height="<?= $photo['h'] ?>"></div>
   </div>
 </section>
 

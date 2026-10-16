@@ -66,22 +66,34 @@ function save_lead(string $type, array $data, array $details = []): int
         'user_agent' => mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
     ]);
 
-    $labels = ['contact' => 'Contact form', 'consultation' => 'Free consultation', 'quote' => 'Quote request', 'hire' => 'Hire a developer'];
-    $body = "New {$labels[$type]} on the AivraSol website\n\n";
-    foreach (['name' => 'Name', 'email' => 'Email', 'phone' => 'Phone', 'company' => 'Company'] as $k => $label) {
-        if (!empty($data[$k])) {
-            $body .= "$label: {$data[$k]}\n";
+    $fields = ['Name' => $data['name'], 'Email' => $data['email'], 'Phone' => $data['phone'] ?? '', 'Company' => $data['company'] ?? ''];
+    foreach ($details as $k => $v) {
+        $fields[ucfirst(str_replace('_', ' ', (string) $k))] = $v;
+    }
+    $fields['Sent from page'] = form_back();
+    send_form_emails($type, setting('notify_emails', setting('email_info')), $fields, $data['message'] ?? null, 'admin/leads/' . $id, $data['name'], $data['email'], $details);
+    return $id;
+}
+
+/**
+ * Queues the team alert and the visitor's automatic reply. Both are sent after the visitor gets their answer.
+ * The auto-reply never repeats the visitor's own message, so the form cannot be used to send spam to other people.
+ */
+function send_form_emails(string $type, string $recipients, array $fields, ?string $message, string $adminPath, string $name, string $email, array $summary): void
+{
+    $to = Mailer::addressList($recipients);
+    if ($to) {
+        [$subject, $text, $html] = Emails::alert($type, $fields, $message, $adminPath, Emails::safeName($name), $email);
+        Mailer::queue($to, $subject, $text, $html, $email, $type . '_alert');
+    }
+    // At most 3 automatic replies per address per day.
+    if (Security::rateLimit('autoreply', 3, 86400, hash_hmac('sha256', strtolower($email), (string) config('app_key')))) {
+        $reply = Emails::autoReply($type, $name, ['Request' => Emails::TYPES[$type] ?? ''] + $summary);
+        if ($reply) {
+            [$subject, $text, $html] = $reply;
+            Mailer::queue($email, $subject, $text, $html, setting('email_info') ?: null, $type . '_autoreply');
         }
     }
-    foreach ($details as $k => $v) {
-        $body .= ucfirst(str_replace('_', ' ', (string) $k)) . ": $v\n";
-    }
-    if (!empty($data['message'])) {
-        $body .= "\nMessage:\n{$data['message']}\n";
-    }
-    $body .= "\nPage: " . form_back() . "\nView in admin: " . absolute_url('admin/leads/' . $id) . "\n";
-    Mailer::send(setting('notify_email', setting('email_info')), "New lead: {$labels[$type]} from {$data['name']}", $body, $data['email']);
-    return $id;
 }
 
 function handle_consultation(): never
@@ -132,8 +144,8 @@ function handle_quote(): never
         form_fail('Please choose a plan.', ['plan_id' => 'Please choose a plan.']);
     }
     $v = (new Validator($_POST))
-        ->options('q1', lines($plan['q1_options']))
-        ->options('q2', lines($plan['q2_options']))
+        ->options('q1', Content::planOptions($plan, 'q1'))
+        ->options('q2', Content::planOptions($plan, 'q2'))
         ->check('q1', $plan['q1_label'], 'required|oneof')
         ->check('q2', $plan['q2_label'], 'required|oneof')
         ->check('name', 'Name', 'required|max:100')
@@ -192,12 +204,10 @@ function handle_application(): never
         'cv_original' => $original,
         'ip_hash' => Security::ipHash(),
     ]);
-    Mailer::send(
-        setting('email_hr', setting('email_info')),
-        'New job application: ' . ($job['title'] ?? 'General application') . ' from ' . $data['name'],
-        "Name: {$data['name']}\nEmail: {$data['email']}\nPhone: {$data['phone']}\nPosition: " . ($job['title'] ?? 'General application')
-            . "\n\nView and download the CV in admin: " . absolute_url('admin/applications/' . $id) . "\n",
-        $data['email']
-    );
+    $position = $job['title'] ?? 'General application';
+    send_form_emails('application', setting('notify_emails_hr', setting('email_hr', setting('email_info'))), [
+        'Name' => $data['name'], 'Email' => $data['email'], 'Phone' => $data['phone'], 'Position' => $position,
+        'Profile' => $data['profile_url'], 'CV file' => $original,
+    ], $data['message'] ?: null, 'admin/applications/' . $id, $data['name'], $data['email'], ['Position' => $position]);
     form_ok('Thank you for applying. Our HR team will review your CV and get back to you.');
 }

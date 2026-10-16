@@ -6,7 +6,7 @@ declare(strict_types=1);
  * so admin forms can never touch other columns.
  * Field types: text, slug, textarea, lines, int, bool, select, image, url
  */
-$icons = ['monitor', 'phone', 'pen', 'cloud', 'cpu', 'search', 'code', 'box', 'users', 'user', 'layers', 'shield', 'rocket', 'chat', 'briefcase'];
+$icons = duo_names();
 $iconOptions = array_combine($icons, $icons);
 
 return [
@@ -84,10 +84,11 @@ return [
         'label' => 'Pricing plans',
         'singular' => 'plan',
         'table' => 'plans',
-        'order' => 'sort_order, id',
-        'columns' => ['title' => 'Title', 'price_label' => 'Price', 'is_highlighted' => 'Popular', 'is_active' => 'Live'],
+        'order' => 'category, sort_order, id',
+        'columns' => ['title' => 'Title', 'category' => 'Group', 'show_on_home' => 'Home page', 'is_highlighted' => 'Popular', 'is_active' => 'Live'],
         'public' => fn ($r) => 'pricing',
         'fields' => [
+            'category' => ['label' => 'Group', 'type' => 'select', 'options' => ['project' => 'Build a project (Pricing page)', 'hire' => 'Hire developers (Pricing page and every hire page)'], 'required' => true],
             'title' => ['label' => 'Title', 'type' => 'text', 'max' => 80, 'required' => true],
             'subtitle' => ['label' => 'Subtitle', 'type' => 'text', 'max' => 160, 'required' => true],
             'icon' => ['label' => 'Icon', 'type' => 'select', 'options' => $iconOptions, 'required' => true],
@@ -95,10 +96,11 @@ return [
             'price_note' => ['label' => 'Price note', 'type' => 'text', 'max' => 80, 'help' => 'Optional, e.g. per month'],
             'features' => ['label' => 'Features', 'type' => 'lines', 'max' => 3000, 'required' => true, 'help' => 'One per line'],
             'q1_label' => ['label' => 'Question 1', 'type' => 'text', 'max' => 80, 'required' => true],
-            'q1_options' => ['label' => 'Question 1 options', 'type' => 'lines', 'max' => 2000, 'required' => true, 'help' => 'One per line'],
+            'q1_options' => ['label' => 'Question 1 options', 'type' => 'lines', 'max' => 2000, 'required' => true, 'help' => 'One per line. Write [hire-roles] on its own line to list every live "Hire a developer" page automatically.'],
             'q2_label' => ['label' => 'Question 2', 'type' => 'text', 'max' => 80, 'required' => true],
             'q2_options' => ['label' => 'Question 2 options', 'type' => 'lines', 'max' => 2000, 'required' => true, 'help' => 'One per line'],
             'is_highlighted' => ['label' => 'Mark as most popular', 'type' => 'bool'],
+            'show_on_home' => ['label' => 'Show on home page', 'type' => 'bool'],
             'sort_order' => ['label' => 'Order', 'type' => 'int'],
             'is_active' => ['label' => 'Show on website', 'type' => 'bool'],
         ],

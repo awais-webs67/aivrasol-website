@@ -1,14 +1,22 @@
 <?php
 /**
- * Creates the tables and loads the starter content using the database details in app/config.php.
- * Command line only:  php database/install.php
- * Start again from empty (deletes all data!):  php database/install.php --fresh
+ * Installs or updates the database using the details in app/config.php.
+ * Command line only.
+ *   php database/install.php           first install, or safe update of an existing site
+ *   php database/install.php --fresh   delete everything and start again (all data is lost!)
  */
 declare(strict_types=1);
 
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
     exit;
+}
+
+function insert_row(PDO $pdo, string $table, array $row): void
+{
+    $cols = array_keys($row);
+    $sql = sprintf('INSERT INTO `%s` (`%s`) VALUES (%s)', $table, implode('`, `', $cols), implode(', ', array_fill(0, count($cols), '?')));
+    $pdo->prepare($sql)->execute(array_values($row));
 }
 
 $root = dirname(__DIR__);
@@ -42,13 +50,43 @@ try {
     $pdo->exec((string) file_get_contents(__DIR__ . '/schema.sql'));
     echo "Tables ready.\n";
 
-    if ((int) $pdo->query('SELECT COUNT(*) FROM offerings')->fetchColumn() > 0) {
-        echo "Starter content already loaded, skipped. Use --fresh to start again.\n";
-    } else {
+    $migrations = require __DIR__ . '/migrations.php';
+    $done = $pdo->query('SELECT name FROM schema_migrations')->fetchAll(PDO::FETCH_COLUMN);
+    $mark = $pdo->prepare('INSERT IGNORE INTO schema_migrations (name) VALUES (?)');
+
+    if ((int) $pdo->query('SELECT COUNT(*) FROM offerings')->fetchColumn() === 0) {
         $pdo->exec((string) file_get_contents(__DIR__ . '/seed.sql'));
+        foreach (require __DIR__ . '/data/plans.php' as $plan) {
+            insert_row($pdo, 'plans', $plan);
+        }
+        foreach (array_keys($migrations) as $m) {
+            $mark->execute([$m]);
+        }
         echo "Starter content loaded.\n";
+    } else {
+        $ran = 0;
+        foreach ($migrations as $m => $fn) {
+            if (!in_array($m, $done, true)) {
+                $fn($pdo);
+                $mark->execute([$m]);
+                echo "Update applied: $m\n";
+                $ran++;
+            }
+        }
+        echo $ran ? "Your existing content was kept.\n" : "Database is already up to date.\n";
     }
-    echo "Done. Next: open /admin/setup in your browser to create your admin account.\n";
+
+    $add = $pdo->prepare('INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)');
+    $before = (int) $pdo->query('SELECT COUNT(*) FROM settings')->fetchColumn();
+    foreach (require __DIR__ . '/data/settings.php' as $k => $v) {
+        $add->execute([$k, $v]);
+    }
+    $added = (int) $pdo->query('SELECT COUNT(*) FROM settings')->fetchColumn() - $before;
+    if ($added > 0) {
+        echo "New settings added: $added\n";
+    }
+
+    echo "Done. If you have no admin account yet, open /admin/setup in your browser.\n";
 } catch (PDOException $e) {
     fwrite(STDERR, 'Database error: ' . $e->getMessage() . "\nCheck the db section in app/config.php and that MySQL is running.\n");
     exit(1);

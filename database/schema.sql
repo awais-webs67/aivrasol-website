@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS testimonials (
 
 CREATE TABLE IF NOT EXISTS plans (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  category      ENUM('project','hire') NOT NULL DEFAULT 'project',
   title         VARCHAR(80)  NOT NULL,
   subtitle      VARCHAR(160) NOT NULL,
   icon          VARCHAR(40)  NOT NULL DEFAULT 'box',
@@ -83,6 +84,7 @@ CREATE TABLE IF NOT EXISTS plans (
   q2_label      VARCHAR(80)  NOT NULL,
   q2_options    TEXT         NOT NULL COMMENT 'One per line',
   is_highlighted TINYINT(1)  NOT NULL DEFAULT 0,
+  show_on_home  TINYINT(1)   NOT NULL DEFAULT 0,
   sort_order    INT          NOT NULL DEFAULT 0,
   is_active     TINYINT(1)   NOT NULL DEFAULT 1,
   updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -182,6 +184,22 @@ CREATE TABLE IF NOT EXISTS audit_log (
   ip_hash    CHAR(64)     NOT NULL,
   created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_audit_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS email_log (
+  id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  type       VARCHAR(40)  NOT NULL,
+  recipients VARCHAR(500) NOT NULL,
+  subject    VARCHAR(255) NOT NULL,
+  status     ENUM('sent','failed') NOT NULL,
+  error      VARCHAR(500) NOT NULL DEFAULT '',
+  created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_email_log_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  name       VARCHAR(100) NOT NULL PRIMARY KEY,
+  applied_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

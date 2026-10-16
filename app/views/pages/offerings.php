@@ -20,7 +20,7 @@ $isHire = $type === 'hire';
     <div class="offer-grid">
       <?php foreach ($items as $o): ?>
       <a class="offer-card" href="<?= e(url(($isHire ? 'hire/' : 'services/') . $o['slug'])) ?>">
-        <span class="mega-icon"><?= icon($o['icon']) ?></span>
+        <span class="mega-icon"><?= duo($o['icon']) ?></span>
         <h2><?= e($o['title']) ?></h2>
         <p><?= e($o['summary']) ?></p>
         <span class="link-arrow">Learn more<span class="sr-only"> about <?= e($o['title']) ?></span> <?= icon('arrow-right') ?></span>

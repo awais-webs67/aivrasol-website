@@ -19,6 +19,7 @@ require APP_PATH . '/lib/Database.php';
 require APP_PATH . '/lib/Security.php';
 require APP_PATH . '/lib/Validator.php';
 require APP_PATH . '/lib/Mailer.php';
+require APP_PATH . '/lib/Emails.php';
 require APP_PATH . '/lib/Auth.php';
 require APP_PATH . '/lib/Router.php';
 require APP_PATH . '/lib/Upload.php';

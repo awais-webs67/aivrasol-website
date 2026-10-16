@@ -54,11 +54,30 @@ final class Content
         ));
     }
 
-    public static function plans(): array
+    /** Active plans. $filter: null (all), 'project', 'hire' or 'home'. */
+    public static function plans(?string $filter = null): array
     {
-        return self::remember('plans', fn () => Database::all(
+        $rows = self::remember('plans', fn () => Database::all(
             'SELECT * FROM plans WHERE is_active = 1 ORDER BY sort_order, id'
         ));
+        if ($filter === null) {
+            return $rows;
+        }
+        return array_values(array_filter($rows, fn ($p) => $filter === 'home' ? (int) $p['show_on_home'] === 1 : $p['category'] === $filter));
+    }
+
+    /** Dropdown options for a plan question. "[hire-roles]" becomes the list of live hire pages. */
+    public static function planOptions(array $plan, string $q): array
+    {
+        $out = [];
+        foreach (lines($plan[$q . '_options']) as $line) {
+            if ($line === '[hire-roles]') {
+                array_push($out, ...array_column(self::offerings('hire'), 'short_title'));
+            } else {
+                $out[] = $line;
+            }
+        }
+        return array_values(array_unique($out));
     }
 
     public static function plan(int $id): ?array

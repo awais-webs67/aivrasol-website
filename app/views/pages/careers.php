@@ -18,7 +18,7 @@ $benefits = [
       <p class="lead">AivraSol is growing and we are always looking for curious developers, designers and marketers who want to build software that matters. Jobs and internships are listed below.</p>
       <a class="btn" href="#jobs">See open roles</a>
     </div>
-    <div class="about-photo"><img src="<?= e(url('assets/img/hero-office.webp')) ?>" alt="Inside the AivraSol office" width="703" height="771" loading="lazy"></div>
+    <div class="about-photo"><?php $photo = site_photo(); ?><img src="<?= e($photo['src']) ?>" alt="Inside the AivraSol office" width="<?= $photo['w'] ?>" height="<?= $photo['h'] ?>" loading="lazy"></div>
   </div>
 </section>
 

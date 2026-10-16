@@ -51,7 +51,7 @@ body.admin, body.admin-bare { background: var(--grey-soft); }
 .stat-card span { font-size: 13.5px; }
 .stat-card strong { font-family: var(--font-display); font-weight: 400; font-size: 42px; line-height: 1; color: var(--slate); }
 
-.table-wrap { overflow-x: auto; margin: 0 -4px; }
+.table-wrap { position: relative; overflow-x: auto; margin: 0 -4px; }
 .table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 520px; }
 .table th, .table td { padding: 11px 10px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--line); }
 .table th { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
@@ -98,3 +98,16 @@ fieldset.card { margin: 0; }
 fieldset.card legend { padding: 0 6px; font-size: 15px; font-weight: 600; color: var(--ink); }
 .sticky-save { position: sticky; bottom: 0; padding: 14px 0; background: linear-gradient(transparent, var(--grey-soft) 30%); }
 .admin-backdrop { position: fixed; inset: 0; z-index: 25; background: rgba(25, 31, 36, .5); }
+.radio-cards { display: grid; gap: 12px; }
+@media (min-width: 760px) { .radio-cards { grid-template-columns: 1fr 1fr; } }
+.radio-card { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border: 1px solid var(--line-strong); border-radius: var(--radius-md); cursor: pointer; }
+.radio-card:has(input:checked) { border-color: var(--orange); background: var(--orange-tint); }
+.radio-card input { margin-top: 4px; accent-color: var(--orange); }
+.radio-card strong { display: block; color: var(--ink); }
+.reply-grid { display: grid; gap: 18px; margin-top: 14px; }
+@media (min-width: 1100px) { .reply-grid { grid-template-columns: 1fr 1fr; } }
+.reply-item { display: grid; gap: 10px; padding: 16px; background: var(--grey-soft); border-radius: var(--radius-md); }
+.reply-item h3 { margin: 0; }
+.card code { padding: 1px 5px; background: var(--grey); border-radius: 3px; font-size: 13px; }
+.admin-content > * { min-width: 0; }
+.field > span.small.muted { font-weight: 400; color: var(--muted); }

@@ -406,12 +406,20 @@ function admin_settings_schema(): array
             'meta_description' => ['Default SEO description', 'textarea'],
             'hero_heading' => ['Hero heading', 'text', 'Use | to break the line, e.g. Smart software|for growing businesses'],
             'hero_text' => ['Hero text', 'textarea'],
+            'hero_image' => ['Hero photo (also used on About and Careers)', 'image', 'Portrait photo works best, about 700 x 770 pixels. Leave empty to keep the current photo.'],
+        ],
+        'Home page sections (untick to hide)' => [
+            'home_show_stats' => ['Company numbers strip', 'bool'],
+            'home_show_portfolio' => ['Portfolio slider', 'bool'],
+            'home_show_process' => ['How we work', 'bool'],
+            'home_show_pricing' => ['Pricing', 'bool'],
+            'home_show_reviews' => ['Client reviews', 'bool'],
+            'home_show_faq' => ['FAQ', 'bool'],
         ],
         'Contact details' => [
             'email_info' => ['Business email', 'email'],
             'email_sales' => ['Sales email', 'email'],
             'email_hr' => ['HR email', 'email'],
-            'notify_email' => ['Send new lead alerts to', 'email'],
             'phone' => ['Phone', 'text'],
             'whatsapp' => ['WhatsApp number', 'text', 'With country code, e.g. +92 300 1234567'],
             'office_hours' => ['Office hours', 'text'],
@@ -422,6 +430,7 @@ function admin_settings_schema(): array
             'contact_person_name' => ['Name', 'text'],
             'contact_person_role' => ['Role', 'text'],
             'contact_person_email' => ['Email', 'email'],
+            'contact_person_photo' => ['Photo', 'image', 'Square photo, at least 200 x 200 pixels.'],
         ],
         'Company numbers (leave empty to hide)' => [
             'stat_projects' => ['Projects delivered', 'text', 'e.g. 120+'],
@@ -452,6 +461,22 @@ function admin_settings(): string
         $save = [];
         foreach ($schema as $group) {
             foreach ($group as $key => [$label, $type]) {
+                if ($type === 'bool') {
+                    $save[$key] = isset($_POST[$key]) ? '1' : '0';
+                    continue;
+                }
+                if ($type === 'image') {
+                    if (!empty($_POST[$key . '_remove'])) {
+                        $save[$key] = '';
+                    } elseif (($_FILES[$key]['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                        try {
+                            $save[$key] = Upload::image($_FILES[$key], 'site', $key === 'contact_person_photo' ? 400 : 1400);
+                        } catch (InvalidArgumentException $e) {
+                            $errors[$key] = $e->getMessage();
+                        }
+                    }
+                    continue;
+                }
                 $v = trim(str_replace("\r\n", "\n", (string) ($_POST[$key] ?? '')));
                 if (mb_strlen($v) > 2000) $errors[$key] = "$label is too long.";
                 if ($type === 'email' && $v !== '' && !filter_var($v, FILTER_VALIDATE_EMAIL)) $errors[$key] = "$label must be a valid email.";
@@ -544,4 +569,88 @@ function admin_account(): string
         }
     }
     return admin_view('account', ['errors' => $errors, 'pageTitle' => 'My account']);
+}
+
+/* ---------- Email settings ---------- */
+
+function admin_email(): string
+{
+    $user = Auth::require('admin');
+    $errors = [];
+    $testResult = null;
+    if (is_post()) {
+        admin_csrf();
+        $action = $_POST['action'] ?? '';
+        if ($action === 'test') {
+            $to = trim((string) ($_POST['test_to'] ?? ''));
+            if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                flash('error', 'Enter a valid email address for the test.');
+            } elseif (!Security::rateLimit('email_test', 10, 600, (string) $user['id'])) {
+                flash('error', 'Too many test emails. Please wait a few minutes.');
+            } else {
+                [$subject, $text, $html] = Emails::test();
+                $err = Mailer::send($to, $subject, $text, $html, null, 'test');
+                $err === null ? flash('success', "Test email sent to $to. Check the inbox and the spam folder.") : flash('error', 'The test email failed: ' . $err);
+            }
+            redirect(url('admin/email'));
+        }
+        $save = [];
+        foreach (['notify_emails' => 'Enquiry recipients', 'notify_emails_hr' => 'Job application recipients'] as $k => $label) {
+            $raw = (string) ($_POST[$k] ?? '');
+            $list = Mailer::addressList($raw);
+            $typed = preg_split('/[\s,;]+/', trim($raw)) ?: [];
+            if (count(array_filter($typed)) !== count($list)) {
+                $errors[$k] = "$label: one or more addresses are not valid.";
+            } elseif (count($list) > 15) {
+                $errors[$k] = "$label: add 15 addresses at most.";
+            }
+            $save[$k] = implode("\n", $list);
+        }
+        $save['mail_source'] = ($_POST['mail_source'] ?? '') === 'custom' ? 'custom' : 'config';
+        $save['mail_from_email'] = trim((string) ($_POST['mail_from_email'] ?? ''));
+        $save['mail_from_name'] = mb_substr(trim((string) ($_POST['mail_from_name'] ?? '')), 0, 80);
+        $save['smtp_host'] = preg_replace('/[^a-z0-9.\-]/i', '', (string) ($_POST['smtp_host'] ?? '')) ?? '';
+        $save['smtp_port'] = (string) max(1, min(65535, (int) ($_POST['smtp_port'] ?? 465)));
+        $save['smtp_encryption'] = in_array($_POST['smtp_encryption'] ?? '', ['ssl', 'tls', 'none'], true) ? $_POST['smtp_encryption'] : 'ssl';
+        $save['smtp_username'] = mb_substr(trim((string) ($_POST['smtp_username'] ?? '')), 0, 190);
+        if ($save['mail_from_email'] !== '' && !filter_var($save['mail_from_email'], FILTER_VALIDATE_EMAIL)) {
+            $errors['mail_from_email'] = 'The "from" address is not a valid email.';
+        }
+        if ($save['mail_source'] === 'custom' && $save['mail_from_email'] === '') {
+            $errors['mail_from_email'] = 'Add the address emails are sent from.';
+        }
+        $newPassword = (string) ($_POST['smtp_password'] ?? '');
+        if ($newPassword !== '') {
+            $save['smtp_password'] = Secret::encrypt($newPassword);
+        } elseif (!empty($_POST['smtp_password_clear'])) {
+            $save['smtp_password'] = '';
+        }
+        $save['autoreply_enabled'] = isset($_POST['autoreply_enabled']) ? '1' : '0';
+        foreach (array_keys(Emails::TYPES) as $t) {
+            $subj = trim((string) ($_POST["autoreply_{$t}_subject"] ?? ''));
+            $body = trim(str_replace("\r\n", "\n", (string) ($_POST["autoreply_{$t}_body"] ?? '')));
+            if ($subj === '' || $body === '') {
+                $errors["autoreply_$t"] = 'Each automatic reply needs a subject and a message.';
+            }
+            $save["autoreply_{$t}_subject"] = mb_substr($subj, 0, 150);
+            $save["autoreply_{$t}_body"] = mb_substr($body, 0, 3000);
+        }
+        if (!$errors) {
+            $stmt = Database::pdo()->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
+            foreach ($save as $k => $v) {
+                $stmt->execute([$k, $v]);
+            }
+            Auth::audit((int) $user['id'], 'email_settings_update');
+            flash('success', 'Email settings saved. Send a test email to check them.');
+            redirect(url('admin/email'));
+        }
+    }
+    return admin_view('email', [
+        'pageTitle' => 'Email settings',
+        'errors' => $errors,
+        'posted' => is_post() ? $_POST : null,
+        'effective' => Mailer::settings(),
+        'log' => Database::all('SELECT type, recipients, subject, status, error, created_at FROM email_log ORDER BY id DESC LIMIT 30'),
+        'user' => $user,
+    ]);
 }

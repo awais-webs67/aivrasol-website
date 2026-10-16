@@ -1,35 +1,7 @@
 -- AivraSol starter content. Safe to edit later from the admin panel.
 SET NAMES utf8mb4;
 
-INSERT INTO settings (setting_key, setting_value) VALUES
-('site_name', 'AivraSol'),
-('site_tagline', 'Custom Software Development Company'),
-('meta_description', 'AivraSol builds custom web apps, mobile apps, AI solutions and cloud systems for startups and growing businesses. Book a free consultation.'),
-('hero_heading', 'Smart software|for growing businesses'),
-('hero_text', 'We design, build and scale web apps, mobile apps and AI tools for startups and enterprises. One reliable team from first idea to launch and beyond.'),
-('email_info', 'info@aivrasol.com'),
-('email_hr', 'hr@aivrasol.com'),
-('email_sales', 'sales@aivrasol.com'),
-('notify_email', 'info@aivrasol.com'),
-('phone', ''),
-('whatsapp', ''),
-('office_hours', 'Monday to Friday, 9:00 to 18:00'),
-('offices', ''),
-('contact_person_name', ''),
-('contact_person_role', 'Head of Sales'),
-('contact_person_email', 'sales@aivrasol.com'),
-('stat_projects', ''),
-('stat_clients', ''),
-('stat_team', ''),
-('stat_years', ''),
-('social_linkedin', ''),
-('social_facebook', ''),
-('social_instagram', ''),
-('social_x', ''),
-('social_github', ''),
-('ga_measurement_id', ''),
-('booking_url', '')
-ON DUPLICATE KEY UPDATE setting_key = setting_key;
+-- Settings and pricing plans are loaded by database/install.php from database/data/.
 
 INSERT INTO offerings (type, slug, title, short_title, icon, summary, hero_text, quote, features, expertise_title, expertise_text, tech, meta_title, meta_description, sort_order) VALUES
 ('service', 'web-development', 'Web & Desktop App Development', 'Web Development', 'monitor',
@@ -98,7 +70,7 @@ INSERT INTO offerings (type, slug, title, short_title, icon, summary, hero_text,
  'SEO & Digital Marketing Services | AivraSol',
  'SEO audits, technical SEO, content marketing and reporting by AivraSol. Grow your traffic and leads. Get a free consultation.', 6),
 
-('hire', 'devops-engineer', 'Hire DevOps Engineers', 'DevOps Engineer', 'cloud',
+('hire', 'devops-engineer', 'Hire DevOps Engineers', 'DevOps Engineer', 'infinity',
  'Experienced DevOps engineers who automate your deployments, harden your cloud and keep your systems online.',
  'Add skilled DevOps engineers to your team in days, not months.',
  'Ship faster with reliable automation',
@@ -118,7 +90,7 @@ INSERT INTO offerings (type, slug, title, short_title, icon, summary, hero_text,
  'PHP, Laravel, Livewire, MySQL, Redis, Vue, Inertia, Pest',
  'Hire Laravel Developers | AivraSol', 'Hire dedicated Laravel developers from AivraSol for web apps, APIs and upgrades. Flexible monthly and hourly plans.', 2),
 
-('hire', 'python-developer', 'Hire Python Developers', 'Python Developer', 'code',
+('hire', 'python-developer', 'Hire Python Developers', 'Python Developer', 'terminal',
  'Python developers for web backends, data pipelines, automation and AI projects.',
  'Hire Python experts for web, data and AI projects.',
  'Python talent for web, data and AI',
@@ -128,7 +100,7 @@ INSERT INTO offerings (type, slug, title, short_title, icon, summary, hero_text,
  'Python, Django, FastAPI, Flask, Pandas, PostgreSQL, Celery, PyTorch',
  'Hire Python Developers | AivraSol', 'Hire Python developers from AivraSol for Django, FastAPI, data engineering and AI. Flexible monthly and hourly plans.', 3),
 
-('hire', 'reactjs-developer', 'Hire React.js Developers', 'React.js Developer', 'code',
+('hire', 'reactjs-developer', 'Hire React.js Developers', 'React.js Developer', 'atom',
  'React developers who build fast, accessible and easy-to-maintain user interfaces.',
  'Build modern, fast interfaces with skilled React.js developers.',
  'Interfaces that feel instant',
@@ -138,7 +110,7 @@ INSERT INTO offerings (type, slug, title, short_title, icon, summary, hero_text,
  'React, Next.js, TypeScript, Redux, React Query, Tailwind CSS, Jest',
  'Hire React.js Developers | AivraSol', 'Hire React.js and Next.js developers from AivraSol for fast, modern web apps. Flexible monthly and hourly plans.', 4),
 
-('hire', 'nodejs-developer', 'Hire Node.js Developers', 'Node.js Developer', 'code',
+('hire', 'nodejs-developer', 'Hire Node.js Developers', 'Node.js Developer', 'server',
  'Node.js developers for scalable APIs, real-time apps and microservices.',
  'Scale your backend with dedicated Node.js developers.',
  'Backends built to scale',
@@ -157,20 +129,6 @@ INSERT INTO offerings (type, slug, title, short_title, icon, summary, hero_text,
  'Our React Native developers have shipped apps to both stores and know the details that make an app feel native. You get faster delivery and lower cost without cutting quality.',
  'React Native, Expo, TypeScript, Redux, Firebase, Swift, Kotlin',
  'Hire React Native Developers | AivraSol', 'Hire React Native developers from AivraSol for iOS and Android apps from one codebase. Flexible monthly and hourly plans.', 6);
-
-INSERT INTO plans (title, subtitle, icon, price_label, price_note, features, q1_label, q1_options, q2_label, q2_options, is_highlighted, sort_order) VALUES
-('Product Development', 'Get your product built from scratch', 'box', '', '',
- 'Fixed scope and clear milestones\nDesign, development and testing in one team\nWeekly demos and progress reports\nSource code and full ownership are yours\n3 months of free bug fixing after launch',
- 'What are you looking to build?', 'MVP\nComplete product\nUI/UX design only\nWorking prototype\nSomething else',
- 'Which platform?', 'Web app\nMobile app (iOS and Android)\nWeb and mobile\nDesktop app\nNot sure yet', 0, 1),
-('Dedicated Team', 'A full team working only on your project', 'users', '', '',
- 'Developers, designer and project manager\nScale the team up or down each month\nWorks in your time zone and tools\nNo hiring or retention stress\nClear monthly billing',
- 'What do you need?', 'Web development team\nMobile development team\nFull product team\nAI or data team\nSomething else',
- 'For how long?', '1 to 3 months\n3 to 6 months\n6 to 12 months\n12+ months', 1, 2),
-('Hire a Developer', 'Add one expert to your existing team', 'user', '', '',
- 'Senior developers vetted by our tech leads\nStart within one week\nFull-time, part-time or hourly\nFree replacement if the fit is not right\nNo long-term contract required',
- 'Which skill do you need?', 'React.js\nNode.js\nLaravel / PHP\nPython\nReact Native\nDevOps\nOther',
- 'For how long?', '1 to 3 months\n3 to 6 months\n6 to 12 months\n12+ months', 0, 3);
 
 INSERT INTO projects (slug, title, category, industry, location, summary, challenge, solution, results, tech, image, is_featured, is_sample, sort_order) VALUES
 ('event-pos-ticketing', 'Event POS & Ticketing System', 'Web App', 'Events', '',

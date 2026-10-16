@@ -22,5 +22,6 @@ $router->any('/admin/content/{key}/new', fn (string $key) => admin_content_edit(
 $router->any('/admin/content/{key}/{id}', fn (string $key, string $id) => admin_content_edit($key, $id));
 
 $router->any('/admin/settings', fn () => admin_settings());
+$router->any('/admin/email', fn () => admin_email());
 $router->any('/admin/users', fn () => admin_users());
 $router->any('/admin/account', fn () => admin_account());

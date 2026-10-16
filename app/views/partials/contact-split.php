@@ -12,7 +12,7 @@ $initials = $personName !== '' ? mb_strtoupper(implode('', array_map(fn ($w) => 
       <h2 class="display-2">Do you want to get to know us?</h2>
       <span class="bar"></span>
       <div class="person">
-        <span class="avatar" aria-hidden="true"><?= e($initials) ?></span>
+        <?php if (setting('contact_person_photo') !== ''): ?><span class="avatar"><img src="<?= e(url(setting('contact_person_photo'))) ?>" alt="<?= e($personName) ?>" width="84" height="84" loading="lazy"></span><?php else: ?><span class="avatar" aria-hidden="true"><?= e($initials) ?></span><?php endif; ?>
         <div>
           <span class="tag"><?= e($personRole) ?></span>
           <strong><?= e($personName !== '' ? $personName : 'Our sales team') ?></strong>

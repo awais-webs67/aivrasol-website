@@ -278,3 +278,64 @@ function icon(string $name, string $class = 'icon'): string
     $paths = $icons[$name] ?? $icons['code'];
     return '<svg class="' . e($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $paths . '</svg>';
 }
+
+/**
+ * Two-colour illustration icons for services, hire pages and menus.
+ * Dark lines use class "d" and orange accents class "a", so CSS can recolour them (for example white on orange).
+ */
+function duo(string $name, string $class = 'duo'): string
+{
+    $O = '#FF5B35';
+    $L = '#FFB09C';
+    static $icons = null;
+    $icons ??= [
+        'monitor' => '<g class="d"><rect x="5" y="11" width="31" height="21" rx="2.5"/><path d="M15 39h13M21.5 32v7"/></g><g class="a" fill="' . $O . '" stroke="none"><rect x="30" y="5" width="5.5" height="5.5" rx="1"/><rect x="37.5" y="5" width="5.5" height="5.5" rx="1"/><rect x="30" y="12.5" width="5.5" height="5.5" rx="1"/><rect x="37.5" y="12.5" width="5.5" height="5.5" rx="1" fill="' . $L . '"/></g>',
+        'phone' => '<g class="d"><rect x="11" y="6" width="21" height="36" rx="3.5"/><path d="M19.5 36h4"/></g><g class="a" fill="' . $O . '" stroke="none"><rect x="27" y="10" width="5.5" height="5.5" rx="1"/><rect x="34.5" y="10" width="5.5" height="5.5" rx="1"/><rect x="27" y="17.5" width="5.5" height="5.5" rx="1" fill="' . $L . '"/><rect x="34.5" y="17.5" width="5.5" height="5.5" rx="1"/></g>',
+        'pen' => '<g class="d"><path d="M11 9h9v27l-4.5 6.5L11 36z"/><path d="M11 15h9"/><rect x="26" y="6" width="11" height="36" rx="1.5"/></g><g class="a" stroke="' . $O . '" fill="none"><path d="M26 12h5.5M26 18h3.5M26 24h5.5M26 30h3.5M26 36h5.5"/></g><g class="a" fill="' . $O . '" stroke="none"><path d="M13.3 38.2l2.2 3.3 2.2-3.3z"/><rect x="11" y="9" width="9" height="6" rx="1"/></g>',
+        'cloud' => '<g class="d"><path d="M13.5 35A8.5 8.5 0 0 1 12.3 18.1 11.5 11.5 0 0 1 34.2 16.4 9 9 0 0 1 35 35"/></g><g class="a" stroke="none"><path d="M24 22.5l7.5 4.2-7.5 4.3-7.5-4.3z" fill="' . $L . '"/><path d="M16.5 26.7v8.4l7.5 4.3V31z" fill="' . $O . '"/><path d="M31.5 26.7v8.4L24 39.4V31z" fill="#E0451F"/></g>',
+        'cpu' => '<g class="d"><rect x="12" y="12" width="24" height="24" rx="4"/><path d="M18 5v7M24 5v7M30 5v7M18 36v7M24 36v7M30 36v7M5 18h7M5 24h7M5 30h7M36 18h7M36 24h7M36 30h7"/></g><g class="a" stroke="none"><circle cx="24" cy="24" r="7.5" fill="' . $O . '"/></g><path class="w" d="M21 27.5l3-7 3 7M22 25.5h4" stroke="#FFFFFF" stroke-width="1.6"/>',
+        'search' => '<g class="d"><path d="M5 37l8.5-8.5 6 5 6-7"/><circle cx="32" cy="19" r="9"/><path d="M38.5 25.5L44 31"/></g><g class="a" stroke="none"><circle cx="32" cy="19" r="4.5" fill="' . $O . '"/><circle cx="5" cy="37" r="2.2" fill="' . $O . '"/><circle cx="13.5" cy="28.5" r="2.2" fill="' . $L . '"/></g>',
+        'code' => '<g class="d"><path d="M15 13L5 24l10 11M33 13l10 11-10 11"/></g><g class="a" stroke="' . $O . '" fill="none"><path d="M27.5 9l-7 30"/></g>',
+        'atom' => '<g class="d" fill="none"><ellipse cx="24" cy="24" rx="19" ry="7.5"/><ellipse cx="24" cy="24" rx="19" ry="7.5" transform="rotate(60 24 24)"/><ellipse cx="24" cy="24" rx="19" ry="7.5" transform="rotate(120 24 24)"/></g><g class="a" stroke="none"><circle cx="24" cy="24" r="4" fill="' . $O . '"/></g>',
+        'terminal' => '<g class="d"><rect x="5" y="9" width="38" height="30" rx="3.5"/><path d="M5 16.5h38"/></g><g class="a" stroke="' . $O . '" fill="none"><path d="M13 24l5.5 4.5L13 33M23 33h11"/></g><g class="a" stroke="none" fill="' . $O . '"><circle cx="10" cy="12.8" r="1.4"/><circle cx="14.5" cy="12.8" r="1.4" fill="' . $L . '"/></g>',
+        'server' => '<g class="d"><rect x="7" y="7" width="34" height="14" rx="2.5"/><rect x="7" y="27" width="34" height="14" rx="2.5"/><path d="M24 14h11M24 34h11"/></g><g class="a" stroke="none" fill="' . $O . '"><circle cx="14" cy="14" r="2.6"/><circle cx="14" cy="34" r="2.6" fill="' . $L . '"/></g>',
+        'infinity' => '<g class="d"><path d="M24 24c-4.2-6.3-8.2-9.5-12.2-9.5a9.5 9.5 0 0 0 0 19c4 0 8-3.2 12.2-9.5z"/></g><g class="a" stroke="' . $O . '" fill="none"><path d="M24 24c4.2 6.3 8.2 9.5 12.2 9.5a9.5 9.5 0 0 0 0-19c-4 0-8 3.2-12.2 9.5z"/></g>',
+        'box' => '<g class="d"><path d="M24 5l17 9.5v19L24 43 7 33.5v-19z"/><path d="M24 24v19M24 24l17-9.5M24 24L7 14.5"/></g><g class="a" stroke="none"><path d="M24 7.3l14.6 8.2L24 23.6 9.4 15.5z" fill="' . $O . '"/></g>',
+        'users' => '<g class="d"><circle cx="18" cy="16" r="6.5"/><path d="M5 40c1-7.5 6-11.5 13-11.5S30 32.5 31 40"/></g><g class="a" stroke="' . $O . '" fill="none"><circle cx="33" cy="18" r="5"/><path d="M34 28.5c5 .5 8 3.8 9 9.5"/></g>',
+        'user' => '<g class="d"><circle cx="22" cy="16" r="8"/><path d="M6 42c1.5-8.5 7.5-13 16-13 3 0 5.6.6 7.8 1.7"/></g><g class="a" stroke="none"><circle cx="36" cy="36" r="7" fill="' . $O . '"/></g><path class="w" d="M32.8 36l2.3 2.3 4-4.3" stroke="#FFFFFF" stroke-width="2"/>',
+        'layers' => '<g class="d"><path d="M5 30l19 10 19-10M5 22l19 10 19-10"/></g><g class="a" stroke="none"><path d="M24 6l19 10-19 10L5 16z" fill="' . $O . '"/></g>',
+        'shield' => '<g class="d"><path d="M24 5l16 6v12c0 9.5-6.8 17-16 20-9.2-3-16-10.5-16-20V11z"/></g><g class="a" stroke="' . $O . '" fill="none"><path d="M16.5 24l5.5 5.5L32 19"/></g>',
+        'rocket' => '<g class="d"><path d="M28 7c6.5 0 13 6.5 13 13L25.5 35.5l-13-13z"/><path d="M16 24l-7 1-3 6 7 2M24 32l-1 7 6 3 2-7"/></g><g class="a" stroke="none"><circle cx="30" cy="18" r="3.5" fill="' . $O . '"/><path d="M12 36l-5 5 1-7z" fill="' . $O . '"/></g>',
+        'chat' => '<g class="d"><path d="M6 9h36v24H20l-10 8v-8H6z"/></g><g class="a" stroke="' . $O . '" fill="none"><path d="M14 18h20M14 25h12"/></g>',
+        'briefcase' => '<g class="d"><rect x="5" y="14" width="38" height="27" rx="3"/><path d="M17 14V9.5A2.5 2.5 0 0 1 19.5 7h9A2.5 2.5 0 0 1 31 9.5V14M5 26h38"/></g><g class="a" stroke="none"><rect x="20" y="22.5" width="8" height="7" rx="1.5" fill="' . $O . '"/></g>',
+    ];
+    $body = $icons[$name] ?? $icons['code'];
+    return '<svg class="' . e($class) . '" viewBox="0 0 48 48" fill="none" stroke="#333F48" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $body . '</svg>';
+}
+
+/** Names available for the icon pickers in the admin panel. */
+function duo_names(): array
+{
+    return ['monitor', 'phone', 'pen', 'cloud', 'cpu', 'search', 'code', 'atom', 'terminal', 'server', 'infinity', 'box', 'users', 'user', 'layers', 'shield', 'rocket', 'chat', 'briefcase'];
+}
+
+/** The main office or team photo: the one uploaded in Settings, or the default. */
+function site_photo(): array
+{
+    $custom = setting('hero_image');
+    if ($custom !== '' && is_file(PUBLIC_PATH . '/' . $custom)) {
+        $size = @getimagesize(PUBLIC_PATH . '/' . $custom) ?: [703, 771];
+        return ['src' => url($custom), 'srcset' => '', 'w' => (int) $size[0], 'h' => (int) $size[1]];
+    }
+    return [
+        'src' => url('assets/img/hero-office.webp'),
+        'srcset' => url('assets/img/hero-office-420.webp') . ' 420w, ' . url('assets/img/hero-office.webp') . ' 703w',
+        'w' => 703,
+        'h' => 771,
+    ];
+}
+
+function home_section(string $name): bool
+{
+    return setting('home_show_' . $name, '1') === '1';
+}

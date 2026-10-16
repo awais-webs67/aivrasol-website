@@ -42,6 +42,9 @@ $newLeads = (int) Database::value("SELECT COUNT(*) FROM leads WHERE status = 'ne
       <ul>
         <li><a href="<?= e(url('admin/settings')) ?>"<?= $isOn('admin/settings') ? ' aria-current="page"' : '' ?>><?= icon('settings') ?><span>Settings</span></a></li>
         <?php if (($user['role'] ?? '') === 'admin'): ?>
+        <li><a href="<?= e(url('admin/email')) ?>"<?= $isOn('admin/email') ? ' aria-current="page"' : '' ?>><?= icon('mail') ?><span>Email</span></a></li>
+        <?php endif; ?>
+        <?php if (($user['role'] ?? '') === 'admin'): ?>
         <li><a href="<?= e(url('admin/users')) ?>"<?= $isOn('admin/users') ? ' aria-current="page"' : '' ?>><?= icon('users') ?><span>Admin users</span></a></li>
         <?php endif; ?>
         <li><a href="<?= e(url('admin/account')) ?>"<?= $isOn('admin/account') ? ' aria-current="page"' : '' ?>><?= icon('user') ?><span>My account</span></a></li>

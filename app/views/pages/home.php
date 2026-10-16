@@ -23,7 +23,8 @@
         <path d="M22 52l-16 9 16 7"/>
       </svg>
       <div class="hero-frame">
-        <img src="<?= e(url('assets/img/hero-office.webp')) ?>" srcset="<?= e(url('assets/img/hero-office-420.webp')) ?> 420w, <?= e(url('assets/img/hero-office.webp')) ?> 703w" sizes="(min-width: 1024px) 500px, 92vw" width="703" height="771" alt="The AivraSol office reception" fetchpriority="high">
+        <?php $photo = site_photo(); ?>
+        <img src="<?= e($photo['src']) ?>"<?php if ($photo['srcset'] !== ''): ?> srcset="<?= e($photo['srcset']) ?>" sizes="(min-width: 1024px) 500px, 92vw"<?php endif; ?> width="<?= $photo['w'] ?>" height="<?= $photo['h'] ?>" alt="The <?= e(setting('site_name', 'AivraSol')) ?> office" fetchpriority="high">
       </div>
       <div class="hero-badge">
         <span class="mega-icon"><?= icon('rocket') ?></span>
@@ -44,7 +45,7 @@
       <div class="svc-tiles" role="tablist" aria-label="Our services">
         <?php foreach ($services as $i => $s): ?>
         <a class="svc-tile" href="<?= e(url('services/' . $s['slug'])) ?>" role="tab" id="tab-<?= e($s['slug']) ?>" aria-controls="panel-<?= e($s['slug']) ?>" aria-selected="<?= $i === 0 ? 'true' : 'false' ?>" tabindex="<?= $i === 0 ? '0' : '-1' ?>">
-          <?= icon($s['icon']) ?><span><?= e($s['short_title']) ?></span>
+          <?= duo($s['icon']) ?><span><?= e($s['short_title']) ?></span>
         </a>
         <?php endforeach; ?>
       </div>
@@ -67,7 +68,7 @@
   </div>
 </section>
 
-<?php if ($stats): ?>
+<?php if ($stats && home_section('stats')): ?>
 <section class="stats" aria-label="AivraSol in numbers">
   <div class="container stats-grid">
     <?php foreach ($stats as $st): ?>
@@ -77,7 +78,7 @@
 </section>
 <?php endif; ?>
 
-<?php if ($projects): ?>
+<?php if ($projects && home_section('portfolio')): ?>
 <section class="section section-soft" aria-labelledby="work-title">
   <div class="container showcase" data-slider>
     <div>
@@ -99,6 +100,7 @@
 </section>
 <?php endif; ?>
 
+<?php if (home_section('process')): ?>
 <section class="section" aria-labelledby="process-title">
   <div class="container">
     <div class="section-head center">
@@ -114,8 +116,9 @@
     </ol>
   </div>
 </section>
+<?php endif; ?>
 
-<?php if ($plans): ?>
+<?php if ($plans && home_section('pricing')): ?>
 <section class="section section-soft" id="pricing" aria-labelledby="pricing-title">
   <div class="container">
     <div class="section-head center">
@@ -128,7 +131,7 @@
 </section>
 <?php endif; ?>
 
-<?php if ($testimonials): ?>
+<?php if ($testimonials && home_section('reviews')): ?>
 <section class="section" aria-labelledby="reviews-title">
   <div class="container reviews" data-slider>
     <div>
@@ -156,7 +159,7 @@
 </section>
 <?php endif; ?>
 
-<?= partial('faq', ['faqs' => $faqs]) ?>
+<?php if (home_section('faq')): ?><?= partial('faq', ['faqs' => $faqs]) ?><?php endif; ?>
 
 <section class="section section-grey question" id="contact-form" aria-labelledby="question-title">
   <div class="container">

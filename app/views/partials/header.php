@@ -20,12 +20,12 @@ $simple = ['/about' => 'About', '/portfolio' => 'Portfolio', '/careers' => 'Care
             <div class="mega-grid">
               <?php foreach ($services as $s): ?>
               <a class="mega-link" href="<?= e(url('services/' . $s['slug'])) ?>">
-                <span class="mega-icon"><?= icon($s['icon']) ?></span>
-                <span class="mega-text"><strong><?= e($s['title']) ?></strong><span><?= e($s['quote']) ?></span></span>
+                <span class="mega-icon"><?= duo($s['icon']) ?></span>
+                <span class="mega-title"><?= e($s['title']) ?></span>
               </a>
               <?php endforeach; ?>
             </div>
-            <div class="mega-footer"><a class="link-arrow" href="<?= e(url('services')) ?>">All services <?= icon('arrow-right') ?></a></div>
+            <div class="mega-footer"><span>Not sure which service fits? We will help you choose.</span><a class="link-arrow" href="<?= e(url('services')) ?>">View all services <?= icon('arrow-right') ?></a><a class="link-arrow" href="<?= e(url('contact')) ?>" data-modal-open="consult-modal">Free consultation <?= icon('arrow-right') ?></a></div>
           </div>
         </li>
         <li class="nav-item">
@@ -34,12 +34,12 @@ $simple = ['/about' => 'About', '/portfolio' => 'Portfolio', '/careers' => 'Care
             <div class="mega-grid">
               <?php foreach ($hires as $h): ?>
               <a class="mega-link" href="<?= e(url('hire/' . $h['slug'])) ?>">
-                <span class="mega-icon"><?= icon($h['icon']) ?></span>
-                <span class="mega-text"><strong><?= e($h['title']) ?></strong><span><?= e($h['quote']) ?></span></span>
+                <span class="mega-icon"><?= duo($h['icon']) ?></span>
+                <span class="mega-title"><?= e($h['title']) ?></span>
               </a>
               <?php endforeach; ?>
             </div>
-            <div class="mega-footer"><a class="link-arrow" href="<?= e(url('hire')) ?>">Compare hiring options <?= icon('arrow-right') ?></a></div>
+            <div class="mega-footer"><span>Vetted developers, start within a week.</span><a class="link-arrow" href="<?= e(url('pricing')) ?>#hire-plans">Hiring plans and pricing <?= icon('arrow-right') ?></a><a class="link-arrow" href="<?= e(url('hire')) ?>">All roles <?= icon('arrow-right') ?></a></div>
           </div>
         </li>
         <?php foreach ($simple as $path => $label): ?>

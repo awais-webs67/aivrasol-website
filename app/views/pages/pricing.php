@@ -13,12 +13,19 @@ $current = $selected ?? ($plans[0] ?? null);
   </div>
 </section>
 
-<section class="section" aria-labelledby="plans-title">
+<?php $groups = ['project' => ['Build a project', 'Fixed-price projects with clear milestones. You own everything we build.'], 'hire' => ['Hire developers', 'Add vetted developers or a whole team to your company, full-time or by the hour.']]; ?>
+<?php foreach ($groups as $cat => [$gTitle, $gText]): $group = array_values(array_filter($plans, fn ($p) => $p['category'] === $cat)); if (!$group) continue; ?>
+<section class="section<?= $cat === 'hire' ? ' section-soft' : '' ?>" id="<?= $cat ?>-plans" aria-labelledby="<?= $cat ?>-plans-title">
   <div class="container">
-    <h2 class="sr-only" id="plans-title">Ways to work with us</h2>
-    <?= partial('plans', ['plans' => $plans]) ?>
+    <div class="section-head center">
+      <h2 class="display-2" id="<?= $cat ?>-plans-title"><?= e($gTitle) ?></h2>
+      <span class="bar center"></span>
+      <p class="lead"><?= e($gText) ?></p>
+    </div>
+    <?= partial('plans', ['plans' => $group]) ?>
   </div>
 </section>
+<?php endforeach; ?>
 
 <?php if ($current): ?>
 <section class="section section-grey" id="quote" aria-labelledby="quote-form-title">
@@ -43,14 +50,14 @@ $current = $selected ?? ($plans[0] ?? null);
           <label class="sr-only" for="qf-q1-<?= (int) $p['id'] ?>"><?= e($p['q1_label']) ?></label>
           <select class="select" id="qf-q1-<?= (int) $p['id'] ?>" name="q1"<?= $active ? '' : ' disabled' ?>>
             <option value=""><?= e($p['q1_label']) ?></option>
-            <?php foreach (lines($p['q1_options']) as $o): ?><option<?= $active && $q1 === $o ? ' selected' : '' ?>><?= e($o) ?></option><?php endforeach; ?>
+            <?php foreach (Content::planOptions($p, 'q1') as $o): ?><option<?= $active && $q1 === $o ? ' selected' : '' ?>><?= e($o) ?></option><?php endforeach; ?>
           </select>
         </div>
         <div class="cell" data-plan-fields="<?= (int) $p['id'] ?>"<?= $active ? '' : ' hidden' ?>>
           <label class="sr-only" for="qf-q2-<?= (int) $p['id'] ?>"><?= e($p['q2_label']) ?></label>
           <select class="select" id="qf-q2-<?= (int) $p['id'] ?>" name="q2"<?= $active ? '' : ' disabled' ?>>
             <option value=""><?= e($p['q2_label']) ?></option>
-            <?php foreach (lines($p['q2_options']) as $o): ?><option<?= $active && $q2 === $o ? ' selected' : '' ?>><?= e($o) ?></option><?php endforeach; ?>
+            <?php foreach (Content::planOptions($p, 'q2') as $o): ?><option<?= $active && $q2 === $o ? ' selected' : '' ?>><?= e($o) ?></option><?php endforeach; ?>
           </select>
         </div>
         <?php endforeach; ?>

@@ -23,7 +23,7 @@ $others = array_values(array_filter(Content::offerings($type), fn ($o) => $o['sl
     </div>
     <div class="visual" aria-hidden="true">
       <span class="visual-ring"></span><span class="visual-ring inner"></span>
-      <span class="visual-core"><?= icon($item['icon']) ?></span>
+      <span class="visual-core on-dark"><?= duo($item['icon']) ?></span>
       <?php foreach (array_slice($tech, 0, 5) as $i => $t): ?><span class="visual-chip c<?= $i + 1 ?>"><?= e($t) ?></span><?php endforeach; ?>
     </div>
   </div>
@@ -42,7 +42,7 @@ $others = array_values(array_filter(Content::offerings($type), fn ($o) => $o['sl
     <div class="feature-grid<?= count($features) > 4 ? ' cols-3' : '' ?>">
       <?php foreach ($features as $f): ?>
       <article class="feature">
-        <span class="mega-icon"><?= icon($item['icon']) ?></span>
+        <span class="feature-bar"></span>
         <h3><?= e($f['title']) ?></h3>
         <p><?= e($f['text']) ?></p>
       </article>
@@ -88,11 +88,11 @@ $others = array_values(array_filter(Content::offerings($type), fn ($o) => $o['sl
 <section class="section" aria-labelledby="models-title">
   <div class="container">
     <div class="section-head center">
-      <h2 class="display-2" id="models-title">Flexible engagement models</h2>
+      <h2 class="display-2" id="models-title">Hire <?= e($item['short_title']) ?>s your way</h2>
       <span class="bar center"></span>
-      <p class="lead">Choose the way of working that fits your project and budget.</p>
+      <p class="lead">Full-time, part-time or a whole team. Pick a plan and get a free quote within one business day.</p>
     </div>
-    <?= partial('plans', ['plans' => $plans]) ?>
+    <?= partial('plans', ['plans' => $plans, 'preselect' => $item['short_title']]) ?>
   </div>
 </section>
 <?php endif; ?>
@@ -109,7 +109,7 @@ $others = array_values(array_filter(Content::offerings($type), fn ($o) => $o['sl
     <div class="offer-grid">
       <?php foreach (array_slice($others, 0, 3) as $o): ?>
       <a class="offer-card" href="<?= e(url(($isHire ? 'hire/' : 'services/') . $o['slug'])) ?>">
-        <span class="mega-icon"><?= icon($o['icon']) ?></span>
+        <span class="mega-icon"><?= duo($o['icon']) ?></span>
         <h3 class="h4"><?= e($o['title']) ?></h3>
         <p><?= e(excerpt($o['summary'], 120)) ?></p>
         <span class="link-arrow">Learn more<span class="sr-only"> about <?= e($o['title']) ?></span> <?= icon('arrow-right') ?></span>

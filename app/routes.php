@@ -10,7 +10,7 @@ $router->get('/', fn () => view('pages/home', [
     'metaDescription' => setting('meta_description'),
     'services' => Content::offerings('service'),
     'projects' => Content::projects(8),
-    'plans' => Content::plans(),
+    'plans' => Content::plans('home'),
     'testimonials' => Content::testimonials(),
     'faqs' => Content::faqs('general'),
     'stats' => Content::stats(),
@@ -49,7 +49,7 @@ $router->get('/hire/{slug}', function (string $slug) {
         'metaDescription' => $item['meta_description'] ?: $item['summary'],
         'item' => $item,
         'type' => 'hire',
-        'plans' => Content::plans(),
+        'plans' => Content::plans('hire'),
         'faqs' => Content::faqs($slug) ?: Content::faqs('pricing'),
     ]);
 });
