@@ -105,4 +105,13 @@ return [
     '2026_10_24_system_checks' => function (PDO $pdo): void {
         // schema.sql has already created system_checks.
     },
+    '2026_10_25_project_frames' => function (PDO $pdo) use ($hasColumn): void {
+        // Device frames for portfolio screenshots, and an optional phone screenshot.
+        if (!$hasColumn($pdo, 'projects', 'image_mobile')) {
+            $pdo->exec("ALTER TABLE projects ADD COLUMN image_mobile VARCHAR(255) NOT NULL DEFAULT '' AFTER image");
+        }
+        if (!$hasColumn($pdo, 'projects', 'frame')) {
+            $pdo->exec("ALTER TABLE projects ADD COLUMN frame VARCHAR(10) NOT NULL DEFAULT 'auto' AFTER image_mobile");
+        }
+    },
 ];

@@ -48,6 +48,8 @@ CREATE TABLE IF NOT EXISTS projects (
   tech        VARCHAR(400) NOT NULL DEFAULT '',
   url         VARCHAR(255) NOT NULL DEFAULT '',
   image       VARCHAR(255) NOT NULL DEFAULT '',
+  image_mobile  VARCHAR(255) NOT NULL DEFAULT '',
+  frame         VARCHAR(10)  NOT NULL DEFAULT 'auto',
   is_featured TINYINT(1)   NOT NULL DEFAULT 0,
   is_sample   TINYINT(1)   NOT NULL DEFAULT 0,
   sort_order  INT          NOT NULL DEFAULT 0,

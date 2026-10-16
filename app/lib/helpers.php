@@ -255,6 +255,7 @@ function icon(string $name, string $class = 'icon'): string
         'star' => '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
         'external' => '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
         'help' => '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7M12 17h.01"/>',
+        'lock' => '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
         'paperclip' => '<path d="M20 11.5l-8.3 8.3a5 5 0 0 1-7.1-7.1l8.6-8.6a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/>',
         'briefcase' => '<rect x="3" y="7" width="18" height="13" rx="1.5"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/>',
         'shield' => '<path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
@@ -353,4 +354,46 @@ function other_input(string $for, string $value = '', bool $disabled = false, st
 {
     return '<input class="' . e($class) . ' other-input" type="text" name="' . e($for) . '_other" data-other-for="' . e($for) . '" value="' . e($value) . '"'
         . ' placeholder="Please tell us what you need" maxlength="150" aria-label="Please specify"' . ($disabled ? ' disabled' : '') . '>';
+}
+
+/** Width / height of an image in the public folder (0 when unknown). */
+function image_ratio(string $path): float
+{
+    static $cache = [];
+    if ($path === '' || str_ends_with($path, '.svg')) {
+        return 0.0;
+    }
+    if (!isset($cache[$path])) {
+        $info = @getimagesize(PUBLIC_PATH . '/' . ltrim($path, '/'));
+        $cache[$path] = $info && $info[1] > 0 ? $info[0] / $info[1] : 0.0;
+    }
+    return $cache[$path];
+}
+
+/** Which device frame a project screenshot is shown in. "Auto" picks from the image shape. */
+function project_frame(array $p): string
+{
+    $frame = (string) ($p['frame'] ?? 'auto');
+    $image = (string) ($p['image'] ?? '');
+    $mobile = (string) ($p['image_mobile'] ?? '');
+    if ($image === '' || str_ends_with($image, '.svg')) {
+        return $mobile !== '' ? 'mobile' : 'none';
+    }
+    if ($frame === 'combo' && $mobile === '') {
+        $frame = 'laptop';
+    }
+    if ($frame !== 'auto') {
+        return in_array($frame, ['browser', 'desktop', 'laptop', 'tablet', 'mobile', 'combo', 'none'], true) ? $frame : 'browser';
+    }
+    if ($mobile !== '') {
+        return 'combo';
+    }
+    $r = image_ratio($image);
+    if ($r > 0 && $r < 0.8) {
+        return 'mobile';
+    }
+    if ($r > 0 && $r < 1.45) {
+        return 'tablet';
+    }
+    return trim((string) ($p['url'] ?? '')) !== '' ? 'browser' : 'desktop';
 }

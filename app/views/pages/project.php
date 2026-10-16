@@ -11,9 +11,7 @@
       <a class="btn btn-outline" href="<?= e($project['url']) ?>" target="_blank" rel="noopener">Visit live project <?= icon('external') ?></a>
       <?php endif; ?>
     </div>
-    <div class="case-cover">
-      <img src="<?= e(asset($project['image'] ?: 'assets/img/projects/placeholder.svg')) ?>" alt="<?= e($project['title']) ?> preview" width="800" height="500">
-    </div>
+    <div class="case-cover"><?= partial('showcase', ['project' => $project, 'eager' => true]) ?></div>
   </div>
 </section>
 

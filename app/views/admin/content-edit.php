@@ -1,5 +1,12 @@
 <p><a class="link-arrow small" href="<?= e(url('admin/content/' . $key)) ?>">← Back to <?= e(strtolower($res['label'])) ?></a></p>
 <?php if ($errors): ?><p class="form-status is-error" role="alert">Please fix the highlighted fields.</p><?php endif; ?>
+<?php if ($key === 'projects' && $row && ($row['image'] !== '' || ($row['image_mobile'] ?? '') !== '')): ?>
+<section class="card frame-preview">
+  <div class="card-head"><h2>How it looks on the website</h2><span class="small muted">Frame: <?= e(ucfirst(project_frame($row))) ?></span></div>
+  <?= partial('showcase', ['project' => $row]) ?>
+  <p class="small muted">Change "Show the screenshot in" below and save to try another frame.</p>
+</section>
+<?php endif; ?>
 <form method="post" enctype="multipart/form-data" class="card form-grid cols-2 edit-form">
   <?= csrf_field() ?>
   <?php foreach ($res['fields'] as $name => $f): $val = (string) ($values[$name] ?? ''); $err = $errors[$name] ?? null; $id = 'f-' . $name; $wide = in_array($f['type'], ['textarea', 'lines', 'image', 'markdown'], true); ?>

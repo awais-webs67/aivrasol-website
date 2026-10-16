@@ -213,3 +213,4 @@ tr.is-current td { background: var(--orange-tint); }
 .cl-done { margin-top: 16px; }
 .cl-done summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--success); }
 .cl-done .checklist { margin-top: 10px; }
+.frame-preview .showcase { max-width: 720px; border-radius: var(--radius-md); margin-bottom: 10px; }
