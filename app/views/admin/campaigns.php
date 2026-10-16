@@ -9,7 +9,7 @@ $cronOk = $cronAge !== null && $cronAge < 900;
   <div class="stat-card"><span>Daily limit</span><strong><?= $limits['per_day'] ?></strong></div>
   <div class="stat-card"><span>Hourly limit</span><strong><?= $limits['per_hour'] ?></strong></div>
 </div>
-<p class="small muted">Right now: <?= $allowed > 0 ? 'ready to send.' : e($why) ?> Background sender: <?= $cronOk ? 'running (last run ' . (int) floor($cronAge / 60) . ' min ago).' : 'not set up yet, see "How sending works" below. Until then, emails send only while a campaign page is open.' ?><?php if (setting('camp_last_run') !== ''): ?> Last run: <?= e(setting('camp_last_run')) ?><?php endif; ?></p>
+<p class="small muted">Right now: <?= $allowed > 0 ? 'ready to send.' : e($why) ?> Background sender: <?= $cronOk ? 'running (last run ' . (int) floor($cronAge / 60) . ' min ago).' : 'not set up yet. Click "How this works" for the 2-minute setup. Until then, emails send only while a campaign page is open.' ?><?php if (setting('camp_last_run') !== ''): ?> Last run: <?= e(setting('camp_last_run')) ?><?php endif; ?></p>
 <div class="list-head">
   <h2 class="sr-only">Campaigns</h2>
   <div class="btn-group">
@@ -39,25 +39,8 @@ $cronOk = $cronAge !== null && $cronAge < 900;
 </div>
 
 <div class="admin-grid">
-  <section class="card">
-    <h2>How sending works</h2>
-    <ul class="checklist">
-      <li class="is-done"><?= icon('check') ?><span>Emails go out one by one with a random gap, inside your sending window and under your hourly and daily limits.</span></li>
-      <li class="is-done"><?= icon('check') ?><span>Every email has an unsubscribe link and one-click unsubscribe headers that Gmail and Outlook require. Unsubscribes and bounces are never emailed again.</span></li>
-      <li class="is-done"><?= icon('check') ?><span>If 5 emails in a row fail, all campaigns pause to protect your mailbox.</span></li>
-      <li class="<?= $cronOk ? 'is-done' : '' ?>"><?= icon($cronOk ? 'check' : 'close') ?><span>Background sender. In cPanel open Cron Jobs, choose "Every 5 minutes" and use:<br><code class="code-line">php <?= e(ROOT_PATH) ?>/bin/cron.php &gt;/dev/null 2&gt;&amp;1</code><?php if (Auth::can('settings', $user)): ?><br>No cron on your host? Ask a free service such as cron-job.org to open this private address every 5 minutes:<br><code class="code-line"><?= e(absolute_url('cron/' . Campaigns::cronToken())) ?></code><?php endif; ?></span></li>
-    </ul>
-    <h3 class="mt">Avoid the spam folder and account suspension</h3>
-    <ul class="small">
-      <li>Set up SPF, DKIM and DMARC for the sending domain (cPanel, Email Deliverability: click "Repair" on each).</li>
-      <li>For cold outreach, use a second domain (for example aivrasol.co) and its own mailbox below, so your main domain stays safe.</li>
-      <li>Warm up a new mailbox: about 20 a day in week one, 40 in week two, then up to 100 to 150 a day.</li>
-      <li>Keep cold emails short, personal and plain, with no attachments and at most one link.</li>
-      <li>Only email people with a real business reason, and remove anyone who asks.</li>
-    </ul>
-  </section>
   <?php if (Auth::can('settings', $user)): $l = $limits; ?>
-  <section class="card">
+  <section class="card span-all">
     <h2>Sending settings</h2>
     <form method="post" class="form-grid cols-2">
       <?= csrf_field() ?><input type="hidden" name="action" value="limits">

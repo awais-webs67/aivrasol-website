@@ -14,6 +14,8 @@ function admin_headers(): void
 function admin_view(string $template, array $data = []): string
 {
     admin_headers();
+    require_once APP_PATH . '/admin/guides.php';
+    $data['guide'] ??= admin_guide($template, $data);
     return view('admin/' . $template, $data + ['user' => Auth::user()], 'admin/layout');
 }
 

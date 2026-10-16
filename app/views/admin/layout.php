@@ -26,6 +26,7 @@ $system = array_filter([
     'admin/email' => ['mail', 'Email', 'settings'],
     'admin/users' => ['users', 'Team and roles', 'users'],
     'admin/backups' => ['download', 'Backups', 'settings'],
+    'admin/system' => ['check', 'System check', 'settings'],
     'admin/profile' => ['user', 'My profile', 'profile'],
 ], fn ($n) => $can($n[2]));
 $current = trim(request_path(), '/');
@@ -105,6 +106,25 @@ $newLeads = $can('leads') ? (int) Database::value("SELECT COUNT(*) FROM leads WH
       </form>
     </header>
     <main id="admin-main" class="admin-content" tabindex="-1">
+      <?php if (!empty($guide)): ?>
+      <details class="guide">
+        <summary class="btn btn-sm btn-outline guide-toggle"><?= icon('help') ?><span>How this works</span></summary>
+        <div class="guide-body">
+          <h2><?= e($guide['title']) ?></h2>
+          <?php if (!empty($guide['intro'])): ?><p class="guide-intro"><?= e($guide['intro']) ?></p><?php endif; ?>
+          <ol class="guide-steps">
+            <?php foreach ($guide['sections'] as $sec): ?>
+            <li>
+              <h3><?= e($sec['h']) ?></h3>
+              <?php if (!empty($sec['p'])): ?><p><?= e($sec['p']) ?></p><?php endif; ?>
+              <?php if (!empty($sec['list'])): ?><ul><?php foreach ($sec['list'] as $item): ?><li><?= e($item) ?></li><?php endforeach; ?></ul><?php endif; ?>
+              <?php foreach ($sec['code'] ?? [] as $code): ?><code class="code-line"><?= e($code) ?></code><?php endforeach; ?>
+            </li>
+            <?php endforeach; ?>
+          </ol>
+        </div>
+      </details>
+      <?php endif; ?>
       <?php if ($m = flash('success')): ?><p class="form-status is-success" role="status"><?= e($m) ?></p><?php endif; ?>
       <?php if ($m = flash('error')): ?><p class="form-status is-error" role="alert"><?= e($m) ?></p><?php endif; ?>
       <?= $content ?>

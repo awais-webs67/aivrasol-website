@@ -68,3 +68,4 @@ $router->any('/admin/campaigns/{id}', fn (string $id) => admin_campaign_edit($id
 
 $router->any('/admin/backups', fn () => admin_backups());
 $router->get('/admin/backups/download', fn () => admin_backup_download((string) ($_GET['name'] ?? '')));
+$router->any('/admin/system', fn () => admin_system());

@@ -102,4 +102,7 @@ return [
     '2026_10_23_suppressions' => function (PDO $pdo): void {
         // schema.sql has already created email_suppressions.
     },
+    '2026_10_24_system_checks' => function (PDO $pdo): void {
+        // schema.sql has already created system_checks.
+    },
 ];
