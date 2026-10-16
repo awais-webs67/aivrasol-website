@@ -28,5 +28,20 @@ function run_scheduled_tasks(bool $cli): string
         $save->execute(['task_cleanup_at', gmdate('Y-m-d H:i:s')]);
         $out[] = 'Cleanup done.';
     }
+    // Daily database backup (from the command line only, where there is no time limit).
+    if ($cli && setting('backup_auto', '1') === '1') {
+        $lastBackup = setting('task_backup_at');
+        if ($lastBackup === '' || strtotime($lastBackup . ' UTC') < time() - 23 * 3600) {
+            require_once APP_PATH . '/lib/Backup.php';
+            try {
+                $out[] = 'Backup: ' . Backup::database();
+                Backup::prune(max(2, (int) setting('backup_keep', '7')));
+            } catch (Throwable $e) {
+                $out[] = 'Backup failed: ' . $e->getMessage();
+                error_log('Backup failed: ' . $e->getMessage());
+            }
+            $save->execute(['task_backup_at', gmdate('Y-m-d H:i:s')]);
+        }
+    }
     return implode("\n", $out) . "\n";
 }

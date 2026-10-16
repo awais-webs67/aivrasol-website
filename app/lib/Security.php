@@ -109,22 +109,59 @@ final class Security
         return is_string($token) && !empty($_SESSION['_csrf']) && hash_equals($_SESSION['_csrf'], $token);
     }
 
+    /** Cloudflare's published edge ranges (cloudflare.com/ips). Visitor IPs behind Cloudflare are read from CF-Connecting-IP only when the request really comes from these. */
+    private const CLOUDFLARE = [
+        '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22', '141.101.64.0/18', '108.162.192.0/18',
+        '190.93.240.0/20', '188.114.96.0/20', '197.234.240.0/22', '198.41.128.0/17', '162.158.0.0/15', '104.16.0.0/13',
+        '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22',
+        '2400:cb00::/32', '2606:4700::/32', '2803:f800::/32', '2405:b500::/32', '2405:8100::/32', '2a06:98c0::/29', '2c0f:f248::/32',
+    ];
+
+    /**
+     * The visitor's real IP. Without this, every visitor behind Cloudflare or a host's proxy would share one IP,
+     * and rate limits would block real people. Spoofed headers are ignored unless the request comes from a trusted proxy.
+     */
     public static function clientIp(): string
     {
-        if (config('trust_proxy')) {
-            foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR'] as $header) {
-                if (!empty($_SERVER[$header])) {
-                    $ip = trim(explode(',', $_SERVER[$header])[0]);
-                    if (filter_var($ip, FILTER_VALIDATE_IP)) {
-                        return $ip;
-                    }
-                }
+        $remote = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+        $cf = trim((string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''));
+        if ($cf !== '' && filter_var($cf, FILTER_VALIDATE_IP) && (config('trust_proxy') || self::inRanges($remote, self::CLOUDFLARE))) {
+            return $cf;
+        }
+        if (config('trust_proxy') && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ip = trim(explode(',', (string) $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
             }
         }
-        return (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+        return $remote;
     }
 
-    /** Visitor IPs are stored only as keyed hashes, never in plain text. */
+    public static function inRanges(string $ip, array $ranges): bool
+    {
+        $bin = @inet_pton($ip);
+        if ($bin === false) {
+            return false;
+        }
+        foreach ($ranges as $range) {
+            [$net, $bits] = explode('/', $range);
+            $netBin = @inet_pton($net);
+            if ($netBin === false || strlen($netBin) !== strlen($bin)) {
+                continue;
+            }
+            $bits = (int) $bits;
+            $bytes = intdiv($bits, 8);
+            if (strncmp($bin, $netBin, $bytes) !== 0) {
+                continue;
+            }
+            $rest = $bits % 8;
+            if ($rest === 0 || ((ord($bin[$bytes]) ^ ord($netBin[$bytes])) & (0xFF << (8 - $rest)) & 0xFF) === 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static function ipHash(?string $ip = null): string
     {
         return hash_hmac('sha256', $ip ?? self::clientIp(), (string) config('app_key'));

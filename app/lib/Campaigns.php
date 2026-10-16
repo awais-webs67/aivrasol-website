@@ -12,6 +12,22 @@ final class Campaigns
     public const STATUSES = ['draft' => 'Draft', 'sending' => 'Sending', 'paused' => 'Paused', 'done' => 'Finished', 'cancelled' => 'Cancelled'];
     public const TIMEZONES = ['Asia/Karachi', 'Asia/Dubai', 'Europe/London', 'Australia/Sydney', 'America/New_York', 'America/Los_Angeles', 'UTC'];
 
+    public static function suppressionHash(string $email): string
+    {
+        return hash_hmac('sha256', 'suppress' . strtolower(trim($email)), (string) config('app_key'));
+    }
+
+    public static function isSuppressed(string $email): bool
+    {
+        return (bool) Database::value('SELECT COUNT(*) FROM email_suppressions WHERE email_hash = ?', [self::suppressionHash($email)]);
+    }
+
+    /** Remembers an opt-out or bounce for good, even if the contact is later deleted. */
+    public static function suppress(string $email, string $reason): void
+    {
+        Database::run('INSERT IGNORE INTO email_suppressions (email_hash, reason) VALUES (?, ?)', [self::suppressionHash($email), $reason]);
+    }
+
     public static function limits(): array
     {
         return [
@@ -206,7 +222,7 @@ final class Campaigns
                 }
                 $campaign = Database::one('SELECT * FROM campaigns WHERE id = ?', [$next['campaign_id']]);
                 $rest = self::limits()['rest_days'];
-                if ($next['status'] !== 'subscribed') {
+                if ($next['status'] !== 'subscribed' || self::isSuppressed($next['email'])) {
                     Database::run("UPDATE campaign_recipients SET status = 'skipped', error = ? WHERE id = ?", ['Contact is ' . $next['status'], $next['rid']]);
                     continue;
                 }
@@ -226,6 +242,7 @@ final class Campaigns
                     Database::run("UPDATE campaign_recipients SET status = 'failed', error = ?, sent_at = UTC_TIMESTAMP() WHERE id = ?", [mb_substr($err, 0, 255), $next['rid']]);
                     if (preg_match('/\b55[0-4]\b|5\.1\.\d|user unknown|does not exist|no such user|mailbox unavailable|invalid recipient/i', $err)) {
                         Database::run("UPDATE contacts SET status = 'bounced' WHERE id = ?", [$next['id']]);
+                        self::suppress($next['email'], 'bounced');
                     }
                     // Several failures in a row usually means the mailbox is blocked or misconfigured: stop and protect it.
                     $recent = Database::all("SELECT status FROM campaign_recipients WHERE status IN ('sent', 'failed') ORDER BY sent_at DESC, id DESC LIMIT 5");

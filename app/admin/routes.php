@@ -5,6 +5,7 @@ require APP_PATH . '/admin/handlers.php';
 require APP_PATH . '/admin/staff.php';
 require APP_PATH . '/admin/clients.php';
 require APP_PATH . '/admin/campaigns.php';
+require APP_PATH . '/admin/system.php';
 
 /** @var Router $router */
 $router->any('/admin/login', fn () => admin_login());
@@ -64,3 +65,6 @@ $router->post('/admin/campaigns', fn () => admin_campaigns());
 $router->post('/admin/campaigns/tick', fn () => admin_campaign_tick());
 $router->any('/admin/campaigns/new', fn () => admin_campaign_edit());
 $router->any('/admin/campaigns/{id}', fn (string $id) => admin_campaign_edit($id));
+
+$router->any('/admin/backups', fn () => admin_backups());
+$router->get('/admin/backups/download', fn () => admin_backup_download((string) ($_GET['name'] ?? '')));

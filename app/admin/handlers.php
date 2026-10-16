@@ -125,7 +125,7 @@ function admin_setup(): string
 
 /* ---------- Dashboard ---------- */
 
-function admin_send_password_link(array $u, bool $invite): ?string
+function admin_send_password_link(array $u, bool $invite, bool $later = false): ?string
 {
     $minutes = $invite ? 2880 : 60;
     $token = Auth::createResetToken('user', (int) $u['id'], $minutes);
@@ -140,6 +140,11 @@ function admin_send_password_link(array $u, bool $invite): ?string
         $subject = "Reset your $site password";
         $body = "Hi $first,\n\nWe received a request to reset the password for your $site team account.\n\nUse the button below to choose a new one. The link works for 60 minutes and only once.";
         [$text, $html] = Emails::notice('Reset your password', $body, 'Choose a new password', $link, 'If you did not ask for this, you can ignore this email. Your password stays the same.');
+    }
+    if ($later) {
+        // Sent after the page has loaded, so response time does not show whether the account exists.
+        Mailer::queue($u['email'], $subject, $text, $html, null, 'password_reset');
+        return null;
     }
     return Mailer::send($u['email'], $subject, $text, $html, null, $invite ? 'invite' : 'password_reset');
 }
@@ -161,8 +166,8 @@ function admin_forgot(): string
             $u = Database::one('SELECT id, name, email, role FROM users WHERE email = ? AND is_active = 1', [$email]);
             // The same answer is shown whether or not the account exists.
             if ($u && Security::rateLimit('forgot_user', 3, 3600, (string) $u['id'])) {
-                $err = admin_send_password_link($u, false);
-                Auth::audit((int) $u['id'], $err === null ? 'password_reset_sent' : 'password_reset_failed', $email);
+                admin_send_password_link($u, false, true);
+                Auth::audit((int) $u['id'], 'password_reset_sent', $email);
             }
             $sent = true;
         }
@@ -188,6 +193,7 @@ function admin_reset(string $token): string
         if (!$errors) {
             Database::run('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?', [Auth::hash($new), $u['id']]);
             Auth::clearResetTokens('user', (int) $u['id']);
+            Auth::clearLoginLock($u['email']);
             Auth::audit((int) $u['id'], 'password_reset', $u['email']);
             flash('error', 'Your new password is saved. Please sign in.');
             redirect(url('admin/login'));

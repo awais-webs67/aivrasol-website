@@ -44,7 +44,7 @@ function portal_logout(): never
     redirect(url('portal/login'));
 }
 
-function portal_send_link(array $c, bool $invite): ?string
+function portal_send_link(array $c, bool $invite, bool $later = false): ?string
 {
     $token = Auth::createResetToken('client', (int) $c['id'], $invite ? 7 * 1440 : 60);
     $link = absolute_url('portal/reset/' . $token);
@@ -57,6 +57,10 @@ function portal_send_link(array $c, bool $invite): ?string
     }
     $body = "Hi $first,\n\nWe received a request to reset the password for your $site client portal.\n\nUse the button below to choose a new one. The link works for 60 minutes and only once.";
     [$text, $html] = Emails::notice('Reset your password', $body, 'Choose a new password', $link, 'If you did not ask for this, you can ignore this email.');
+    if ($later) {
+        Mailer::queue($c['email'], "Reset your $site portal password", $text, $html, null, 'client_reset');
+        return null;
+    }
     return Mailer::send($c['email'], "Reset your $site portal password", $text, $html, null, 'client_reset');
 }
 
@@ -75,7 +79,7 @@ function portal_forgot(): string
         } else {
             $c = Database::one('SELECT id, contact_name, email FROM clients WHERE email = ? AND is_active = 1', [$email]);
             if ($c && Security::rateLimit('client_forgot', 3, 3600, (string) $c['id'])) {
-                portal_send_link($c, false);
+                portal_send_link($c, false, true);
             }
             $sent = true;
         }
@@ -100,6 +104,7 @@ function portal_reset(string $token): string
         if (!$errors) {
             Database::run('UPDATE clients SET password_hash = ?, must_change_password = 0 WHERE id = ?', [Auth::hash($new), $c['id']]);
             Auth::clearResetTokens('client', (int) $c['id']);
+            Auth::clearLoginLock($c['email'], 'client_');
             flash('error', 'Your password is saved. Please sign in.');
             redirect(url('portal/login'));
         }
@@ -139,7 +144,7 @@ function portal_project(string $id): string
 function portal_messages(string $id): never
 {
     $c = Portal::client();
-    $p = $c ? Portal::project((int) $c['id'], $id) : null;
+    $p = $c && (int) $c['must_change_password'] === 0 ? Portal::project((int) $c['id'], $id) : null;
     if (!$p) {
         json_response(['ok' => false], 404);
     }

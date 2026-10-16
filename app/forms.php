@@ -121,7 +121,7 @@ function apply_other(array &$data, array &$errors, string $field): void
 
 function handle_consultation(): never
 {
-    form_guard('consultation', 8, 600);
+    form_guard('consultation', 15, 600);
     $v = (new Validator($_POST))
         ->check('name', 'Name', 'required|max:100')
         ->check('email', 'Email', 'required|email|max:190')
@@ -135,7 +135,7 @@ function handle_consultation(): never
 
 function handle_contact(): never
 {
-    form_guard('contact', 8, 600);
+    form_guard('contact', 15, 600);
     $interestOptions = array_merge(
         array_column(Content::offerings('service'), 'short_title'),
         array_column(Content::offerings('hire'), 'short_title'),
@@ -166,7 +166,7 @@ function handle_contact(): never
 
 function handle_quote(): never
 {
-    form_guard('quote', 8, 600);
+    form_guard('quote', 15, 600);
     $plan = Content::plan((int) ($_POST['plan_id'] ?? 0));
     if (!$plan) {
         form_fail('Please choose a plan.', ['plan_id' => 'Please choose a plan.']);
@@ -201,7 +201,7 @@ function handle_quote(): never
 
 function handle_application(): never
 {
-    form_guard('apply', 3, 3600);
+    form_guard('apply', 6, 3600);
     $job = null;
     $jobSlug = (string) ($_POST['job'] ?? '');
     if ($jobSlug !== '' && $jobSlug !== 'general') {

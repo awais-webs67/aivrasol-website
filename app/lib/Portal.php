@@ -79,11 +79,11 @@ final class Portal
         $ipKey = Security::ipHash();
         $emailKey = hash_hmac('sha256', 'client' . strtolower($email), (string) config('app_key'));
         if (Security::rateCount('client_login_ip', $ipKey, self::LOCK_SECONDS) >= self::MAX_FAILS * 3
-            || Security::rateCount('client_login_email', $emailKey, self::LOCK_SECONDS) >= self::MAX_FAILS) {
+            || Security::rateCount('client_login_email', $emailKey, self::LOCK_SECONDS) >= self::MAX_FAILS * 2) {
             return 'Too many failed attempts. Please wait 15 minutes and try again.';
         }
         $row = Database::one('SELECT id, password_hash, is_active FROM clients WHERE email = ?', [strtolower($email)]);
-        $hash = $row['password_hash'] ?? '$2y$12$moBWVc5xSqbObWQfcBmx..UZSZ23F3T3LzPcm64UEbgK57W3w8fj.';
+        $hash = $row['password_hash'] ?? Auth::dummyHash();
         if (!password_verify($password, $hash) || !$row || (int) $row['is_active'] !== 1) {
             Security::rateLimit('client_login_ip', PHP_INT_MAX, self::LOCK_SECONDS, $ipKey);
             Security::rateLimit('client_login_email', PHP_INT_MAX, self::LOCK_SECONDS, $emailKey);

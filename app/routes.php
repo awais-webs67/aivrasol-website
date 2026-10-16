@@ -216,6 +216,8 @@ $router->any('/unsubscribe/{token}', function (string $token) {
         if ($contact['status'] === 'subscribed') {
             Database::run("UPDATE contacts SET status = 'unsubscribed' WHERE id = ?", [$contact['id']]);
         }
+        require_once APP_PATH . '/lib/Campaigns.php';
+        Campaigns::suppress($contact['email'], 'unsubscribed');
         $done = true;
         if (($_POST['List-Unsubscribe'] ?? '') === 'One-Click') {
             http_response_code(200);

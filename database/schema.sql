@@ -378,6 +378,12 @@ CREATE TABLE IF NOT EXISTS contacts (
   KEY idx_contacts_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS email_suppressions (
+  email_hash CHAR(64)    NOT NULL PRIMARY KEY COMMENT 'HMAC of the address, so no email is kept after deletion',
+  reason     VARCHAR(20) NOT NULL,
+  created_at TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS email_templates (
   id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   name       VARCHAR(100) NOT NULL,

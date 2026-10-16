@@ -6,15 +6,35 @@ Company website and admin panel for AivraSol, built with PHP 8 and MySQL. No fra
 
 | Area | Details |
 |---|---|
-| Public pages | Home, 6 service pages, 6 hire-a-developer pages, services and hire overviews, portfolio with case studies, pricing with quote form, careers with job pages and CV upload, about, contact, privacy, terms, cookie policy, 404 and 500 pages |
-| Features | Mega menus, hamburger menu on phones, free consultation pop-up, service tabs, project and review sliders, quote cards, FAQ, cookie consent (analytics off by default), back-to-top button, sitemap.xml, robots.txt, Open Graph images, schema.org data |
-| Admin panel (`/admin`) | Dashboard with launch checklist, leads inbox (status, notes, search, CSV export), job applications (CV download), editors for services, hire pages, projects, testimonials, pricing plans, jobs and FAQs, site settings (hero photo, contact photo, home page sections on or off), email settings, admin users with activity log, password change |
-| Emails | Branded alert to your team for every form (to as many addresses as you like), branded automatic reply to the visitor, editable reply texts, SMTP settings from the admin panel or `app/config.php`, test button and email log |
-| Security | Prepared SQL statements, strict Content Security Policy, CSRF tokens, honeypot and timing checks, rate limits, login lockout, Argon2id or bcrypt passwords, secure sessions, file type checks, private CV storage, hashed visitor IPs, hardened `.htaccess` |
+| Public pages | Home, 6 service pages, 6 hire-a-developer pages, services and hire overviews, portfolio with case studies, pricing with quote form, blog with categories and RSS, careers with job pages and CV upload, about, contact, privacy, terms, cookie policy, 404 and 500 pages |
+| Features | Mega menus, hamburger menu on phones, free consultation pop-up, service tabs, project and review sliders, quote cards, FAQ, cookie consent (analytics and ads off by default), back-to-top button |
+| Google and AI search | Sitemap with dates, robots.txt that welcomes Google, Bing and AI crawlers (ChatGPT, Claude, Perplexity, Gemini), `llms.txt` and `llms-full.txt` for AI assistants, schema.org data (company, website, breadcrumbs, services, articles, FAQs, job posts), IndexNow pings to Bing, Search Console and Bing verification, an indexing on/off switch |
+| Ads | Google Ads conversion tag and Meta Pixel, loaded only after a visitor accepts marketing cookies (Google Consent Mode v2). Every form sent counts as a lead conversion |
+| Admin panel (`/admin`) | Dashboard per role, leads inbox, job applications, website content editors, blog editor, settings, email settings, team and roles, backups |
+| Team roles | Admin, HR, Sales, Project manager, Content editor and Employee. Each person sees only their part of the panel. Invitations by email, password reset links, forced password change for temporary passwords |
+| Employees | Staff records, private photos, ID card PDF (front and back, with QR verification), experience letter PDF with your template, signature and stamp, letter numbers, withdraw and restore, public verification page, employee self-service |
+| Client portal (`/portal`) | Clients sign in to see project progress, updates, chat with the team (with file sharing), budget, invoices, payments, remaining budget and amount due. Staff manage it from Admin, Clients and Client projects |
+| Email campaigns | Contacts with CSV import, ready-made templates (cold intro, follow-up, newsletter, announcement), personalisation, sending limits per hour and day, sending window, random gaps, one-click unsubscribe, bounce handling, automatic pause after errors, optional separate mailbox for cold email |
+| Emails | Branded alert to your team for every form, automatic reply to the visitor, SMTP from the admin panel or `app/config.php`, test button and email log |
+| Backups | One-click full backup (database and all files) or database only, daily automatic database backup, and a restore script for moving hosts |
+| Security | Prepared SQL statements, strict Content Security Policy, CSRF tokens, honeypot and timing checks, rate limits, login lockout, Argon2id or bcrypt passwords, secure sessions, file type checks, private storage for CVs, photos, signatures and portal files, encrypted ID numbers and SMTP passwords, hashed visitor IPs, hardened `.htaccess` |
+
+## Who can open what
+
+| Role | Can open |
+|---|---|
+| Admin | Everything, including settings, email, team and roles, letters and ID card settings, backups |
+| HR | Dashboard, job applications, job posts, employees, ID cards and experience letters |
+| Sales | Dashboard, leads, clients, email campaigns, contacts and email templates |
+| Project manager | Dashboard, clients, client projects, updates, chat, invoices and payments |
+| Content editor | Dashboard, website content and blog |
+| Employee | Their own profile, ID card and letters |
+
+Clients never use the team panel. They have their own sign-in at `/portal`.
 
 ## Requirements
 
-- PHP 8.1 or newer with `pdo_mysql`, `mbstring`, `fileinfo`, `gd` (with WebP) and `openssl`
+- PHP 8.1 or newer with `pdo_mysql`, `mbstring`, `fileinfo`, `gd` (with WebP), `openssl`, `sodium`, `zlib` and `zip` (zip is only needed for full backups). All are on by default on cPanel hosts
 - MySQL 8 or MariaDB 10.6+
 - Apache with `mod_rewrite` (cPanel)
 - An SSL certificate (free Let's Encrypt is fine)
@@ -55,6 +75,54 @@ On XAMPP: `C:\xampp\php\php.exe database/install.php`. The database user needs A
 | Email | Who receives enquiries and applications, how emails are sent, and the automatic reply texts |
 
 In a pricing plan, write `[hire-roles]` in an options list to show every live "Hire a developer" page automatically. Every plan question and the contact form also offer an "Other" choice: picking it opens a text box, and what the visitor types is saved with the lead.
+
+## Cron job (needed for campaigns and daily backups)
+
+In cPanel open **Cron Jobs**, choose **Once Per Five Minutes** and enter (use your real path):
+
+```
+php /home/YOUR_CPANEL_USER/public_html/bin/cron.php >/dev/null 2>&1
+```
+
+If your host has no cron feature, Admin, Email campaigns shows a private address you can give to a free service such as cron-job.org. Without either, campaign emails only go out while a campaign page is open.
+
+## Getting found on Google and in AI answers
+
+1. In Admin, Settings, keep **Let search engines and AI tools index the website** ticked, and write the **Company summary**.
+2. Verify the site in **Google Search Console** and **Bing Webmaster Tools** (paste the codes in Settings), then submit `/sitemap.xml` in both. Bing also feeds ChatGPT search and Copilot.
+3. Create a **Google Business Profile** for each office, with the same name, address and phone as on the website.
+4. List the company on LinkedIn, Clutch, GoodFirms and DesignRush with a link back to the site. AI assistants learn about companies from sources like these.
+5. Publish a useful blog post at least twice a month, and ask happy clients for reviews.
+
+## Ads (Google and Meta)
+
+Add the **Google Ads tag ID** (AW-...) and the **lead conversion label**, and the **Meta Pixel ID**, in Admin, Settings. They load only after a visitor accepts marketing cookies, and a lead is counted each time a form is sent.
+
+## Email campaigns without getting blocked
+
+No tool can promise that a mailbox will never be suspended, but these settings keep the risk low:
+
+- Set up SPF, DKIM and DMARC (cPanel, Email Deliverability, Repair).
+- For cold outreach, use a second domain and its own mailbox (Admin, Email campaigns, Sending settings), so the main domain stays clean.
+- Start slowly: about 20 emails a day in week one, 40 in week two, then up to 100 to 150 a day. The defaults are 30 an hour and 150 a day, 09:00 to 18:00 on weekdays.
+- Keep cold emails short and plain, with one link and no attachments. Every email includes an unsubscribe link and the one-click unsubscribe headers Gmail and Outlook require.
+
+## Backups and moving to a new host
+
+Admin, Backups makes a **full backup**: one ZIP with the database and every uploaded file. With the cron job on, the database is also backed up every day (the last 7 are kept). Download a copy regularly.
+
+To move hosts:
+
+1. Make a full backup and download it.
+2. On the new host, deploy the code, create an empty database, and copy `app/config.php` with the **same `app_key`** (it unlocks saved passwords and ID numbers). Update `base_url` and the database details if they changed.
+3. Upload the ZIP to `storage/backups/` and run `php database/restore.php storage/backups/FILE.zip`, then `php database/install.php`.
+4. Add the cron job, point the domain to the new host and check the site.
+
+Everything uses relative paths and settings stored in the database, so nothing else needs changing.
+
+## Open to visitors everywhere
+
+The site does not block any country or IP range. Rate limits only slow down repeated form posts from one address, and they are generous enough for shared mobile networks. Behind Cloudflare, the real visitor IP is detected automatically. Fonts and scripts are self-hosted, so the site still loads where Google services are slow or blocked.
 
 ## Deploy from GitHub with cPanel (recommended)
 
@@ -120,18 +188,23 @@ Buttons use the brand orange with white text, matching the reference design. Tha
 
 ```
 app/            PHP code (never public)
-  admin/        Admin routes, handlers and editable content types
-  lib/          Database, security, validation, mail, uploads, router
-  views/        Page templates, partials and admin screens
+  admin/        Admin routes and screens: content, staff, clients, campaigns, backups
+  lib/          Database, security, mail, uploads, PDFs, portal, campaigns, SEO, backups
+  resources/    Logos used inside PDFs
+  vendor/       FPDF (PDF files) and a QR code generator, both free to use
+  views/        Page templates, partials, admin and portal screens
   config.php    Your settings (create from config.sample.php)
-database/       schema.sql and seed.sql
+bin/cron.php    Background tasks (campaigns, cleanup, daily backup)
+database/       schema.sql, seed.sql, data files, migrations, install.php, restore.php
 public/         Web root: index.php, assets, uploads
-storage/        Logs, sessions and CVs (never public)
+storage/        Logs, sessions, CVs, private files and backups (never public)
 ```
 
 ## Testing done before handover
 
-- 15 pages at 6 screen widths (360 to 1440 px): no horizontal scrolling, no console errors, no broken images
-- 30 browser tests covering menus, hamburger, tabs, sliders, pop-ups, cookie consent, all forms, CV upload and the no-JavaScript fallback
-- Security tests: missing or fake CSRF tokens, bots, forged timestamps, invalid input, email header injection, open redirects, rate limits, PHP disguised as PDF, SQL injection in admin search, stored XSS, login lockout, setup token, private folders under Apache
-- Lighthouse (mobile): Performance 99 to 100, Best Practices 100, SEO 100, Accessibility 95 to 97 (the remaining points are the brand-orange button contrast described above)
+- Public pages at 6 screen widths (360 to 1440 px) and every admin and portal page at 360 px: no horizontal scrolling, no console errors, no broken images
+- 30 browser tests for the public site, plus test suites for roles and passwords (37), SEO and ads consent (58), employees and documents (47), the client portal (43) and email campaigns (37)
+- Access checks: every role blocked from pages outside its role, clients unable to see other clients' projects, messages or files, employees unable to see other employees' documents
+- Security tests: CSRF, bots, rate limits, login lockout, uploads disguised as PDFs, SQL injection, stored XSS in blog posts and chat, unsubscribe and verification tokens, private folders under Apache
+- Backup and restore tested into a fresh database: every table and file came back identical
+- Lighthouse (mobile): Performance 99 to 100, Best Practices 100, SEO 100, Accessibility 95 to 97

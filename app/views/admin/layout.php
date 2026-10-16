@@ -25,6 +25,7 @@ $system = array_filter([
     'admin/settings' => ['settings', 'Settings', 'settings'],
     'admin/email' => ['mail', 'Email', 'settings'],
     'admin/users' => ['users', 'Team and roles', 'users'],
+    'admin/backups' => ['download', 'Backups', 'settings'],
     'admin/profile' => ['user', 'My profile', 'profile'],
 ], fn ($n) => $can($n[2]));
 $current = trim(request_path(), '/');

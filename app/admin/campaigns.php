@@ -38,14 +38,32 @@ function admin_contacts(): string
             Auth::audit((int) $user['id'], 'contacts_from_leads', (string) $added);
             flash('success', "$added website leads added as contacts with the tag website-lead.");
         } elseif (in_array($action, ['unsubscribe', 'resubscribe', 'delete'], true) && ctype_digit((string) ($_POST['id'] ?? ''))) {
-            $id = (int) $_POST['id'];
-            if ($action === 'delete') {
-                Database::run('DELETE FROM contacts WHERE id = ?', [$id]);
+            $row = Database::one('SELECT id, email, status FROM contacts WHERE id = ?', [(int) $_POST['id']]);
+            if (!$row) {
+                flash('error', 'Contact not found.');
+            } elseif ($action === 'resubscribe') {
+                // Only an admin can undo an opt-out, and only when the person has asked to be added back.
+                if ($row['status'] !== 'unsubscribed' || !Auth::can('settings', $user)) {
+                    flash('error', 'Only an admin can re-subscribe someone, and bounced or complained addresses can never be re-subscribed.');
+                } else {
+                    Database::run("UPDATE contacts SET status = 'subscribed' WHERE id = ?", [$row['id']]);
+                    Database::run('DELETE FROM email_suppressions WHERE email_hash = ?', [Campaigns::suppressionHash($row['email'])]);
+                    Auth::audit((int) $user['id'], 'contact_resubscribe', $row['email']);
+                    flash('success', 'Contact re-subscribed. Only do this when they asked for it.');
+                }
             } else {
-                Database::run('UPDATE contacts SET status = ? WHERE id = ?', [$action === 'unsubscribe' ? 'unsubscribed' : 'subscribed', $id]);
+                if ($action === 'delete') {
+                    if ($row['status'] !== 'subscribed') {
+                        Campaigns::suppress($row['email'], $row['status']);
+                    }
+                    Database::run('DELETE FROM contacts WHERE id = ?', [$row['id']]);
+                } else {
+                    Database::run("UPDATE contacts SET status = 'unsubscribed' WHERE id = ?", [$row['id']]);
+                    Campaigns::suppress($row['email'], 'unsubscribed');
+                }
+                Auth::audit((int) $user['id'], 'contact_' . $action, $row['email']);
+                flash('success', $action === 'delete' ? 'Contact deleted.' : 'Contact unsubscribed.');
             }
-            Auth::audit((int) $user['id'], 'contact_' . $action, '#' . $id);
-            flash('success', 'Contact updated.');
         }
         redirect(url('admin/contacts') . (isset($_POST['back']) && is_string($_POST['back']) && str_starts_with($_POST['back'], '?') ? $_POST['back'] : ''));
     }
@@ -96,7 +114,9 @@ function admin_contact_upsert(array $d, string $source, bool $overwrite = true):
         }
         return 0;
     }
-    Database::insert('contacts', $row + ['source' => $source, 'token' => bin2hex(random_bytes(16))]);
+    // Someone who opted out or bounced before (even if since deleted) comes back as unsubscribed, never subscribed.
+    $status = Campaigns::isSuppressed($row['email']) ? 'unsubscribed' : 'subscribed';
+    Database::insert('contacts', $row + ['source' => $source, 'status' => $status, 'token' => bin2hex(random_bytes(16))]);
     return 1;
 }
 
@@ -343,7 +363,7 @@ function admin_campaign_edit(?string $id = null): string
 function admin_campaign_tick(): never
 {
     $user = Auth::user();
-    if (!$user || !Auth::can('campaigns', $user) || !Security::verifyCsrf($_POST['_csrf'] ?? null)) {
+    if (!$user || (int) $user['must_change_password'] === 1 || !Auth::can('campaigns', $user) || !Security::verifyCsrf($_POST['_csrf'] ?? null)) {
         json_response(['ok' => false], 403);
     }
     json_response(['ok' => true, 'report' => Campaigns::run(1, false)]);

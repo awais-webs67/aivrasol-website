@@ -107,13 +107,13 @@ final class Auth
         $ipKey = Security::ipHash();
         $emailKey = hash_hmac('sha256', strtolower($email), (string) config('app_key'));
         if (Security::rateCount('login_ip', $ipKey, self::LOCK_SECONDS) >= self::MAX_FAILS * 3
-            || Security::rateCount('login_email', $emailKey, self::LOCK_SECONDS) >= self::MAX_FAILS) {
+            || Security::rateCount('login_email', $emailKey, self::LOCK_SECONDS) >= self::MAX_FAILS * 2) {
             return 'Too many failed attempts. Please wait 15 minutes and try again.';
         }
 
         $user = Database::one('SELECT id, password_hash, is_active FROM users WHERE email = ?', [strtolower($email)]);
         // Verify against a dummy hash when the user does not exist so timing does not reveal valid emails.
-        $hash = $user['password_hash'] ?? '$2y$12$moBWVc5xSqbObWQfcBmx..UZSZ23F3T3LzPcm64UEbgK57W3w8fj.';
+        $hash = $user['password_hash'] ?? self::dummyHash();
         $valid = password_verify($password, $hash) && $user && (int) $user['is_active'] === 1;
 
         if (!$valid) {
@@ -144,6 +144,19 @@ final class Auth
         unset($_SESSION['admin_id'], $_SESSION['admin_seen'], $_SESSION['admin_fp'], $_SESSION['admin_pv'], $_SESSION['_csrf']);
         self::$cached = false;
         session_regenerate_id(true);
+    }
+
+    /** A hash made with the same algorithm as real ones, so unknown emails take the same time to check. */
+    public static function dummyHash(): string
+    {
+        static $h = null;
+        return $h ??= self::hash(bin2hex(random_bytes(8)));
+    }
+
+    /** Lets someone sign in straight after a password reset, even if their email was locked by wrong guesses. */
+    public static function clearLoginLock(string $email, string $prefix = ''): void
+    {
+        Security::clearRate($prefix . 'login_email', hash_hmac('sha256', ($prefix === 'client_' ? 'client' : '') . strtolower($email), (string) config('app_key')));
     }
 
     public static function algo(): string|int

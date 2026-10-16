@@ -169,31 +169,48 @@ final class Seo
         return max(1, (int) ceil(str_word_count(self::plainText($markdown)) / 220));
     }
 
+    /**
+     * Inline formatting. Code, images and links are cut out into placeholders first, built as complete HTML,
+     * and put back only at the end, so no later rule can ever run inside an attribute.
+     */
     private static function inline(string $s): string
     {
-        $s = e($s);
-        $s = preg_replace_callback('/`([^`]+)`/', fn ($m) => '<code>' . $m[1] . '</code>', $s) ?? $s;
-        $s = preg_replace_callback('/!\[([^\]]*)\]\(([^)\s]+)\)/', function ($m) {
-            $src = html_entity_decode($m[2], ENT_QUOTES);
-            if (!preg_match('#^(https://|/uploads/|uploads/)#', $src)) {
+        $s = str_replace("\x00", '', $s);
+        $parts = [];
+        $hold = function (string $html) use (&$parts): string {
+            $parts[] = $html;
+            return "\x00" . (count($parts) - 1) . "\x00";
+        };
+        $safeUrl = fn (string $u) => !preg_match('/[\[\]"\'<>\s\\`]/', $u);
+        $s = preg_replace_callback('/`([^`]+)`/', fn ($m) => $hold('<code>' . e($m[1]) . '</code>'), $s) ?? $s;
+        $s = preg_replace_callback('/!\[([^\]\x00]*)\]\(([^)\s\x00]+)\)/', function ($m) use ($hold, $safeUrl) {
+            $src = $m[2];
+            if (!$safeUrl($src) || !preg_match('#^(https://|/uploads/|uploads/)#', $src)) {
                 return '';
             }
             $src = str_starts_with($src, 'https://') ? $src : url(ltrim($src, '/'));
-            return '<img src="' . e($src) . '" alt="' . $m[1] . '" loading="lazy" decoding="async">';
+            return $hold('<img src="' . e($src) . '" alt="' . e($m[1]) . '" loading="lazy" decoding="async">');
         }, $s) ?? $s;
-        $s = preg_replace_callback('/\[([^\]]+)\]\(([^)\s]+)\)/', function ($m) {
-            $href = html_entity_decode($m[2], ENT_QUOTES);
+        $s = preg_replace_callback('/\[([^\]\x00]+)\]\(([^)\s\x00]+)\)/', function ($m) use ($hold, $safeUrl) {
+            $href = $m[2];
+            $text = e($m[1]);
+            if (!$safeUrl($href)) {
+                return $text;
+            }
             if (preg_match('~^/[a-z0-9/#_-]*$~i', $href)) {
-                return '<a href="' . e(url(ltrim($href, '/'))) . '">' . $m[1] . '</a>';
+                return $hold('<a href="' . e(url(ltrim($href, '/'))) . '">' . $text . '</a>');
             }
             if (!preg_match('#^(https?://|mailto:)#i', $href)) {
-                return $m[1];
+                return $text;
             }
             $own = str_starts_with($href, base_url());
-            return '<a href="' . e($href) . '"' . ($own ? '' : ' rel="noopener" target="_blank"') . '>' . $m[1] . '</a>';
+            return $hold('<a href="' . e($href) . '"' . ($own ? '' : ' rel="noopener" target="_blank"') . '>' . $text . '</a>');
         }, $s) ?? $s;
+        // Escape everything that is still plain text (placeholders contain only \x00 and digits, so they survive).
+        $s = implode('', array_map(fn ($chunk) => preg_match('/^\x00\d+\x00$/', $chunk) ? $chunk : e($chunk), preg_split('/(\x00\d+\x00)/', $s, -1, PREG_SPLIT_DELIM_CAPTURE) ?: []));
         $s = preg_replace('/\*\*(.+?)\*\*/', '<strong>$1</strong>', $s) ?? $s;
-        return preg_replace('/(?<![*\w])\*(?!\s)(.+?)(?<!\s)\*(?!\w)/', '<em>$1</em>', $s) ?? $s;
+        $s = preg_replace('/(?<![*\w])\*(?!\s)(.+?)(?<!\s)\*(?!\w)/', '<em>$1</em>', $s) ?? $s;
+        return preg_replace_callback('/\x00(\d+)\x00/', fn ($m) => $parts[(int) $m[1]] ?? '', $s) ?? $s;
     }
 }
 

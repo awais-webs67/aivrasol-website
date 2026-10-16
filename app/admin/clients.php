@@ -99,7 +99,7 @@ function admin_client_edit(?string $id = null): string
                     flash('success', 'Client saved.');
                 } else {
                     $data['password_hash'] = Auth::hash(bin2hex(random_bytes(24)));
-                    $data['lead_id'] = ctype_digit((string) ($_POST['lead_id'] ?? '')) ? (int) $_POST['lead_id'] : null;
+                    $data['lead_id'] = Auth::can('leads', $user) && ctype_digit((string) ($_POST['lead_id'] ?? '')) ? (int) $_POST['lead_id'] : null;
                     $cid = Database::insert('clients', $data);
                     Auth::audit((int) $user['id'], 'client_create', $data['email']);
                     if ($data['lead_id']) {
@@ -308,7 +308,7 @@ function admin_project_entry_delete(string $id, string $eid): never
 function admin_project_messages(string $id): never
 {
     $user = Auth::user();
-    if (!$user || !Auth::can('projects', $user)) {
+    if (!$user || (int) $user['must_change_password'] === 1 || !Auth::can('projects', $user)) {
         json_response(['ok' => false], 403);
     }
     $p = ctype_digit($id) ? Database::one('SELECT p.id, p.title, p.client_id, c.email AS client_email, c.contact_name, c.is_active FROM client_projects p JOIN clients c ON c.id = p.client_id WHERE p.id = ?', [(int) $id]) : null;
