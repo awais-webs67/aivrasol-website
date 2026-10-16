@@ -48,6 +48,12 @@ function admin_launch_checklist(): array
     $items[] = [$withAddress > 0, $withAddress > 0 ? "$withAddress offices have an address" : 'Add cities and addresses to your offices', url('admin/content/offices')];
     $items[] = [setting('contact_person_name') !== '', 'Add your sales contact person', url('admin/settings')];
     $items[] = [Content::stats() !== [], 'Add company numbers (projects, clients, team)', url('admin/settings')];
+    $items[] = [Seo::indexingOn(), Seo::indexingOn() ? 'Search engines can index the website' : 'Search indexing is OFF. Turn it on in Settings before launch', url('admin/settings')];
+    $items[] = [setting('google_site_verification') !== '', 'Verify the site in Google Search Console, then submit /sitemap.xml there', url('admin/settings')];
+    $items[] = [setting('bing_site_verification') !== '', 'Verify the site in Bing Webmaster Tools (also feeds ChatGPT search and Copilot)', url('admin/settings')];
+    $lastPost = (string) Database::value('SELECT MAX(published_at) FROM posts WHERE is_active = 1 AND published_at <= UTC_DATE()');
+    $fresh = $lastPost !== '' && strtotime($lastPost) > time() - 35 * 86400;
+    $items[] = [$fresh, $fresh ? 'Blog has a post from the last 5 weeks' : 'Publish a new blog post (aim for two a month)', url('admin/content/posts/new')];
     $items[] = [(string) config('mail.host') !== '', 'Set SMTP details in app/config.php so lead emails arrive reliably', null];
     $items[] = [Security::isHttps(), 'Serve the site over HTTPS', null];
     $items[] = [!str_starts_with((string) config('app_key'), 'replace'), 'Set a unique app_key in app/config.php', null];
@@ -379,13 +385,16 @@ function admin_content_edit(string $key, ?string $id = null): string
         }
     }
     $errors = [];
-    $values = $row ?? ['is_active' => 1, 'sort_order' => 0, 'rating' => 5];
+    $values = $row ?? ['is_active' => 1, 'sort_order' => 0, 'rating' => 5, 'published_at' => gmdate('Y-m-d'), 'author_name' => setting('site_name', 'AivraSol') . ' Team'];
 
     if (is_post()) {
         admin_csrf();
         if (($_POST['action'] ?? '') === 'delete' && $row) {
             Database::run("DELETE FROM `{$res['table']}` WHERE id = ?", [$row['id']]);
             Auth::audit((int) $user['id'], 'delete_' . $key, '#' . $row['id']);
+            if (isset($res['public'])) {
+                Seo::ping([absolute_url($res['public']($row))]);
+            }
             flash('success', ucfirst($res['singular']) . ' deleted.');
             redirect(url('admin/content/' . $key));
         }
@@ -400,6 +409,9 @@ function admin_content_edit(string $key, ?string $id = null): string
                     $newId = Database::insert($res['table'], $data);
                 }
                 Auth::audit((int) $user['id'], ($row ? 'update_' : 'create_') . $key, '#' . $newId);
+                if (isset($res['public'])) {
+                    Seo::ping([absolute_url($res['public'](array_merge($row ?? [], $data)))]);
+                }
                 flash('success', ucfirst($res['singular']) . ' saved.');
                 redirect(url("admin/content/$key/$newId"));
             } catch (PDOException $e) {
@@ -450,6 +462,16 @@ function admin_collect_fields(array $fields, ?array $row): array
                 continue 2;
             case 'slug':
                 $value = slugify($value);
+                break;
+            case 'date':
+                $d = DateTime::createFromFormat('!Y-m-d', $value);
+                if ($value !== '' && (!$d || $d->format('Y-m-d') !== $value)) {
+                    $errors[$name] = 'Please enter a valid date.';
+                }
+                if ($value === '' && empty($f['required'])) {
+                    $data[$name] = null;
+                    continue 2;
+                }
                 break;
             case 'select':
                 if ($value !== '' && !array_key_exists($value, $f['options'])) {
@@ -527,8 +549,18 @@ function admin_settings_schema(): array
             'social_x' => ['X (Twitter)', 'url'],
             'social_github' => ['GitHub', 'url'],
         ],
-        'Analytics' => [
+        'Google and AI search' => [
+            'search_indexing' => ['Let search engines and AI tools index the website', 'bool', 'Untick only while you test a copy of the site. Live sites must keep this on.'],
+            'company_summary' => ['Company summary for Google and AI assistants', 'textarea', 'Two or three plain sentences: what you do, for whom, and where. Used in Google business data and in /llms.txt, which AI tools such as ChatGPT, Claude and Perplexity read.'],
+            'company_founded' => ['Year founded', 'text', 'e.g. 2021'],
+            'google_site_verification' => ['Google Search Console code', 'text', 'In Search Console choose "HTML tag" and paste the tag or just its content value.'],
+            'bing_site_verification' => ['Bing Webmaster Tools code', 'text', 'Choose "Meta tag" in Bing Webmaster Tools and paste the tag or its content value. Bing also powers ChatGPT search and Copilot.'],
+        ],
+        'Analytics and ads (load only after cookie consent)' => [
             'ga_measurement_id' => ['Google Analytics 4 ID', 'text', 'Looks like G-XXXXXXXXXX. Loads only after a visitor accepts analytics cookies.'],
+            'google_ads_id' => ['Google Ads tag ID', 'text', 'Looks like AW-123456789. Loads only after a visitor accepts marketing cookies.'],
+            'google_ads_lead_label' => ['Google Ads lead conversion label', 'text', 'From Google Ads, Goals, Conversions, your lead action, Tag setup. Looks like AbC-D_efG123. Sent when a form is submitted.'],
+            'meta_pixel_id' => ['Meta (Facebook and Instagram) Pixel ID', 'text', 'Numbers only, from Meta Events Manager. A Lead event is sent when a form is submitted.'],
         ],
     ];
 }
@@ -563,7 +595,21 @@ function admin_settings(): string
                 if (mb_strlen($v) > 2000) $errors[$key] = "$label is too long.";
                 if ($type === 'email' && $v !== '' && !filter_var($v, FILTER_VALIDATE_EMAIL)) $errors[$key] = "$label must be a valid email.";
                 if ($type === 'url' && $v !== '' && !preg_match('#^https://[^\s]+$#i', $v)) $errors[$key] = "$label must start with https://";
-                if ($key === 'ga_measurement_id' && $v !== '' && !preg_match('/^G-[A-Z0-9]{4,20}$/', $v)) $errors[$key] = 'Analytics ID must look like G-XXXXXXXXXX.';
+                if (in_array($key, ['google_site_verification', 'bing_site_verification'], true) && preg_match('/content=["\']([^"\']+)["\']/i', $v, $m)) {
+                    $v = $m[1];
+                }
+                $formats = [
+                    'ga_measurement_id' => ['/^G-[A-Z0-9]{4,20}$/', 'Analytics ID must look like G-XXXXXXXXXX.'],
+                    'google_ads_id' => ['/^AW-[0-9]{6,15}$/', 'Google Ads tag ID must look like AW-123456789.'],
+                    'google_ads_lead_label' => ['/^[A-Za-z0-9_-]{4,64}$/', 'The conversion label can only contain letters, numbers, - and _.'],
+                    'meta_pixel_id' => ['/^[0-9]{8,20}$/', 'The Pixel ID must be numbers only.'],
+                    'google_site_verification' => ['/^[A-Za-z0-9_-]{10,100}$/', 'Paste the Google verification tag or its content value.'],
+                    'bing_site_verification' => ['/^[A-Za-z0-9_-]{10,100}$/', 'Paste the Bing verification tag or its content value.'],
+                    'company_founded' => ['/^(19|20)[0-9]{2}$/', 'Enter a four-digit year.'],
+                ];
+                if (isset($formats[$key]) && $v !== '' && !preg_match($formats[$key][0], $v)) {
+                    $errors[$key] = $formats[$key][1];
+                }
                 $save[$key] = $v;
             }
         }

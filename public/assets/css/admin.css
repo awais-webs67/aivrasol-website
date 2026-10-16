@@ -122,3 +122,4 @@ fieldset.card legend { padding: 0 6px; font-size: 15px; font-weight: 600; color:
 .row-menu-body { margin-top: 8px; width: 240px; display: grid; gap: 12px; padding: 14px; background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: 0 12px 30px rgba(25, 31, 36, .14); }
 .row-menu-body .btn .icon { width: 16px; height: 16px; }
 .role-note { margin: 0 0 16px; }
+.textarea.editor { min-height: 480px; font-size: 15px; line-height: 1.65; }

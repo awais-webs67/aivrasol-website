@@ -22,6 +22,7 @@ $router->get('/services', fn () => view('pages/offerings', [
     'metaDescription' => 'Web, mobile, UI/UX, cloud, AI and SEO services from AivraSol. One team from idea to launch.',
     'type' => 'service',
     'items' => Content::offerings('service'),
+    'crumbs' => ['Services' => 'services'],
 ]));
 
 $router->get('/services/{slug}', function (string $slug) {
@@ -32,6 +33,8 @@ $router->get('/services/{slug}', function (string $slug) {
         'item' => $item,
         'type' => 'service',
         'faqs' => Content::faqs($slug) ?: Content::faqs('general'),
+        'crumbs' => ['Services' => 'services', $item['title'] => 'services/' . $slug],
+        'schema' => [service_schema($item, 'services/' . $slug)],
     ]);
 });
 
@@ -40,6 +43,7 @@ $router->get('/hire', fn () => view('pages/offerings', [
     'metaDescription' => 'Hire vetted React, Node.js, Laravel, Python, React Native and DevOps developers from AivraSol on flexible terms.',
     'type' => 'hire',
     'items' => Content::offerings('hire'),
+    'crumbs' => ['Hire developers' => 'hire'],
 ]));
 
 $router->get('/hire/{slug}', function (string $slug) {
@@ -50,6 +54,8 @@ $router->get('/hire/{slug}', function (string $slug) {
         'item' => $item,
         'type' => 'hire',
         'faqs' => Content::faqs($slug) ?: Content::faqs('pricing'),
+        'crumbs' => ['Hire developers' => 'hire', $item['title'] => 'hire/' . $slug],
+        'schema' => [service_schema($item, 'hire/' . $slug)],
     ]);
 });
 
@@ -57,6 +63,7 @@ $router->get('/portfolio', fn () => view('pages/portfolio', [
     'pageTitle' => 'Portfolio | AivraSol',
     'metaDescription' => 'Selected web, mobile and e-commerce projects built by AivraSol.',
     'projects' => Content::projects(),
+    'crumbs' => ['Portfolio' => 'portfolio'],
 ]));
 
 $router->get('/portfolio/{slug}', function (string $slug) {
@@ -66,6 +73,7 @@ $router->get('/portfolio/{slug}', function (string $slug) {
         'metaDescription' => $project['summary'],
         'ogImage' => $project['image'],
         'project' => $project,
+        'crumbs' => ['Portfolio' => 'portfolio', $project['title'] => 'portfolio/' . $slug],
         'more' => array_values(array_filter(Content::projects(), fn ($p) => $p['slug'] !== $slug)),
     ]);
 });
@@ -83,6 +91,7 @@ $router->get('/pricing', function () {
         'q2Other' => is_string($_GET['q2_other'] ?? null) ? mb_substr($_GET['q2_other'], 0, 150) : '',
         'role' => in_array($_GET['role'] ?? '', array_column(Content::offerings('hire'), 'short_title'), true) ? $_GET['role'] : '',
         'faqs' => Content::faqs('pricing'),
+        'crumbs' => ['Pricing' => 'pricing'],
     ]);
 });
 
@@ -91,6 +100,7 @@ $router->get('/careers', fn () => view('pages/careers', [
     'metaDescription' => 'Join AivraSol. Open roles, internships and benefits for developers, designers and marketers.',
     'jobs' => Content::jobs(),
     'faqs' => Content::faqs('careers'),
+    'crumbs' => ['Careers' => 'careers'],
 ]));
 
 $router->get('/careers/{slug}', function (string $slug) {
@@ -99,6 +109,8 @@ $router->get('/careers/{slug}', function (string $slug) {
         'pageTitle' => $job['title'] . ' | Careers at AivraSol',
         'metaDescription' => $job['summary'],
         'job' => $job,
+        'crumbs' => ['Careers' => 'careers', $job['title'] => 'careers/' . $slug],
+        'schema' => [job_schema($job)],
     ]);
 });
 
@@ -106,11 +118,13 @@ $router->get('/about', fn () => view('pages/about', [
     'pageTitle' => 'About Us | AivraSol',
     'metaDescription' => 'AivraSol is a software development company that builds web apps, mobile apps and AI solutions for growing businesses.',
     'stats' => Content::stats(),
+    'crumbs' => ['About us' => 'about'],
 ]));
 
 $router->get('/contact', fn () => view('pages/contact', [
     'pageTitle' => 'Contact Us | AivraSol',
     'metaDescription' => 'Talk to AivraSol about your project. Email, phone, WhatsApp or send a message and we reply within one business day.',
+    'crumbs' => ['Contact us' => 'contact'],
 ]));
 
 foreach (['privacy-policy' => 'Privacy Policy', 'terms' => 'Terms & Conditions', 'cookie-policy' => 'Cookie Policy'] as $slug => $title) {
@@ -121,6 +135,59 @@ foreach (['privacy-policy' => 'Privacy Policy', 'terms' => 'Terms & Conditions',
     ]));
 }
 
+$router->get('/blog', function () {
+    $posts = Content::posts();
+    $cat = is_string($_GET['category'] ?? null) ? $_GET['category'] : '';
+    $cats = array_values(array_unique(array_column($posts, 'category')));
+    if ($cat !== '' && !in_array($cat, $cats, true)) {
+        $cat = '';
+    }
+    return view('pages/blog', [
+        'pageTitle' => 'Blog: Software, Hiring and Growth Guides | ' . setting('site_name', 'AivraSol'),
+        'metaDescription' => 'Practical guides on software development costs, hiring developers, tech stacks, AI and growing your business online, from the AivraSol team.',
+        'posts' => $cat === '' ? $posts : array_values(array_filter($posts, fn ($p) => $p['category'] === $cat)),
+        'categories' => $cats,
+        'category' => $cat,
+        'metaRobots' => $cat === '' ? null : 'noindex, follow',
+        'canonicalPath' => 'blog',
+        'crumbs' => ['Blog' => 'blog'],
+    ]);
+});
+
+$router->get('/blog/feed.xml', function () {
+    header('Content-Type: application/rss+xml; charset=utf-8');
+    return render('feed', ['posts' => array_slice(Content::posts(), 0, 20)]);
+});
+
+$router->get('/blog/{slug}', function (string $slug) {
+    $post = Content::post($slug) ?? abort(404);
+    return view('pages/post', [
+        'pageTitle' => $post['meta_title'] ?: $post['title'] . ' | ' . setting('site_name', 'AivraSol'),
+        'metaDescription' => $post['meta_description'] ?: $post['excerpt'],
+        'ogImage' => $post['image'] ?: null,
+        'ogType' => 'article',
+        'post' => $post,
+        'more' => array_slice(array_values(array_filter(Content::posts(), fn ($p) => $p['slug'] !== $slug)), 0, 3),
+        'crumbs' => ['Blog' => 'blog', $post['title'] => 'blog/' . $slug],
+        'schema' => [article_schema($post)],
+    ]);
+});
+
+$router->get('/llms.txt', function () {
+    header('Content-Type: text/plain; charset=utf-8');
+    return render('llms', ['full' => false]);
+});
+
+$router->get('/llms-full.txt', function () {
+    header('Content-Type: text/plain; charset=utf-8');
+    return render('llms', ['full' => true]);
+});
+
+$router->get('/indexnow-key.txt', function () {
+    header('Content-Type: text/plain; charset=utf-8');
+    return Seo::indexNowKey();
+});
+
 $router->get('/sitemap.xml', function () {
     header('Content-Type: application/xml; charset=utf-8');
     return render('sitemap', [
@@ -128,12 +195,13 @@ $router->get('/sitemap.xml', function () {
         'hires' => Content::offerings('hire'),
         'projects' => Content::projects(),
         'jobs' => Content::jobs(),
+        'posts' => Content::posts(),
     ]);
 });
 
 $router->get('/robots.txt', function () {
     header('Content-Type: text/plain; charset=utf-8');
-    return "User-agent: *\nDisallow: /admin\nDisallow: /submit\n\nSitemap: " . absolute_url('sitemap.xml') . "\n";
+    return render('robots');
 });
 
 $router->post('/submit/consultation', fn () => handle_consultation());

@@ -49,13 +49,23 @@ final class Security
         $script = ["'self'"];
         $connect = ["'self'"];
         $img = ["'self'", 'data:'];
-        if (setting('ga_measurement_id') !== '') {
+        $frame = [];
+        $google = setting('ga_measurement_id') !== '' || setting('google_ads_id') !== '';
+        if ($google) {
             $script[] = 'https://www.googletagmanager.com';
-            $connect[] = 'https://*.google-analytics.com';
-            $connect[] = 'https://*.analytics.google.com';
-            $connect[] = 'https://*.googletagmanager.com';
-            $img[] = 'https://*.google-analytics.com';
-            $img[] = 'https://*.googletagmanager.com';
+            array_push($connect, 'https://*.google-analytics.com', 'https://*.analytics.google.com', 'https://*.googletagmanager.com');
+            array_push($img, 'https://*.google-analytics.com', 'https://*.googletagmanager.com');
+        }
+        if (setting('google_ads_id') !== '') {
+            array_push($script, 'https://www.googleadservices.com', 'https://googleads.g.doubleclick.net', 'https://www.google.com');
+            array_push($connect, 'https://www.googleadservices.com', 'https://googleads.g.doubleclick.net', 'https://www.google.com', 'https://*.doubleclick.net');
+            array_push($img, 'https://www.googleadservices.com', 'https://googleads.g.doubleclick.net', 'https://www.google.com', 'https://*.doubleclick.net', 'https://*.google.com');
+            array_push($frame, 'https://*.doubleclick.net', 'https://www.googletagmanager.com');
+        }
+        if (setting('meta_pixel_id') !== '') {
+            $script[] = 'https://connect.facebook.net';
+            array_push($connect, 'https://www.facebook.com', 'https://connect.facebook.net');
+            $img[] = 'https://www.facebook.com';
         }
         $csp = implode('; ', [
             "default-src 'self'",
@@ -64,13 +74,16 @@ final class Security
             'img-src ' . implode(' ', $img),
             "font-src 'self'",
             'connect-src ' . implode(' ', $connect),
-            "frame-src 'none'",
+            'frame-src ' . ($frame ? implode(' ', $frame) : "'none'"),
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
             "frame-ancestors 'none'",
         ]) . (self::isHttps() ? '; upgrade-insecure-requests' : '');
         header('Content-Security-Policy: ' . $csp);
+        if (setting('search_indexing', '1') !== '1') {
+            header('X-Robots-Tag: noindex, nofollow');
+        }
         header('X-Content-Type-Options: nosniff');
         header('X-Frame-Options: DENY');
         header('Referrer-Policy: strict-origin-when-cross-origin');

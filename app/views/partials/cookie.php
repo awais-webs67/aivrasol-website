@@ -11,7 +11,7 @@
       <label class="switch"><input type="checkbox" data-consent="analytics" aria-label="Analytics cookies"><i></i></label>
     </div>
     <div class="cookie-opt">
-      <div><strong>Marketing</strong><span>Measures our ads. Off unless you turn it on.</span></div>
+      <div><strong>Marketing</strong><span>Google Ads and Meta (Facebook, Instagram) measure which ads bring visitors. Off unless you turn it on.</span></div>
       <label class="switch"><input type="checkbox" data-consent="marketing" aria-label="Marketing cookies"><i></i></label>
     </div>
   </div>

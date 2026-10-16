@@ -37,6 +37,7 @@ $whatsapp = setting('whatsapp');
             <li><a href="<?= e(url('about')) ?>">About us</a></li>
             <li><a href="<?= e(url('portfolio')) ?>">Portfolio</a></li>
             <li><a href="<?= e(url('pricing')) ?>">Pricing</a></li>
+            <li><a href="<?= e(url('blog')) ?>">Blog</a></li>
             <li><a href="<?= e(url('careers')) ?>">Careers</a></li>
             <li><a href="<?= e(url('contact')) ?>">Contact us</a></li>
           </ul>

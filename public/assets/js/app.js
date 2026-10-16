@@ -236,7 +236,7 @@
           toast(data.message, 'success');
           var dlg = form.closest('dialog');
           if (dlg) setTimeout(function () { if (dlg.open) dlg.close(); }, 2600);
-          if (window.gtag && consent.analytics) window.gtag('event', 'generate_lead', { form: form.action.split('/').pop() });
+          trackLead(form.action.split('/').pop());
         } else {
           showErrors(form, data.errors);
           showStatus(form, data.message || 'Please check the form and try again.', false);
@@ -355,10 +355,10 @@
     doc.cookie = COOKIE + '=' + v + '; Max-Age=' + (60 * 60 * 24 * 182) + '; Path=/; SameSite=Lax' + secure;
     consent = c;
   }
-  function clearAnalyticsCookies() {
+  function clearCookies(pattern) {
     doc.cookie.split(';').forEach(function (part) {
       var name = part.split('=')[0].trim();
-      if (/^_ga|^_gid|^_gat/.test(name)) {
+      if (pattern.test(name)) {
         var host = location.hostname.replace(/^www\./, '');
         ['', '; domain=' + host, '; domain=.' + host].forEach(function (d) {
           doc.cookie = name + '=; Max-Age=0; Path=/' + d;
@@ -366,17 +366,60 @@
       }
     });
   }
-  function loadAnalytics() {
-    var id = doc.body.getAttribute('data-ga');
-    if (!id || window.gtag || !/^G-[A-Z0-9]+$/.test(id)) return;
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = function () { window.dataLayer.push(arguments); };
-    window.gtag('js', new Date());
-    window.gtag('config', id, { anonymize_ip: true });
+  /* Google tag (Analytics and Ads) with Consent Mode, and the Meta Pixel. Nothing loads before consent. */
+  var body = doc.body;
+  var gaId = /^G-[A-Z0-9]+$/.test(body.getAttribute('data-ga') || '') ? body.getAttribute('data-ga') : '';
+  var adsId = /^AW-[0-9]+$/.test(body.getAttribute('data-gads') || '') ? body.getAttribute('data-gads') : '';
+  var adsLabel = body.getAttribute('data-gads-lead') || '';
+  var pixelId = /^[0-9]+$/.test(body.getAttribute('data-pixel') || '') ? body.getAttribute('data-pixel') : '';
+  var configured = {};
+  function consentState(c) {
+    var ad = c.marketing ? 'granted' : 'denied';
+    return { analytics_storage: c.analytics ? 'granted' : 'denied', ad_storage: ad, ad_user_data: ad, ad_personalization: ad };
+  }
+  function loadGoogle(c) {
+    if (!gaId && !adsId) return;
+    var wantGa = gaId && c.analytics, wantAds = adsId && c.marketing;
+    if (!window.gtag) {
+      if (!wantGa && !wantAds) return;
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      window.gtag('consent', 'default', consentState({ analytics: false, marketing: false }));
+      window.gtag('js', new Date());
+      var s = doc.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaId || adsId);
+      doc.head.appendChild(s);
+    }
+    window.gtag('consent', 'update', consentState(c));
+    if (wantGa && !configured.ga) { window.gtag('config', gaId, { anonymize_ip: true }); configured.ga = true; }
+    if (wantAds && !configured.ads) { window.gtag('config', adsId); configured.ads = true; }
+  }
+  function loadPixel() {
+    if (!pixelId || window.fbq) return;
+    var n = window.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
+    if (!window._fbq) window._fbq = n;
+    n.push = n; n.loaded = true; n.version = '2.0'; n.queue = [];
     var s = doc.createElement('script');
     s.async = true;
-    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id);
+    s.src = 'https://connect.facebook.net/en_US/fbevents.js';
     doc.head.appendChild(s);
+    window.fbq('init', pixelId);
+    window.fbq('track', 'PageView');
+  }
+  function startTracking(c) {
+    loadGoogle(c);
+    if (c.marketing) loadPixel();
+    else if (window.fbq) window.fbq('consent', 'revoke');
+    if (!c.analytics) clearCookies(/^_ga|^_gid|^_gat/);
+    if (!c.marketing) clearCookies(/^_fbp|^_fbc|^_gcl/);
+  }
+  /* Called after a form is sent: counts the lead in Analytics, Google Ads and Meta when allowed. */
+  function trackLead(formName) {
+    if (!consent) return;
+    if (window.gtag && consent.analytics && gaId) window.gtag('event', 'generate_lead', { form: formName });
+    if (window.gtag && consent.marketing && adsId && adsLabel) window.gtag('event', 'conversion', { send_to: adsId + '/' + adsLabel });
+    if (window.fbq && consent.marketing && pixelId) window.fbq('track', 'Lead', { content_name: formName });
   }
   function syncSwitches() {
     if (!banner) return;
@@ -386,7 +429,7 @@
   }
   function apply(c) {
     writeConsent(c);
-    if (c.analytics) loadAnalytics(); else clearAnalyticsCookies();
+    startTracking(c);
     if (banner) banner.hidden = true;
     toast('Your cookie choices have been saved.', 'success');
   }
@@ -423,5 +466,5 @@
       if (first) first.focus();
     });
   });
-  if (consent && consent.analytics) loadAnalytics();
+  if (consent) startTracking(consent);
 })();

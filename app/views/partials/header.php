@@ -1,7 +1,7 @@
 <?php
 $services = Content::offerings('service');
 $hires = Content::offerings('hire');
-$simple = ['/about' => 'About', '/portfolio' => 'Portfolio', '/careers' => 'Careers', '/pricing' => 'Pricing'];
+$simple = ['/about' => 'About', '/portfolio' => 'Portfolio', '/blog' => 'Blog', '/careers' => 'Careers', '/pricing' => 'Pricing'];
 ?>
 <header class="site-header" data-header>
   <div class="container header-inner">

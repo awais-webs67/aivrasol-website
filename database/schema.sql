@@ -90,6 +90,25 @@ CREATE TABLE IF NOT EXISTS plans (
   updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS posts (
+  id               INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  title            VARCHAR(160) NOT NULL,
+  slug             VARCHAR(120) NOT NULL UNIQUE,
+  category         VARCHAR(60)  NOT NULL DEFAULT '',
+  excerpt          VARCHAR(400) NOT NULL DEFAULT '',
+  body             MEDIUMTEXT   NOT NULL,
+  image            VARCHAR(255) NOT NULL DEFAULT '',
+  author_name      VARCHAR(80)  NOT NULL DEFAULT '',
+  author_role      VARCHAR(80)  NOT NULL DEFAULT '',
+  meta_title       VARCHAR(160) NOT NULL DEFAULT '',
+  meta_description VARCHAR(300) NOT NULL DEFAULT '',
+  published_at     DATE         NULL,
+  is_active        TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_posts_live (is_active, published_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS jobs (
   id           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   slug         VARCHAR(80)  NOT NULL UNIQUE,

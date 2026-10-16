@@ -111,6 +111,23 @@ final class Content
         return null;
     }
 
+    /** Live blog posts, newest first. Posts with a future date stay hidden. */
+    public static function posts(): array
+    {
+        return self::remember('posts', fn () => Database::all(
+            'SELECT id, title, slug, category, excerpt, image, author_name, author_role, published_at, updated_at, body FROM posts WHERE is_active = 1 AND published_at IS NOT NULL AND published_at <= UTC_DATE() ORDER BY published_at DESC, id DESC'
+        ));
+    }
+
+    public static function post(string $slug): ?array
+    {
+        if (!self::posts()) {
+            return null;
+        }
+        $row = Database::one('SELECT * FROM posts WHERE slug = ? AND is_active = 1 AND published_at IS NOT NULL AND published_at <= UTC_DATE()', [$slug]);
+        return $row ?: null;
+    }
+
     public static function faqs(string $scope): array
     {
         return self::remember("faq_$scope", fn () => Database::all(

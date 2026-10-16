@@ -77,4 +77,12 @@ return [
             $pdo->exec('ALTER TABLE users ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active');
         }
     },
+    '2026_10_19_blog' => function (PDO $pdo): void {
+        // schema.sql has already created the posts table. Add the starter articles once.
+        if ((int) $pdo->query('SELECT COUNT(*) FROM posts')->fetchColumn() === 0) {
+            foreach (require __DIR__ . '/data/posts.php' as $post) {
+                insert_row($pdo, 'posts', $post);
+            }
+        }
+    },
 ];
