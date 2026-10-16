@@ -13,7 +13,7 @@
       <dt>From page</dt><dd><?= e($lead['source_page']) ?></dd>
     </dl>
     <?php if ($lead['message']): ?><h3>Message</h3><div class="message"><?= nl2br(e($lead['message'])) ?></div><?php endif; ?>
-    <p class="btn-group"><a class="btn btn-sm" href="mailto:<?= e($lead['email']) ?>?subject=<?= e(rawurlencode('Re: your enquiry to ' . setting('site_name', 'AivraSol'))) ?>"><?= icon('mail') ?>Reply by email</a></p>
+    <p class="btn-group"><a class="btn btn-sm" href="mailto:<?= e($lead['email']) ?>?subject=<?= e(rawurlencode('Re: your enquiry to ' . setting('site_name', 'AivraSol'))) ?>"><?= icon('mail') ?>Reply by email</a><?php if (Auth::can('clients', $user)): ?><a class="btn btn-sm btn-outline" href="<?= e(url('admin/clients/new?lead=' . $lead['id'])) ?>"><?= icon('briefcase') ?>Create client</a><?php endif; ?></p>
   </section>
   <section class="card">
     <h2>Update</h2>

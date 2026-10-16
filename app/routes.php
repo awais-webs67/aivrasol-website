@@ -228,6 +228,7 @@ $router->post('/submit/contact', fn () => handle_contact());
 $router->post('/submit/quote', fn () => handle_quote());
 $router->post('/submit/apply', fn () => handle_application());
 
+require APP_PATH . '/portal.php';
 require APP_PATH . '/admin/routes.php';
 
 return $router;

@@ -73,7 +73,7 @@ $whatsapp = setting('whatsapp');
     <?php endif; ?>
     <div class="footer-bottom">
       <p class="small">© <?= date('Y') ?> <?= e(setting('site_name', 'AivraSol')) ?>. All rights reserved.</p>
-      <p class="small"><a href="<?= e(url('privacy-policy')) ?>">Privacy</a> · <a href="<?= e(url('terms')) ?>">Terms</a> · <a href="<?= e(url('cookie-policy')) ?>">Cookies</a> · <button type="button" data-cookie-open>Cookie settings</button></p>
+      <p class="small"><a href="<?= e(url('privacy-policy')) ?>">Privacy</a> · <a href="<?= e(url('terms')) ?>">Terms</a> · <a href="<?= e(url('cookie-policy')) ?>">Cookies</a> · <a href="<?= e(url('portal')) ?>" rel="nofollow">Client login</a> · <button type="button" data-cookie-open>Cookie settings</button></p>
     </div>
   </div>
 </footer>

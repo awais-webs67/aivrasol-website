@@ -278,6 +278,88 @@ CREATE TABLE IF NOT EXISTS employee_documents (
   CONSTRAINT fk_doc_emp FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS clients (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  company_name  VARCHAR(120) NOT NULL DEFAULT '',
+  contact_name  VARCHAR(100) NOT NULL,
+  email         VARCHAR(190) NOT NULL UNIQUE,
+  phone         VARCHAR(40)  NOT NULL DEFAULT '',
+  country       VARCHAR(60)  NOT NULL DEFAULT '',
+  password_hash VARCHAR(255) NOT NULL,
+  is_active     TINYINT(1)   NOT NULL DEFAULT 1,
+  must_change_password TINYINT(1) NOT NULL DEFAULT 0,
+  notes         TEXT         NULL,
+  lead_id       INT UNSIGNED NULL,
+  last_login_at TIMESTAMP    NULL,
+  created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS client_projects (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  client_id    INT UNSIGNED NOT NULL,
+  title        VARCHAR(150) NOT NULL,
+  summary      TEXT         NULL,
+  status       VARCHAR(20)  NOT NULL DEFAULT 'planning',
+  progress     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  currency     CHAR(3)      NOT NULL DEFAULT 'USD',
+  budget       DECIMAL(12,2) NOT NULL DEFAULT 0,
+  start_date   DATE         NULL,
+  due_date     DATE         NULL,
+  manager_id   INT UNSIGNED NULL,
+  created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_cp_client (client_id),
+  CONSTRAINT fk_cp_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cp_manager FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS project_updates (
+  id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  project_id INT UNSIGNED NOT NULL,
+  user_id    INT UNSIGNED NULL,
+  title      VARCHAR(150) NOT NULL,
+  body       TEXT         NOT NULL,
+  progress   TINYINT UNSIGNED NULL,
+  created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_pu_project (project_id, created_at),
+  CONSTRAINT fk_pu_project FOREIGN KEY (project_id) REFERENCES client_projects(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pu_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS project_messages (
+  id              INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  project_id      INT UNSIGNED NOT NULL,
+  sender_type     VARCHAR(10)  NOT NULL COMMENT 'client or staff',
+  sender_id       INT UNSIGNED NOT NULL,
+  sender_name     VARCHAR(100) NOT NULL,
+  body            TEXT         NOT NULL,
+  file_stored     VARCHAR(80)  NOT NULL DEFAULT '',
+  file_name       VARCHAR(150) NOT NULL DEFAULT '',
+  file_size       INT UNSIGNED NOT NULL DEFAULT 0,
+  read_by_client  TINYINT(1)   NOT NULL DEFAULT 0,
+  read_by_staff   TINYINT(1)   NOT NULL DEFAULT 0,
+  created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_pm_project (project_id, id),
+  CONSTRAINT fk_pm_project FOREIGN KEY (project_id) REFERENCES client_projects(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS project_transactions (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  project_id  INT UNSIGNED NOT NULL,
+  type        VARCHAR(10)  NOT NULL COMMENT 'invoice, payment or refund',
+  amount      DECIMAL(12,2) NOT NULL,
+  description VARCHAR(200) NOT NULL DEFAULT '',
+  reference   VARCHAR(80)  NOT NULL DEFAULT '',
+  method      VARCHAR(40)  NOT NULL DEFAULT '',
+  entry_date  DATE         NOT NULL,
+  due_date    DATE         NULL,
+  created_by  INT UNSIGNED NULL,
+  created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_pt_project (project_id, entry_date),
+  CONSTRAINT fk_pt_project FOREIGN KEY (project_id) REFERENCES client_projects(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS email_log (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   type       VARCHAR(40)  NOT NULL,

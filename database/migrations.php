@@ -88,4 +88,7 @@ return [
     '2026_10_20_employees' => function (PDO $pdo): void {
         // schema.sql has already created the employees and employee_documents tables.
     },
+    '2026_10_21_client_portal' => function (PDO $pdo): void {
+        // schema.sql has already created the client portal tables.
+    },
 ];

@@ -140,3 +140,12 @@ fieldset.card legend { padding: 0 6px; font-size: 15px; font-weight: 600; color:
 .list-head .filters-bar { flex: 1 1 320px; min-width: 0; }
 .list-head .filters-bar .input, .list-head .filters-bar .select { min-width: 0; }
 .edit-form .field { align-content: start; }
+.card-summary { cursor: pointer; list-style: none; }
+.card-summary::-webkit-details-marker { display: none; }
+.card-summary h2 { display: inline; margin: 0; }
+.card-summary::after { content: "Show or edit"; float: right; font-size: 13px; color: var(--orange-text); }
+details[open] > .card-summary { margin-bottom: 16px; }
+details[open] > .card-summary::after { content: "Hide"; }
+.mt { margin-top: 26px; }
+.entry-form { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+.admin .p-card, .admin .portal-grid > .card { margin-bottom: 20px; }

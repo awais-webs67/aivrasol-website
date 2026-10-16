@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require APP_PATH . '/admin/handlers.php';
 require APP_PATH . '/admin/staff.php';
+require APP_PATH . '/admin/clients.php';
 
 /** @var Router $router */
 $router->any('/admin/login', fn () => admin_login());
@@ -42,3 +43,16 @@ $router->post('/admin/letters/{id}/revoke', fn (string $id) => admin_document_re
 $router->any('/admin/documents', fn () => admin_documents_settings());
 $router->get('/admin/documents/image/{which}', fn (string $which) => admin_documents_image($which));
 $router->get('/admin/documents/sample/{kind}', fn (string $kind) => admin_documents_sample($kind));
+
+$router->get('/admin/clients', fn () => admin_clients());
+$router->any('/admin/clients/new', fn () => admin_client_edit());
+$router->any('/admin/clients/{id}', fn (string $id) => admin_client_edit($id));
+$router->get('/admin/projects', fn () => admin_projects());
+$router->any('/admin/projects/new', fn () => admin_project_edit());
+$router->any('/admin/projects/{id}', fn (string $id) => admin_project_edit($id));
+$router->post('/admin/projects/{id}/updates', fn (string $id) => admin_project_update_post($id));
+$router->post('/admin/projects/{id}/updates/{uid}/delete', fn (string $id, string $uid) => admin_project_update_delete($id, $uid));
+$router->post('/admin/projects/{id}/entries', fn (string $id) => admin_project_entry($id));
+$router->post('/admin/projects/{id}/entries/{eid}/delete', fn (string $id, string $eid) => admin_project_entry_delete($id, $eid));
+$router->any('/admin/projects/{id}/messages', fn (string $id) => admin_project_messages($id));
+$router->get('/admin/project-files/{id}', fn (string $id) => admin_project_file($id));

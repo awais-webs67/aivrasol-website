@@ -11,6 +11,10 @@ foreach (admin_resources() as $k => $r) {
         $contentNav['admin/content/' . $k] = $r['label'];
     }
 }
+$work = array_filter([
+    'admin/clients' => ['briefcase', 'Clients', 'clients'],
+    'admin/projects' => ['layers', 'Client projects', 'projects'],
+], fn ($n) => $can($n[2]));
 $people = array_filter([
     'admin/employees' => ['users', 'Employees', 'employees'],
     'admin/documents' => ['file', 'Letters and ID cards', 'settings'],
@@ -23,6 +27,7 @@ $system = array_filter([
 ], fn ($n) => $can($n[2]));
 $current = trim(request_path(), '/');
 $isOn = fn (string $p) => $p === 'admin' ? $current === 'admin' : str_starts_with($current, $p);
+$unreadChat = $can('projects') ? (int) Database::value("SELECT COUNT(DISTINCT project_id) FROM project_messages WHERE sender_type = 'client' AND read_by_staff = 0") : 0;
 $newLeads = $can('leads') ? (int) Database::value("SELECT COUNT(*) FROM leads WHERE status = 'new'") : 0;
 ?><!doctype html>
 <html lang="en">
@@ -34,7 +39,11 @@ $newLeads = $can('leads') ? (int) Database::value("SELECT COUNT(*) FROM leads WH
 <link rel="icon" href="<?= e(asset('assets/img/favicon.svg')) ?>" type="image/svg+xml">
 <link rel="stylesheet" href="<?= e(asset('assets/css/app.css')) ?>">
 <link rel="stylesheet" href="<?= e(asset('assets/css/admin.css')) ?>">
+<?php if (!empty($extraCss)): ?><link rel="stylesheet" href="<?= e(asset($extraCss)) ?>">
+<?php endif; ?>
 <script src="<?= e(asset('assets/js/admin.js')) ?>" defer></script>
+<?php if (!empty($extraJs)): ?><script src="<?= e(asset($extraJs)) ?>" defer></script>
+<?php endif; ?>
 </head>
 <body class="admin">
 <a class="skip-link" href="#admin-main">Skip to content</a>
@@ -54,6 +63,14 @@ $newLeads = $can('leads') ? (int) Database::value("SELECT COUNT(*) FROM leads WH
       <ul>
         <?php foreach ($contentNav as $path => $label): ?>
         <li><a href="<?= e(url($path)) ?>"<?= $isOn($path) ? ' aria-current="page"' : '' ?>><?= icon('file') ?><span><?= e($label) ?></span></a></li>
+        <?php endforeach; ?>
+      </ul>
+      <?php endif; ?>
+      <?php if ($work): ?>
+      <p class="admin-side-label">Clients</p>
+      <ul>
+        <?php foreach ($work as $path => [$ic, $label]): ?>
+        <li><a href="<?= e(url($path)) ?>"<?= $isOn($path) ? ' aria-current="page"' : '' ?>><?= icon($ic) ?><span><?= e($label) ?></span><?php if ($path === 'admin/projects' && $unreadChat): ?><b class="pill"><?= $unreadChat ?></b><?php endif; ?></a></li>
         <?php endforeach; ?>
       </ul>
       <?php endif; ?>
