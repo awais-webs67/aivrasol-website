@@ -1,0 +1,52 @@
+# AivraSol - Apache configuration (document root = /public)
+Options -Indexes -MultiViews
+ServerSignature Off
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Force HTTPS (enable once your SSL certificate is installed)
+  # RewriteCond %{HTTPS} !=on
+  # RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Block hidden files and common sensitive file types
+  RewriteRule (^|/)\. - [F,L]
+  RewriteRule \.(sql|log|ini|env|bak|sh|dist|lock|md)$ - [F,L,NC]
+
+  # Send everything that is not a real file to the front controller
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ index.php [L,QSA]
+</IfModule>
+
+# Only index.php may run as PHP
+<FilesMatch "\.(php|phtml|phar)$">
+  Require all denied
+</FilesMatch>
+<Files "index.php">
+  Require all granted
+</Files>
+
+<IfModule mod_headers.c>
+  Header always unset X-Powered-By
+  Header always set X-Content-Type-Options "nosniff"
+  <FilesMatch "\.(css|js|woff2|svg|webp|jpg|jpeg|png|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.(svg)$">
+    Header set Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml application/xml text/plain application/manifest+json
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType font/woff2 .woff2
+  AddType image/webp .webp
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
+LimitRequestBody 8388608

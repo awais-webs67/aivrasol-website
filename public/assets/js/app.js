@@ -1,0 +1,375 @@
+/* AivraSol front end. No dependencies. Every feature also works without JavaScript. */
+(function () {
+  'use strict';
+
+  var doc = document;
+  var root = doc.documentElement;
+  var $ = function (sel, ctx) { return (ctx || doc).querySelector(sel); };
+  var $$ = function (sel, ctx) { return Array.prototype.slice.call((ctx || doc).querySelectorAll(sel)); };
+  var desktop = window.matchMedia('(min-width: 1024px)');
+
+  /* Toast */
+  var toastEl = $('[data-toast]');
+  var toastTimer;
+  function toast(message, type) {
+    if (!toastEl) return;
+    toastEl.textContent = message;
+    toastEl.className = 'toast is-visible' + (type ? ' is-' + type : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.className = 'toast'; }, 5000);
+  }
+
+  /* Mobile navigation */
+  var navToggle = $('[data-nav-toggle]');
+  var nav = $('#main-nav');
+  function setNav(open) {
+    root.classList.toggle('nav-open', open);
+    doc.body.classList.toggle('nav-open', open);
+    if (navToggle) navToggle.setAttribute('aria-expanded', String(open));
+    if (!open) closeDropdowns();
+  }
+  if (navToggle) {
+    navToggle.addEventListener('click', function () { setNav(navToggle.getAttribute('aria-expanded') !== 'true'); });
+  }
+  if (nav) {
+    nav.addEventListener('click', function (e) {
+      if (e.target.closest('a')) setNav(false);
+    });
+  }
+  desktop.addEventListener('change', function () { setNav(false); });
+
+  /* Dropdowns: click to toggle (needed on touch and in the mobile menu); hover is handled by CSS on desktop */
+  var dropdowns = $$('[data-dropdown]');
+  function closeDropdowns(except) {
+    dropdowns.forEach(function (btn) { if (btn !== except) btn.setAttribute('aria-expanded', 'false'); });
+  }
+  dropdowns.forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = btn.getAttribute('aria-expanded') !== 'true';
+      closeDropdowns(btn);
+      btn.setAttribute('aria-expanded', String(open));
+    });
+  });
+  doc.addEventListener('click', function (e) {
+    if (desktop.matches && !e.target.closest('.nav-item')) closeDropdowns();
+  });
+  doc.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var openBtn = dropdowns.filter(function (b) { return b.getAttribute('aria-expanded') === 'true'; })[0];
+    if (openBtn) { closeDropdowns(); openBtn.focus(); return; }
+    if (root.classList.contains('nav-open')) { setNav(false); if (navToggle) navToggle.focus(); }
+  });
+
+  /* Modals */
+  function openModal(id) {
+    var dlg = doc.getElementById(id);
+    if (!dlg || typeof dlg.showModal !== 'function') return false;
+    setNav(false);
+    resetFormState($('form', dlg));
+    dlg.showModal();
+    var first = $('input:not([type=hidden]):not([tabindex="-1"]), textarea', dlg);
+    if (first) first.focus();
+    return true;
+  }
+  $$('[data-modal-open]').forEach(function (el) {
+    el.addEventListener('click', function (e) {
+      if (openModal(el.getAttribute('data-modal-open'))) e.preventDefault();
+    });
+  });
+  $$('dialog.modal').forEach(function (dlg) {
+    dlg.addEventListener('click', function (e) {
+      if (e.target === dlg || e.target.closest('[data-modal-close]')) dlg.close();
+    });
+  });
+
+  /* Pricing cards open the quote modal with the chosen options */
+  $$('[data-quote-card]').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+      var q1 = form.elements.q1, q2 = form.elements.q2;
+      if (!q1.value || !q2.value) {
+        e.preventDefault();
+        (q1.value ? q2 : q1).focus();
+        toast('Please choose both options to get your quote.', 'error');
+        return;
+      }
+      var dlg = doc.getElementById('quote-modal');
+      if (!dlg || typeof dlg.showModal !== 'function') return;
+      e.preventDefault();
+      var target = $('form', dlg);
+      target.elements.plan_id.value = form.elements.plan.value;
+      target.elements.q1.value = q1.value;
+      target.elements.q2.value = q2.value;
+      $('[data-quote-summary]', dlg).textContent = form.getAttribute('data-plan-title') + ': ' + q1.value + ', ' + q2.value;
+      openModal('quote-modal');
+    });
+  });
+
+  /* Pricing page: show the questions for the selected plan */
+  var planSelect = $('[data-plan-select]');
+  if (planSelect) {
+    planSelect.addEventListener('change', function () {
+      $$('[data-plan-fields]').forEach(function (cell) {
+        var on = cell.getAttribute('data-plan-fields') === planSelect.value;
+        cell.hidden = !on;
+        $$('select', cell).forEach(function (s) { s.disabled = !on; });
+      });
+    });
+  }
+
+  /* Forms sent with fetch, with a normal post as fallback */
+  function resetFormState(form) {
+    if (!form) return;
+    $$('[aria-invalid]', form).forEach(function (el) { el.removeAttribute('aria-invalid'); });
+    $$('.field-error, .form-status', form).forEach(function (el) { el.remove(); });
+  }
+  function showStatus(form, message, ok) {
+    var p = doc.createElement('p');
+    p.className = 'form-status ' + (ok ? 'is-success' : 'is-error');
+    p.setAttribute('role', ok ? 'status' : 'alert');
+    p.textContent = message;
+    form.appendChild(p);
+  }
+  function showErrors(form, errors) {
+    var first = null;
+    Object.keys(errors || {}).forEach(function (name) {
+      var field = form.elements[name];
+      if (!field || !field.getAttribute) return;
+      if (field.length && !field.tagName) field = field[0];
+      field.setAttribute('aria-invalid', 'true');
+      var msg = doc.createElement('span');
+      msg.className = 'field-error';
+      msg.id = 'err-' + Math.random().toString(36).slice(2);
+      msg.textContent = errors[name];
+      field.setAttribute('aria-describedby', msg.id);
+      var holder = field.closest('.cell, .field, .check') || field.parentNode;
+      holder.appendChild(msg);
+      if (!first) first = field;
+    });
+    if (first) first.focus();
+  }
+  function clientCheck(form) {
+    var errors = {};
+    $$('[required]', form).forEach(function (el) {
+      if (el.disabled) return;
+      var empty = el.type === 'checkbox' ? !el.checked : el.type === 'file' ? !el.files.length : !el.value.trim();
+      if (empty) errors[el.name] = el.type === 'checkbox' ? 'Please tick this box to continue.' : 'This field is required.';
+      else if (el.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim())) errors[el.name] = 'Please enter a valid email address.';
+      else if (el.minLength > 0 && el.value.trim().length < el.minLength) errors[el.name] = 'Please write at least ' + el.minLength + ' characters.';
+    });
+    var file = $('input[type=file]', form);
+    if (file && file.files.length && file.files[0].size > 5 * 1024 * 1024) errors[file.name] = 'The file is too large. The limit is 5 MB.';
+    return errors;
+  }
+  $$('[data-ajax-form]').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+      if (!window.fetch || !window.FormData) return;
+      e.preventDefault();
+      resetFormState(form);
+      var errors = clientCheck(form);
+      if (Object.keys(errors).length) { showErrors(form, errors); return; }
+      var btn = $('[type=submit]', form);
+      if (btn) { btn.setAttribute('aria-busy', 'true'); btn.disabled = true; }
+      fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'fetch' },
+        credentials: 'same-origin'
+      }).then(function (res) {
+        return res.json().catch(function () { return { ok: false, message: 'Something went wrong. Please try again.' }; });
+      }).then(function (data) {
+        if (data.ok) {
+          form.reset();
+          showStatus(form, data.message, true);
+          toast(data.message, 'success');
+          var dlg = form.closest('dialog');
+          if (dlg) setTimeout(function () { if (dlg.open) dlg.close(); }, 2600);
+          if (window.gtag && consent.analytics) window.gtag('event', 'generate_lead', { form: form.action.split('/').pop() });
+        } else {
+          showErrors(form, data.errors);
+          showStatus(form, data.message || 'Please check the form and try again.', false);
+        }
+      }).catch(function () {
+        showStatus(form, 'We could not send your message. Please check your connection and try again.', false);
+      }).then(function () {
+        if (btn) { btn.removeAttribute('aria-busy'); btn.disabled = false; }
+      });
+    });
+  });
+
+  /* Service tabs */
+  $$('[data-tabs]').forEach(function (wrap) {
+    var tabs = $$('[role=tab]', wrap);
+    function select(tab, focus) {
+      tabs.forEach(function (t) {
+        var on = t === tab;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        var panel = doc.getElementById(t.getAttribute('aria-controls'));
+        if (panel) {
+          panel.hidden = !on;
+          if (on) { panel.classList.remove('fade-in'); void panel.offsetWidth; panel.classList.add('fade-in'); }
+        }
+      });
+      if (focus) tab.focus();
+      if (!desktop.matches) {
+        var panelEl = doc.getElementById(tab.getAttribute('aria-controls'));
+        if (panelEl && panelEl.getBoundingClientRect().top > window.innerHeight * .8) panelEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+    tabs.forEach(function (tab, i) {
+      tab.addEventListener('click', function (e) { e.preventDefault(); select(tab); });
+      tab.addEventListener('keydown', function (e) {
+        var cols = window.matchMedia('(min-width: 768px)').matches ? 3 : 2;
+        var map = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: cols, ArrowUp: -cols };
+        if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); select(tabs[e.key === 'Home' ? 0 : tabs.length - 1], true); return; }
+        if (!(e.key in map)) return;
+        e.preventDefault();
+        var next = (i + map[e.key] + tabs.length) % tabs.length;
+        select(tabs[next], true);
+      });
+    });
+  });
+
+  /* Sliders */
+  $$('[data-slider]').forEach(function (wrap) {
+    var track = $('[data-track]', wrap);
+    var prev = $('[data-slide=prev]', wrap);
+    var next = $('[data-slide=next]', wrap);
+    if (!track || !prev || !next) return;
+    function step() {
+      var card = track.firstElementChild;
+      if (!card) return track.clientWidth;
+      var gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+      return card.getBoundingClientRect().width + gap;
+    }
+    function update() {
+      var max = track.scrollWidth - track.clientWidth - 2;
+      prev.disabled = track.scrollLeft <= 2;
+      next.disabled = track.scrollLeft >= max;
+    }
+    prev.addEventListener('click', function () { track.scrollBy({ left: -step(), behavior: 'smooth' }); });
+    next.addEventListener('click', function () { track.scrollBy({ left: step(), behavior: 'smooth' }); });
+    track.addEventListener('scroll', function () { window.requestAnimationFrame(update); }, { passive: true });
+    track.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') { e.preventDefault(); next.click(); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); prev.click(); }
+    });
+    window.addEventListener('resize', update);
+    update();
+  });
+
+  /* Portfolio filters */
+  var filterBar = $('[data-filters]');
+  if (filterBar) {
+    filterBar.hidden = false;
+    var cards = $$('[data-filter-grid] [data-category]');
+    $$('[data-filter]', filterBar).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var val = btn.getAttribute('data-filter');
+        $$('[data-filter]', filterBar).forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+        cards.forEach(function (c) { c.hidden = val !== '*' && c.getAttribute('data-category') !== val; });
+      });
+    });
+  }
+
+  /* Back to top */
+  var topBtn = $('[data-to-top]');
+  if (topBtn) {
+    var onScroll = function () { topBtn.classList.toggle('is-visible', window.scrollY > 600); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    topBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      var main = $('#main');
+      if (main) main.focus({ preventScroll: true });
+    });
+  }
+
+  /* Cookie consent. Analytics and marketing stay off until the visitor opts in. */
+  var COOKIE = 'avs_consent';
+  var consent = readConsent();
+  var banner = $('[data-cookie]');
+  function readConsent() {
+    var m = doc.cookie.match(/(?:^|;\s*)avs_consent=([^;]+)/);
+    if (!m) return null;
+    var v = decodeURIComponent(m[1]);
+    return { analytics: /a1/.test(v), marketing: /m1/.test(v) };
+  }
+  function writeConsent(c) {
+    var v = 'v1.a' + (c.analytics ? 1 : 0) + '.m' + (c.marketing ? 1 : 0);
+    var secure = location.protocol === 'https:' ? '; Secure' : '';
+    doc.cookie = COOKIE + '=' + v + '; Max-Age=' + (60 * 60 * 24 * 182) + '; Path=/; SameSite=Lax' + secure;
+    consent = c;
+  }
+  function clearAnalyticsCookies() {
+    doc.cookie.split(';').forEach(function (part) {
+      var name = part.split('=')[0].trim();
+      if (/^_ga|^_gid|^_gat/.test(name)) {
+        var host = location.hostname.replace(/^www\./, '');
+        ['', '; domain=' + host, '; domain=.' + host].forEach(function (d) {
+          doc.cookie = name + '=; Max-Age=0; Path=/' + d;
+        });
+      }
+    });
+  }
+  function loadAnalytics() {
+    var id = doc.body.getAttribute('data-ga');
+    if (!id || window.gtag || !/^G-[A-Z0-9]+$/.test(id)) return;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    window.gtag('config', id, { anonymize_ip: true });
+    var s = doc.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id);
+    doc.head.appendChild(s);
+  }
+  function syncSwitches() {
+    if (!banner) return;
+    $$('[data-consent]', banner).forEach(function (input) {
+      input.checked = !!(consent && consent[input.getAttribute('data-consent')]);
+    });
+  }
+  function apply(c) {
+    writeConsent(c);
+    if (c.analytics) loadAnalytics(); else clearAnalyticsCookies();
+    if (banner) banner.hidden = true;
+    toast('Your cookie choices have been saved.', 'success');
+  }
+  if (banner) {
+    if (!consent) banner.hidden = false;
+    syncSwitches();
+    $$('[data-consent-action]', banner).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var act = btn.getAttribute('data-consent-action');
+        if (act === 'accept') apply({ analytics: true, marketing: true });
+        else if (act === 'reject') apply({ analytics: false, marketing: false });
+        else apply({
+          analytics: $('[data-consent=analytics]', banner).checked,
+          marketing: $('[data-consent=marketing]', banner).checked
+        });
+      });
+    });
+  }
+  function showOptions() {
+    if (!banner) return;
+    $('[data-cookie-opts]', banner).hidden = false;
+    $('[data-consent-action=save]', banner).hidden = false;
+    $('[data-cookie-customise]', banner).hidden = true;
+  }
+  var customise = banner && $('[data-cookie-customise]', banner);
+  if (customise) customise.addEventListener('click', function () { showOptions(); $('[data-consent=analytics]', banner).focus(); });
+  $$('[data-cookie-open]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!banner) return;
+      syncSwitches();
+      showOptions();
+      banner.hidden = false;
+      var first = $('[data-consent]', banner);
+      if (first) first.focus();
+    });
+  });
+  if (consent && consent.analytics) loadAnalytics();
+})();

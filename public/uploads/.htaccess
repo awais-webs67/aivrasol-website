@@ -1,0 +1,10 @@
+# Uploaded images only. Nothing here may ever run as code.
+Options -Indexes -ExecCGI
+RemoveHandler .php .phtml .phar .pl .py .cgi .sh
+RemoveType .php .phtml .phar
+<FilesMatch "\.(?!(webp|jpg|jpeg|png)$)[^.]+$">
+  Require all denied
+</FilesMatch>
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>

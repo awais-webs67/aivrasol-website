@@ -1,0 +1,10 @@
+# Fallback for hosts where the document root cannot point at /public.
+# Sends every request into /public and keeps app, storage and database folders private.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^(app|storage|database|docs|bin)(/|$) - [F,L]
+  RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+<FilesMatch "\.(sql|md|log|env|ini)$">
+  Require all denied
+</FilesMatch>
