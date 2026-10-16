@@ -207,6 +207,38 @@ $router->get('/verify/{token}', function (string $token) {
     return view('pages/verify', $data);
 });
 
+$router->any('/unsubscribe/{token}', function (string $token) {
+    header('X-Robots-Tag: noindex, nofollow');
+    $contact = preg_match('/^[a-f0-9]{32}$/', $token) ? Database::one('SELECT id, email, status FROM contacts WHERE token = ?', [$token]) : null;
+    $done = false;
+    // The token in the link is the secret, so one-click unsubscribe from Gmail and Outlook (RFC 8058) works without a form token.
+    if ($contact && is_post()) {
+        if ($contact['status'] === 'subscribed') {
+            Database::run("UPDATE contacts SET status = 'unsubscribed' WHERE id = ?", [$contact['id']]);
+        }
+        $done = true;
+        if (($_POST['List-Unsubscribe'] ?? '') === 'One-Click') {
+            http_response_code(200);
+            return 'Unsubscribed';
+        }
+    }
+    if (!$contact) {
+        http_response_code(404);
+    }
+    return view('pages/unsubscribe', ['contact' => $contact, 'done' => $done || ($contact && $contact['status'] === 'unsubscribed'), 'pageTitle' => 'Unsubscribe | ' . setting('site_name', 'AivraSol'), 'metaRobots' => 'noindex, nofollow']);
+});
+
+$router->get('/cron/{token}', function (string $token) {
+    require_once APP_PATH . '/lib/Campaigns.php';
+    header('X-Robots-Tag: noindex, nofollow');
+    header('Content-Type: text/plain; charset=utf-8');
+    if (!hash_equals(Campaigns::cronToken(), $token)) {
+        abort(404);
+    }
+    require_once APP_PATH . '/tasks.php';
+    return run_scheduled_tasks(false);
+});
+
 $router->get('/sitemap.xml', function () {
     header('Content-Type: application/xml; charset=utf-8');
     return render('sitemap', [

@@ -65,6 +65,9 @@ try {
         foreach (require __DIR__ . '/data/posts.php' as $post) {
             insert_row($pdo, 'posts', $post);
         }
+        foreach (require __DIR__ . '/data/email_templates.php' as $tpl) {
+            insert_row($pdo, 'email_templates', $tpl);
+        }
         foreach (array_keys($migrations) as $m) {
             $mark->execute([$m]);
         }

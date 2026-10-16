@@ -7,11 +7,13 @@ $main = array_filter([
 ], fn ($n) => $can($n[2]));
 $contentNav = [];
 foreach (admin_resources() as $k => $r) {
-    if ($can('content:' . $k)) {
+    if (($r['nav'] ?? true) && $can('content:' . $k)) {
         $contentNav['admin/content/' . $k] = $r['label'];
     }
 }
 $work = array_filter([
+    'admin/campaigns' => ['mail', 'Email campaigns', 'campaigns'],
+    'admin/contacts' => ['users', 'Contacts', 'campaigns'],
     'admin/clients' => ['briefcase', 'Clients', 'clients'],
     'admin/projects' => ['layers', 'Client projects', 'projects'],
 ], fn ($n) => $can($n[2]));
@@ -67,7 +69,7 @@ $newLeads = $can('leads') ? (int) Database::value("SELECT COUNT(*) FROM leads WH
       </ul>
       <?php endif; ?>
       <?php if ($work): ?>
-      <p class="admin-side-label">Clients</p>
+      <p class="admin-side-label">Sales and clients</p>
       <ul>
         <?php foreach ($work as $path => [$ic, $label]): ?>
         <li><a href="<?= e(url($path)) ?>"<?= $isOn($path) ? ' aria-current="page"' : '' ?>><?= icon($ic) ?><span><?= e($label) ?></span><?php if ($path === 'admin/projects' && $unreadChat): ?><b class="pill"><?= $unreadChat ?></b><?php endif; ?></a></li>

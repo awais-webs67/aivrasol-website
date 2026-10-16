@@ -4,6 +4,7 @@ declare(strict_types=1);
 require APP_PATH . '/admin/handlers.php';
 require APP_PATH . '/admin/staff.php';
 require APP_PATH . '/admin/clients.php';
+require APP_PATH . '/admin/campaigns.php';
 
 /** @var Router $router */
 $router->any('/admin/login', fn () => admin_login());
@@ -56,3 +57,10 @@ $router->post('/admin/projects/{id}/entries', fn (string $id) => admin_project_e
 $router->post('/admin/projects/{id}/entries/{eid}/delete', fn (string $id, string $eid) => admin_project_entry_delete($id, $eid));
 $router->any('/admin/projects/{id}/messages', fn (string $id) => admin_project_messages($id));
 $router->get('/admin/project-files/{id}', fn (string $id) => admin_project_file($id));
+
+$router->any('/admin/contacts', fn () => admin_contacts());
+$router->get('/admin/campaigns', fn () => admin_campaigns());
+$router->post('/admin/campaigns', fn () => admin_campaigns());
+$router->post('/admin/campaigns/tick', fn () => admin_campaign_tick());
+$router->any('/admin/campaigns/new', fn () => admin_campaign_edit());
+$router->any('/admin/campaigns/{id}', fn (string $id) => admin_campaign_edit($id));

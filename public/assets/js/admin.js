@@ -26,4 +26,18 @@
       if (!window.confirm(form.getAttribute('data-confirm'))) e.preventDefault();
     });
   });
+  // On an open, sending campaign page, ask the server to send the next email every minute (works without cron).
+  var tick = document.querySelector('[data-campaign-tick]');
+  var token = document.querySelector('input[name=_csrf]');
+  if (tick && token && window.fetch) {
+    setInterval(function () {
+      if (document.hidden) return;
+      var body = new FormData();
+      body.append('_csrf', token.value);
+      fetch(tick.getAttribute('data-campaign-tick'), { method: 'POST', body: body, credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { if (d && d.report) tick.textContent = 'Background send: ' + d.report; })
+        .catch(function () {});
+    }, 60000);
+  }
 })();

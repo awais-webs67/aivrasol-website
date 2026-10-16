@@ -149,3 +149,6 @@ details[open] > .card-summary::after { content: "Hide"; }
 .mt { margin-top: 26px; }
 .entry-form { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
 .admin .p-card, .admin .portal-grid > .card { margin-bottom: 20px; }
+.code-line { display: block; margin: 6px 0; padding: 8px 10px; font-size: 12.5px; background: var(--grey-soft); border: 1px solid var(--line); border-radius: var(--radius); overflow-wrap: anywhere; white-space: normal; }
+.mail-preview { margin: 0; padding: 14px; max-height: 420px; overflow: auto; font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--grey-soft); border: 1px solid var(--line); border-radius: var(--radius); }
+fieldset.form-grid { border: 0; margin: 0; padding: 0; min-width: 0; }

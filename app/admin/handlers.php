@@ -367,16 +367,16 @@ function admin_application_cv(string $id): never
 
 function admin_content_list(string $key): string
 {
-    Auth::require('content:' . $key);
     $res = admin_resource($key);
+    Auth::require($res['cap'] ?? 'content:' . $key);
     $rows = Database::all("SELECT * FROM `{$res['table']}` ORDER BY {$res['order']}");
     return admin_view('content-list', ['key' => $key, 'res' => $res, 'rows' => $rows, 'pageTitle' => $res['label']]);
 }
 
 function admin_content_edit(string $key, ?string $id = null): string
 {
-    $user = Auth::require('content:' . $key);
     $res = admin_resource($key);
+    $user = Auth::require($res['cap'] ?? 'content:' . $key);
     $row = null;
     if ($id !== null) {
         $row = ctype_digit($id) ? Database::one("SELECT * FROM `{$res['table']}` WHERE id = ?", [(int) $id]) : null;

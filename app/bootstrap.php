@@ -52,5 +52,7 @@ set_exception_handler(function (Throwable $e) use ($isDev) {
     }
 });
 
-Security::startSession();
-Security::sendHeaders();
+if (PHP_SAPI !== 'cli') {
+    Security::startSession();
+    Security::sendHeaders();
+}

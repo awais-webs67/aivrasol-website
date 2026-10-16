@@ -12,8 +12,21 @@ final class Mailer
     private static bool $flushRegistered = false;
 
     /** Effective sending settings and where they came from. */
-    public static function settings(): array
+    public static function settings(string $profile = 'main'): array
     {
+        // Campaigns can use their own mailbox (for example on a second domain) so cold email never affects the main domain.
+        if ($profile === 'campaign' && setting('camp_smtp_host') !== '') {
+            return [
+                'source' => 'campaign',
+                'from_email' => setting('camp_from_email'),
+                'from_name' => setting('camp_from_name', setting('site_name', 'AivraSol')),
+                'host' => setting('camp_smtp_host'),
+                'port' => (int) setting('camp_smtp_port', '465'),
+                'encryption' => setting('camp_smtp_encryption', 'ssl') === 'none' ? '' : setting('camp_smtp_encryption', 'ssl'),
+                'username' => setting('camp_smtp_username'),
+                'password' => Secret::decrypt(setting('camp_smtp_password')),
+            ];
+        }
         if (setting('mail_source') === 'custom') {
             return [
                 'source' => 'admin',
@@ -81,7 +94,11 @@ final class Mailer
     }
 
     /** Sends one message (to one or more people, each receiving their own copy). Returns null on success or the error text. */
-    public static function send(array|string $to, string $subject, string $text, ?string $html = null, ?string $replyTo = null, string $type = 'general'): ?string
+    /**
+     * $options: 'profile' => 'campaign' to use the campaign mailbox, 'from_name' to override the sender name,
+     * 'headers' => extra headers such as List-Unsubscribe.
+     */
+    public static function send(array|string $to, string $subject, string $text, ?string $html = null, ?string $replyTo = null, string $type = 'general', array $options = []): ?string
     {
         $recipients = is_array($to) ? $to : [$to];
         $recipients = array_values(array_filter(array_map(fn ($a) => self::clean((string) $a), $recipients), fn ($a) => filter_var($a, FILTER_VALIDATE_EMAIL)));
@@ -89,17 +106,24 @@ final class Mailer
         if (!$recipients) {
             return self::log($type, '', $subject, 'No valid recipient address.');
         }
-        $cfg = self::settings();
+        $cfg = self::settings($options['profile'] ?? 'main');
         $fromEmail = self::clean($cfg['from_email']);
         if (!filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
             return self::log($type, implode(', ', $recipients), $subject, 'The "from" email address is not set. Add it in Admin, Email settings, or in app/config.php.');
         }
-        $fromName = self::clean($cfg['from_name']);
+        $fromName = self::clean((string) ($options['from_name'] ?? '') !== '' ? (string) $options['from_name'] : $cfg['from_name']);
+        $extraHeaders = [];
+        foreach ((array) ($options['headers'] ?? []) as $k => $v) {
+            if (preg_match('/^[A-Za-z][A-Za-z0-9-]{1,40}$/', (string) $k)) {
+                $extraHeaders[$k] = self::clean((string) $v);
+            }
+        }
         $replyTo = $replyTo !== null && filter_var($replyTo, FILTER_VALIDATE_EMAIL) ? self::clean($replyTo) : null;
 
         $errors = [];
         foreach ($recipients as $rcpt) {
             [$headers, $body] = self::build($rcpt, $fromEmail, $fromName, $subject, $text, $html, $replyTo);
+            $headers = array_merge($headers, $extraHeaders);
             try {
                 if ($cfg['host'] === '') {
                     $extra = $headers;

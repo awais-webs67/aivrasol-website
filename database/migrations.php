@@ -91,4 +91,12 @@ return [
     '2026_10_21_client_portal' => function (PDO $pdo): void {
         // schema.sql has already created the client portal tables.
     },
+    '2026_10_22_campaigns' => function (PDO $pdo): void {
+        // schema.sql has already created the campaign tables. Add the starter templates once.
+        if ((int) $pdo->query('SELECT COUNT(*) FROM email_templates')->fetchColumn() === 0) {
+            foreach (require __DIR__ . '/data/email_templates.php' as $tpl) {
+                insert_row($pdo, 'email_templates', $tpl);
+            }
+        }
+    },
 ];

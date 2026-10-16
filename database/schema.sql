@@ -360,6 +360,67 @@ CREATE TABLE IF NOT EXISTS project_transactions (
   CONSTRAINT fk_pt_project FOREIGN KEY (project_id) REFERENCES client_projects(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS contacts (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  email         VARCHAR(190) NOT NULL UNIQUE,
+  first_name    VARCHAR(80)  NOT NULL DEFAULT '',
+  last_name     VARCHAR(80)  NOT NULL DEFAULT '',
+  company       VARCHAR(120) NOT NULL DEFAULT '',
+  website       VARCHAR(190) NOT NULL DEFAULT '',
+  country       VARCHAR(60)  NOT NULL DEFAULT '',
+  tags          VARCHAR(255) NOT NULL DEFAULT '' COMMENT 'Comma separated, lowercase',
+  source        VARCHAR(30)  NOT NULL DEFAULT 'manual',
+  status        VARCHAR(20)  NOT NULL DEFAULT 'subscribed' COMMENT 'subscribed, unsubscribed, bounced, complained',
+  token         CHAR(32)     NOT NULL UNIQUE,
+  last_sent_at  DATETIME     NULL,
+  created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_contacts_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS email_templates (
+  id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  name       VARCHAR(100) NOT NULL,
+  kind       VARCHAR(20)  NOT NULL DEFAULT 'cold',
+  layout     VARCHAR(10)  NOT NULL DEFAULT 'plain' COMMENT 'plain or branded',
+  subject    VARCHAR(200) NOT NULL,
+  body       TEXT         NOT NULL,
+  sort_order INT          NOT NULL DEFAULT 0,
+  is_active  TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS campaigns (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  name         VARCHAR(120) NOT NULL,
+  subject      VARCHAR(200) NOT NULL,
+  body         TEXT         NOT NULL,
+  layout       VARCHAR(10)  NOT NULL DEFAULT 'plain',
+  from_name    VARCHAR(80)  NOT NULL DEFAULT '',
+  reply_to     VARCHAR(190) NOT NULL DEFAULT '',
+  audience_tag VARCHAR(60)  NOT NULL DEFAULT '' COMMENT 'Empty means every subscribed contact',
+  status       VARCHAR(12)  NOT NULL DEFAULT 'draft' COMMENT 'draft, sending, paused, done, cancelled',
+  created_by   INT UNSIGNED NULL,
+  started_at   DATETIME     NULL,
+  finished_at  DATETIME     NULL,
+  created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS campaign_recipients (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  campaign_id INT UNSIGNED NOT NULL,
+  contact_id  INT UNSIGNED NOT NULL,
+  status      VARCHAR(10)  NOT NULL DEFAULT 'queued' COMMENT 'queued, sent, failed, skipped',
+  error       VARCHAR(255) NOT NULL DEFAULT '',
+  sent_at     DATETIME     NULL,
+  UNIQUE KEY uq_campaign_contact (campaign_id, contact_id),
+  KEY idx_cr_status (status, sent_at),
+  CONSTRAINT fk_cr_campaign FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cr_contact FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS email_log (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   type       VARCHAR(40)  NOT NULL,
