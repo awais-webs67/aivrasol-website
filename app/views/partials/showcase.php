@@ -17,14 +17,20 @@ if ($frame === 'none'): ?>
 <?php return; endif;
 $bgSrc = $frame === 'mobile' && $main === '' ? $phone : ($main !== '' ? $main : $phone);
 $fit = ratio_class($frame === 'mobile' && $main === '' ? $phone : $main);
+$themes = ['peach', 'mint', 'sky', 'blush', 'sand', 'linen', 'lilac'];
+$theme = (string) ($project['theme'] ?? 'auto');
+if (!in_array($theme, array_merge($themes, ['grey', 'dark', 'photo']), true)) {
+    $theme = $themes[((int) ($project['id'] ?? 0)) % count($themes)];
+}
 ?>
-<div class="showcase sc-<?= e($frame) ?> <?= $fit ?>">
-  <img class="sc-bg" src="<?= e(asset($bgSrc)) ?>" alt="" aria-hidden="true" decoding="async"<?= $load ?>>
+<div class="showcase sc-<?= e($frame) ?> <?= $fit ?> th-<?= e($theme) ?>">
+  <?php if ($theme === 'photo'): ?><img class="sc-bg" src="<?= e(asset($bgSrc)) ?>" alt="" aria-hidden="true" decoding="async"<?= $load ?>><?php endif; ?>
+  <span class="sc-gem" aria-hidden="true"></span>
   <?php if ($frame === 'browser' || $frame === 'desktop'): ?>
-  <div class="dev dev-window">
+  <div class="dev dev-window"><div class="dev-inner">
     <?= $bar($frame === 'browser' ? ($host ?: strtolower(preg_replace('/[^a-z0-9]+/i', '', $project['title'])) . '.com') : $project['title'], $frame === 'browser') ?>
     <div class="dev-screen"><?= $shot($main, $alt) ?></div>
-  </div>
+  </div></div>
   <?php elseif ($frame === 'laptop' || $frame === 'combo'): ?>
   <div class="dev dev-laptop">
     <div class="dev-lid"><div class="dev-screen"><?= $shot($main, $alt) ?></div></div>

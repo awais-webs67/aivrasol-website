@@ -114,4 +114,9 @@ return [
             $pdo->exec("ALTER TABLE projects ADD COLUMN frame VARCHAR(10) NOT NULL DEFAULT 'auto' AFTER image_mobile");
         }
     },
+    '2026_10_26_project_themes' => function (PDO $pdo) use ($hasColumn): void {
+        if (!$hasColumn($pdo, 'projects', 'theme')) {
+            $pdo->exec("ALTER TABLE projects ADD COLUMN theme VARCHAR(10) NOT NULL DEFAULT 'auto' AFTER frame");
+        }
+    },
 ];

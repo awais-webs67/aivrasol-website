@@ -674,207 +674,217 @@ button { cursor: pointer; }
 .verify-dl dt { color: var(--muted); }
 .verify-dl dd { margin: 0; color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
 
-/* Project showcase: screenshots inside device frames */
-.showcase { position: relative; container-type: inline-size; aspect-ratio: 16 / 10; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--slate); isolation: isolate; }
+/* Project showcase: screenshots inside device frames, styled like the sample artwork */
+.showcase { position: relative; container-type: inline-size; aspect-ratio: 16 / 10; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #FFE3DA; isolation: isolate; }
+.th-peach { background: #FFE3DA; } .th-mint { background: #E3F0E6; } .th-sky { background: #DDE7EE; } .th-blush { background: #F7E1E6; }
+.th-sand { background: #FFF0D6; } .th-linen { background: #F1E7DF; } .th-lilac { background: #ECE6F5; } .th-grey { background: #EBECED; }
+.th-dark { background: #333F48; } .th-photo { background: var(--slate); }
+/* Soft white circle top right, faint orange circle bottom left, orange diamond */
+.showcase::before, .showcase::after { content: ""; position: absolute; z-index: -1; border-radius: 50%; pointer-events: none; }
+.showcase::before { width: 40cqw; height: 40cqw; right: -7.5cqw; top: -12.5cqw; background: rgba(255, 255, 255, .35); }
+.showcase::after { width: 30cqw; height: 30cqw; left: -3.75cqw; bottom: -11.25cqw; background: rgba(255, 91, 53, .10); }
+.th-dark::before { background: rgba(255, 255, 255, .07); }
+.th-photo::before { background: rgba(255, 255, 255, .12); }
+.sc-gem { position: absolute; z-index: 0; left: 76.25%; top: 75.6%; width: 5.5cqw; height: 5.5cqw; border-radius: 1.25cqw; background: rgba(255, 91, 53, .85); transform: rotate(45deg); pointer-events: none; }
+.sc-none .sc-gem { display: none; }
 .sc-bg { position: absolute; inset: -12%; width: 124%; height: 124%; max-width: none; object-fit: cover; filter: blur(26px) saturate(1.25); opacity: .7; transform: scale(1.05); z-index: -2; }
-.showcase::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, .14), transparent 55%), linear-gradient(180deg, rgba(25, 31, 36, .12), rgba(25, 31, 36, .55)); }
 .sc-none > img { width: 100%; height: 100%; object-fit: cover; }
-.dev { position: relative; transition: transform .45s var(--ease); }
-.dev-screen { position: relative; overflow: hidden; background: #fff; }
+.dev { position: relative; z-index: 1; transition: transform .45s var(--ease); }
+.dev-screen { position: relative; overflow: hidden; background: #F6F7F8; }
 .dev-screen img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
-.sc-combo .dev-laptop { margin-right: 15cqw; }
-/* Browser and desktop app windows rise from the bottom edge */
-.dev-window { border-radius: 1.3cqw; overflow: hidden; background: #fff; box-shadow: 0 2.4cqw 6cqw rgba(0, 0, 0, .38), 0 0 0 1px rgba(255, 255, 255, .25); }
-.dev-bar { display: flex; align-items: center; gap: .9cqw; height: 4.4cqw; padding: 0 1.6cqw; background: #F1F2F4; border-bottom: 1px solid #E1E3E5; }
-.dev-bar i { width: 1.15cqw; height: 1.15cqw; border-radius: 50%; background: #FF5F57; flex: none; }
-.dev-bar i:nth-child(2) { background: #FEBC2E; }
-.dev-bar i:nth-child(3) { background: #28C840; }
-.dev-url, .dev-title { flex: 1; display: flex; align-items: center; justify-content: center; gap: .6cqw; min-width: 0; font-size: max(9px, 1.6cqw); line-height: 1; color: #5F666B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dev-url { max-width: 30cqw; margin: 0 auto; padding: .7cqw 1.6cqw; background: #fff; border-radius: 99px; border: 1px solid #E1E3E5; }
-.dev-url .icon { width: max(8px, 1.3cqw); height: max(8px, 1.3cqw); flex: none; color: #8A9196; }
+/* Browser and desktop app: thick near-black frame, white top bar with three dots */
+.dev-window { padding: 1cqw; background: #191F24; border-radius: 1.75cqw; box-shadow: 0 2.25cqw 4.5cqw rgba(25, 31, 36, .22); }
+.dev-window .dev-inner { overflow: hidden; border-radius: 1cqw; background: #F6F7F8; }
+.dev-bar { display: flex; align-items: center; gap: 1cqw; height: 3.5cqw; padding: 0 1.6cqw; background: #FFFFFF; }
+.dev-bar i { width: 1.25cqw; height: 1.25cqw; border-radius: 50%; background: #FF8A70; flex: none; }
+.dev-bar i:nth-child(2) { background: #FFC66B; }
+.dev-bar i:nth-child(3) { background: #7BD3A0; }
+.dev-url, .dev-title { flex: 1; display: flex; align-items: center; justify-content: center; gap: .6cqw; min-width: 0; font-size: max(8px, 1.4cqw); line-height: 1; color: #5F666B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dev-url { max-width: 30cqw; margin: 0 auto; padding: .55cqw 1.6cqw; background: #F1F2F3; border-radius: 99px; }
+.dev-url .icon { width: max(7px, 1.2cqw); height: max(7px, 1.2cqw); flex: none; color: #8A9196; }
 .dev-title { margin-right: 6cqw; font-weight: 600; color: #333F48; }
 /* Laptop */
-.dev-laptop { width: 70%; filter: drop-shadow(0 2.4cqw 3.4cqw rgba(0, 0, 0, .4)); }
-.dev-lid { padding: 1.3cqw 1.3cqw 1.9cqw; background: linear-gradient(#2A3036, #15191C); border-radius: 1.8cqw 1.8cqw .4cqw .4cqw; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
-.dev-lid .dev-screen { aspect-ratio: 16 / 10; border-radius: .4cqw; }
-.dev-base { position: relative; width: 118%; margin-left: -9%; height: 1.9cqw; background: linear-gradient(#E4E7EA, #A9B0B6); border-radius: 0 0 2cqw 2cqw; }
-.dev-base::before { content: ""; position: absolute; left: 50%; top: 0; width: 16%; height: .7cqw; transform: translateX(-50%); background: #9AA1A7; border-radius: 0 0 1cqw 1cqw; }
+.dev-laptop { filter: drop-shadow(0 2.25cqw 2.25cqw rgba(25, 31, 36, .22)); }
+.dev-lid { padding: 1.1cqw 1.1cqw 1.6cqw; background: #191F24; border-radius: 1.75cqw 1.75cqw .4cqw .4cqw; }
+.dev-lid .dev-screen { border-radius: .6cqw; }
+.dev-base { position: relative; width: 118%; margin-left: -9%; height: 1.9cqw; background: linear-gradient(#E9ECEE, #B9C0C5); border-radius: 0 0 2cqw 2cqw; }
+.dev-base::before { content: ""; position: absolute; left: 50%; top: 0; width: 16%; height: .7cqw; transform: translateX(-50%); background: #A3AAB0; border-radius: 0 0 1cqw 1cqw; }
 /* Tablet */
-.dev-tablet { width: 66%; padding: 1.8cqw; background: linear-gradient(#2A3036, #111417); border-radius: 3cqw; box-shadow: 0 2.4cqw 5cqw rgba(0, 0, 0, .4), inset 0 0 0 1px rgba(255, 255, 255, .14); }
-.dev-tablet .dev-screen { aspect-ratio: 4 / 3; border-radius: 1cqw; }
-/* Phone */
-.dev-phone { width: 25%; padding: 1.1cqw; background: linear-gradient(#2A3036, #0E1113); border-radius: 4.6cqw; box-shadow: 0 2.4cqw 5cqw rgba(0, 0, 0, .45), inset 0 0 0 1px rgba(255, 255, 255, .16); }
-.dev-phone .dev-screen { aspect-ratio: 9 / 19.5; border-radius: 3.6cqw; }
+.dev-tablet { padding: 1.4cqw; background: #191F24; border-radius: 2.6cqw; box-shadow: 0 2.25cqw 4.5cqw rgba(25, 31, 36, .22); }
+.dev-tablet .dev-screen { border-radius: 1cqw; }
+/* Phone: thick frame and a notch pill, like the samples */
+.dev-phone { padding: 1.1cqw; background: #191F24; border-radius: 3.75cqw; box-shadow: 0 2.25cqw 4.5cqw rgba(25, 31, 36, .22); }
+.dev-phone .dev-screen { border-radius: 2.75cqw; background: #FFFFFF; }
 .dev-phone.is-landscape .dev-notch { display: none; }
-.dev-notch { position: absolute; z-index: 2; top: 2.2cqw; left: 50%; width: 28%; height: 2.1cqw; transform: translateX(-50%); background: #0E1113; border-radius: 99px; }
+.dev-notch { position: absolute; z-index: 2; top: 2.25cqw; left: 50%; width: 30%; max-width: 7.5cqw; height: 1.25cqw; transform: translateX(-50%); background: #191F24; border-radius: 99px; }
 /* Laptop with a phone in front */
-.dev-phone-front { position: absolute; right: 9%; bottom: 7%; width: 17%; padding: .8cqw; border-radius: 3.4cqw; }
-.dev-phone-front .dev-screen { border-radius: 2.7cqw; }
-.dev-phone-front .dev-notch { top: 1.6cqw; height: 1.5cqw; }
+.sc-combo .dev-laptop { margin-right: 15cqw; }
+.dev-phone-front { position: absolute; right: 9%; bottom: 7%; padding: .8cqw; border-radius: 3cqw; }
+.dev-phone-front .dev-screen { border-radius: 2.3cqw; }
+.dev-phone-front .dev-notch { top: 1.6cqw; height: 1cqw; }
 .case-cover .showcase { border-radius: var(--radius-lg); }
-
 /* Fitted device sizes for every image shape (generated: screen keeps the image's own proportions) */
 .r-35 .dev-screen { aspect-ratio: 0.35; }
-.r-35 .dev-window { width: 18.06cqw; } .r-35 .dev-laptop { width: 19.02cqw; } .r-35 .dev-tablet { width: 21.24cqw; } .r-35 .dev-phone { width: 21.03cqw; } .sc-combo.r-35 .dev-laptop { width: 16.91cqw; }
+.r-35 .dev-window { width: 16.7cqw; } .r-35 .dev-laptop { width: 16.2cqw; } .r-35 .dev-tablet { width: 18.2cqw; } .r-35 .dev-phone { width: 19.87cqw; } .sc-combo.r-35 .dev-laptop { width: 14.8cqw; }
 .showcase .dev-phone.pr-35 { width: 15.04cqw; } .dev-phone.pr-35 .dev-screen { aspect-ratio: 0.35; }
 .r-40 .dev-screen { aspect-ratio: 0.4; }
-.r-40 .dev-window { width: 20.64cqw; } .r-40 .dev-laptop { width: 21.36cqw; } .r-40 .dev-tablet { width: 23.76cqw; } .r-40 .dev-phone { width: 23.72cqw; } .sc-combo.r-40 .dev-laptop { width: 18.96cqw; }
+.r-40 .dev-window { width: 18.8cqw; } .r-40 .dev-laptop { width: 18.2cqw; } .r-40 .dev-tablet { width: 20.4cqw; } .r-40 .dev-phone { width: 22.4cqw; } .sc-combo.r-40 .dev-laptop { width: 16.6cqw; }
 .showcase .dev-phone.pr-40 { width: 16.96cqw; } .dev-phone.pr-40 .dev-screen { aspect-ratio: 0.4; }
 .r-45 .dev-screen { aspect-ratio: 0.45; }
-.r-45 .dev-window { width: 23.22cqw; } .r-45 .dev-laptop { width: 23.71cqw; } .r-45 .dev-tablet { width: 26.28cqw; } .r-45 .dev-phone { width: 26.41cqw; } .sc-combo.r-45 .dev-laptop { width: 21.01cqw; }
+.r-45 .dev-window { width: 20.9cqw; } .r-45 .dev-laptop { width: 20.2cqw; } .r-45 .dev-tablet { width: 22.6cqw; } .r-45 .dev-phone { width: 24.93cqw; } .sc-combo.r-45 .dev-laptop { width: 18.4cqw; }
 .showcase .dev-phone.pr-45 { width: 18.88cqw; } .dev-phone.pr-45 .dev-screen { aspect-ratio: 0.45; }
 .r-50 .dev-screen { aspect-ratio: 0.5; }
-.r-50 .dev-window { width: 25.8cqw; } .r-50 .dev-laptop { width: 26.05cqw; } .r-50 .dev-tablet { width: 28.8cqw; } .r-50 .dev-phone { width: 29.1cqw; } .sc-combo.r-50 .dev-laptop { width: 23.05cqw; }
+.r-50 .dev-window { width: 23cqw; } .r-50 .dev-laptop { width: 22.2cqw; } .r-50 .dev-tablet { width: 24.8cqw; } .r-50 .dev-phone { width: 27.45cqw; } .sc-combo.r-50 .dev-laptop { width: 20.2cqw; }
 .showcase .dev-phone.pr-50 { width: 19.6cqw; } .dev-phone.pr-50 .dev-screen { aspect-ratio: 0.5; }
 .r-55 .dev-screen { aspect-ratio: 0.55; }
-.r-55 .dev-window { width: 28.38cqw; } .r-55 .dev-laptop { width: 28.4cqw; } .r-55 .dev-tablet { width: 31.32cqw; } .r-55 .dev-phone { width: 31.79cqw; } .sc-combo.r-55 .dev-laptop { width: 25.1cqw; }
+.r-55 .dev-window { width: 25.1cqw; } .r-55 .dev-laptop { width: 24.2cqw; } .r-55 .dev-tablet { width: 27cqw; } .r-55 .dev-phone { width: 29.98cqw; } .sc-combo.r-55 .dev-laptop { width: 22cqw; }
 .showcase .dev-phone.pr-55 { width: 19.6cqw; } .dev-phone.pr-55 .dev-screen { aspect-ratio: 0.55; }
 .r-60 .dev-screen { aspect-ratio: 0.6; }
-.r-60 .dev-window { width: 30.96cqw; } .r-60 .dev-laptop { width: 30.74cqw; } .r-60 .dev-tablet { width: 33.84cqw; } .r-60 .dev-phone { width: 34.48cqw; } .sc-combo.r-60 .dev-laptop { width: 27.14cqw; }
+.r-60 .dev-window { width: 27.2cqw; } .r-60 .dev-laptop { width: 26.2cqw; } .r-60 .dev-tablet { width: 29.2cqw; } .r-60 .dev-phone { width: 32.5cqw; } .sc-combo.r-60 .dev-laptop { width: 23.8cqw; }
 .showcase .dev-phone.pr-60 { width: 19.6cqw; } .dev-phone.pr-60 .dev-screen { aspect-ratio: 0.6; }
 .r-65 .dev-screen { aspect-ratio: 0.65; }
-.r-65 .dev-window { width: 33.54cqw; } .r-65 .dev-laptop { width: 33.09cqw; } .r-65 .dev-tablet { width: 36.36cqw; } .r-65 .dev-phone { width: 37.17cqw; } .sc-combo.r-65 .dev-laptop { width: 29.19cqw; }
+.r-65 .dev-window { width: 29.3cqw; } .r-65 .dev-laptop { width: 28.2cqw; } .r-65 .dev-tablet { width: 31.4cqw; } .r-65 .dev-phone { width: 35.03cqw; } .sc-combo.r-65 .dev-laptop { width: 25.6cqw; }
 .showcase .dev-phone.pr-65 { width: 19.6cqw; } .dev-phone.pr-65 .dev-screen { aspect-ratio: 0.65; }
 .r-70 .dev-screen { aspect-ratio: 0.7; }
-.r-70 .dev-window { width: 36.12cqw; } .r-70 .dev-laptop { width: 35.43cqw; } .r-70 .dev-tablet { width: 38.88cqw; } .r-70 .dev-phone { width: 39.86cqw; } .sc-combo.r-70 .dev-laptop { width: 31.23cqw; }
+.r-70 .dev-window { width: 31.4cqw; } .r-70 .dev-laptop { width: 30.2cqw; } .r-70 .dev-tablet { width: 33.6cqw; } .r-70 .dev-phone { width: 37.55cqw; } .sc-combo.r-70 .dev-laptop { width: 27.4cqw; }
 .showcase .dev-phone.pr-70 { width: 19.6cqw; } .dev-phone.pr-70 .dev-screen { aspect-ratio: 0.7; }
 .r-75 .dev-screen { aspect-ratio: 0.75; }
-.r-75 .dev-window { width: 38.7cqw; } .r-75 .dev-laptop { width: 37.77cqw; } .r-75 .dev-tablet { width: 41.4cqw; } .r-75 .dev-phone { width: 42.55cqw; } .sc-combo.r-75 .dev-laptop { width: 33.27cqw; }
+.r-75 .dev-window { width: 33.5cqw; } .r-75 .dev-laptop { width: 32.2cqw; } .r-75 .dev-tablet { width: 35.8cqw; } .r-75 .dev-phone { width: 40.08cqw; } .sc-combo.r-75 .dev-laptop { width: 29.2cqw; }
 .showcase .dev-phone.pr-75 { width: 19.6cqw; } .dev-phone.pr-75 .dev-screen { aspect-ratio: 0.75; }
 .r-80 .dev-screen { aspect-ratio: 0.8; }
-.r-80 .dev-window { width: 41.28cqw; } .r-80 .dev-laptop { width: 40.12cqw; } .r-80 .dev-tablet { width: 43.92cqw; } .r-80 .dev-phone { width: 45.24cqw; } .sc-combo.r-80 .dev-laptop { width: 35.32cqw; }
+.r-80 .dev-window { width: 35.6cqw; } .r-80 .dev-laptop { width: 34.2cqw; } .r-80 .dev-tablet { width: 38cqw; } .r-80 .dev-phone { width: 42.6cqw; } .sc-combo.r-80 .dev-laptop { width: 31cqw; }
 .showcase .dev-phone.pr-80 { width: 19.6cqw; } .dev-phone.pr-80 .dev-screen { aspect-ratio: 0.8; }
 .r-85 .dev-screen { aspect-ratio: 0.85; }
-.r-85 .dev-window { width: 43.86cqw; } .r-85 .dev-laptop { width: 42.46cqw; } .r-85 .dev-tablet { width: 46.44cqw; } .r-85 .dev-phone { width: 47.93cqw; } .sc-combo.r-85 .dev-laptop { width: 37.37cqw; }
+.r-85 .dev-window { width: 37.7cqw; } .r-85 .dev-laptop { width: 36.2cqw; } .r-85 .dev-tablet { width: 40.2cqw; } .r-85 .dev-phone { width: 45.12cqw; } .sc-combo.r-85 .dev-laptop { width: 32.8cqw; }
 .showcase .dev-phone.pr-85 { width: 19.6cqw; } .dev-phone.pr-85 .dev-screen { aspect-ratio: 0.85; }
 .r-90 .dev-screen { aspect-ratio: 0.9; }
-.r-90 .dev-window { width: 46.44cqw; } .r-90 .dev-laptop { width: 44.81cqw; } .r-90 .dev-tablet { width: 48.96cqw; } .r-90 .dev-phone { width: 50.62cqw; } .sc-combo.r-90 .dev-laptop { width: 39.41cqw; }
+.r-90 .dev-window { width: 39.8cqw; } .r-90 .dev-laptop { width: 38.2cqw; } .r-90 .dev-tablet { width: 42.4cqw; } .r-90 .dev-phone { width: 47.65cqw; } .sc-combo.r-90 .dev-laptop { width: 34.6cqw; }
 .showcase .dev-phone.pr-90 { width: 19.6cqw; } .dev-phone.pr-90 .dev-screen { aspect-ratio: 0.9; }
 .r-95 .dev-screen { aspect-ratio: 0.95; }
-.r-95 .dev-window { width: 49.02cqw; } .r-95 .dev-laptop { width: 47.16cqw; } .r-95 .dev-tablet { width: 51.48cqw; } .r-95 .dev-phone { width: 53.31cqw; } .sc-combo.r-95 .dev-laptop { width: 41.45cqw; }
+.r-95 .dev-window { width: 41.9cqw; } .r-95 .dev-laptop { width: 40.2cqw; } .r-95 .dev-tablet { width: 44.6cqw; } .r-95 .dev-phone { width: 50.17cqw; } .sc-combo.r-95 .dev-laptop { width: 36.4cqw; }
 .showcase .dev-phone.pr-95 { width: 19.6cqw; } .dev-phone.pr-95 .dev-screen { aspect-ratio: 0.95; }
 .r-100 .dev-screen { aspect-ratio: 1; }
-.r-100 .dev-window { width: 51.6cqw; } .r-100 .dev-laptop { width: 49.5cqw; } .r-100 .dev-tablet { width: 54cqw; } .r-100 .dev-phone { width: 56cqw; } .sc-combo.r-100 .dev-laptop { width: 43.5cqw; }
+.r-100 .dev-window { width: 44cqw; } .r-100 .dev-laptop { width: 42.2cqw; } .r-100 .dev-tablet { width: 46.8cqw; } .r-100 .dev-phone { width: 52.7cqw; } .sc-combo.r-100 .dev-laptop { width: 38.2cqw; }
 .showcase .dev-phone.pr-100 { width: 19.6cqw; } .dev-phone.pr-100 .dev-screen { aspect-ratio: 1; }
 .r-105 .dev-screen { aspect-ratio: 1.05; }
-.r-105 .dev-window { width: 54.18cqw; } .r-105 .dev-laptop { width: 51.84cqw; } .r-105 .dev-tablet { width: 56.52cqw; } .r-105 .dev-phone { width: 58.69cqw; } .sc-combo.r-105 .dev-laptop { width: 45.55cqw; }
+.r-105 .dev-window { width: 46.1cqw; } .r-105 .dev-laptop { width: 44.2cqw; } .r-105 .dev-tablet { width: 49cqw; } .r-105 .dev-phone { width: 54.2cqw; } .sc-combo.r-105 .dev-laptop { width: 40cqw; }
 .showcase .dev-phone.pr-105 { width: 19.6cqw; } .dev-phone.pr-105 .dev-screen { aspect-ratio: 1.05; }
 .r-110 .dev-screen { aspect-ratio: 1.1; }
-.r-110 .dev-window { width: 56.76cqw; } .r-110 .dev-laptop { width: 54.19cqw; } .r-110 .dev-tablet { width: 59.04cqw; } .r-110 .dev-phone { width: 60cqw; } .sc-combo.r-110 .dev-laptop { width: 47.59cqw; }
+.r-110 .dev-window { width: 48.2cqw; } .r-110 .dev-laptop { width: 46.2cqw; } .r-110 .dev-tablet { width: 51.2cqw; } .r-110 .dev-phone { width: 54.2cqw; } .sc-combo.r-110 .dev-laptop { width: 41.8cqw; }
 .showcase .dev-phone.pr-110 { width: 19.6cqw; } .dev-phone.pr-110 .dev-screen { aspect-ratio: 1.1; }
 .r-115 .dev-screen { aspect-ratio: 1.15; }
-.r-115 .dev-window { width: 59.34cqw; } .r-115 .dev-laptop { width: 56.53cqw; } .r-115 .dev-tablet { width: 61.56cqw; } .r-115 .dev-phone { width: 60cqw; } .sc-combo.r-115 .dev-laptop { width: 49.63cqw; }
+.r-115 .dev-window { width: 50.3cqw; } .r-115 .dev-laptop { width: 48.2cqw; } .r-115 .dev-tablet { width: 53.4cqw; } .r-115 .dev-phone { width: 54.2cqw; } .sc-combo.r-115 .dev-laptop { width: 43.6cqw; }
 .showcase .dev-phone.pr-115 { width: 19.6cqw; } .dev-phone.pr-115 .dev-screen { aspect-ratio: 1.15; }
 .r-120 .dev-screen { aspect-ratio: 1.2; }
-.r-120 .dev-window { width: 61.92cqw; } .r-120 .dev-laptop { width: 58.88cqw; } .r-120 .dev-tablet { width: 64.08cqw; } .r-120 .dev-phone { width: 60cqw; } .sc-combo.r-120 .dev-laptop { width: 51.68cqw; }
+.r-120 .dev-window { width: 52.4cqw; } .r-120 .dev-laptop { width: 50.2cqw; } .r-120 .dev-tablet { width: 55.6cqw; } .r-120 .dev-phone { width: 54.2cqw; } .sc-combo.r-120 .dev-laptop { width: 45.4cqw; }
 .showcase .dev-phone.pr-120 { width: 19.6cqw; } .dev-phone.pr-120 .dev-screen { aspect-ratio: 1.2; }
 .r-125 .dev-screen { aspect-ratio: 1.25; }
-.r-125 .dev-window { width: 64.5cqw; } .r-125 .dev-laptop { width: 61.23cqw; } .r-125 .dev-tablet { width: 66.6cqw; } .r-125 .dev-phone { width: 60cqw; } .sc-combo.r-125 .dev-laptop { width: 53.73cqw; }
+.r-125 .dev-window { width: 54.5cqw; } .r-125 .dev-laptop { width: 52.2cqw; } .r-125 .dev-tablet { width: 57.8cqw; } .r-125 .dev-phone { width: 54.2cqw; } .sc-combo.r-125 .dev-laptop { width: 47.2cqw; }
 .showcase .dev-phone.pr-125 { width: 19.6cqw; } .dev-phone.pr-125 .dev-screen { aspect-ratio: 1.25; }
 .r-130 .dev-screen { aspect-ratio: 1.3; }
-.r-130 .dev-window { width: 67.08cqw; } .r-130 .dev-laptop { width: 63.57cqw; } .r-130 .dev-tablet { width: 69.12cqw; } .r-130 .dev-phone { width: 60cqw; } .sc-combo.r-130 .dev-laptop { width: 55.77cqw; }
+.r-130 .dev-window { width: 56.6cqw; } .r-130 .dev-laptop { width: 54.2cqw; } .r-130 .dev-tablet { width: 60cqw; } .r-130 .dev-phone { width: 54.2cqw; } .sc-combo.r-130 .dev-laptop { width: 49cqw; }
 .showcase .dev-phone.pr-130 { width: 19.6cqw; } .dev-phone.pr-130 .dev-screen { aspect-ratio: 1.3; }
 .r-135 .dev-screen { aspect-ratio: 1.35; }
-.r-135 .dev-window { width: 69.66cqw; } .r-135 .dev-laptop { width: 65.92cqw; } .r-135 .dev-tablet { width: 71.64cqw; } .r-135 .dev-phone { width: 60cqw; } .sc-combo.r-135 .dev-laptop { width: 56cqw; }
+.r-135 .dev-window { width: 58.7cqw; } .r-135 .dev-laptop { width: 56.2cqw; } .r-135 .dev-tablet { width: 62.2cqw; } .r-135 .dev-phone { width: 54.2cqw; } .sc-combo.r-135 .dev-laptop { width: 50.8cqw; }
 .showcase .dev-phone.pr-135 { width: 19.6cqw; } .dev-phone.pr-135 .dev-screen { aspect-ratio: 1.35; }
 .r-140 .dev-screen { aspect-ratio: 1.4; }
-.r-140 .dev-window { width: 72.24cqw; } .r-140 .dev-laptop { width: 68.26cqw; } .r-140 .dev-tablet { width: 74.16cqw; } .r-140 .dev-phone { width: 60cqw; } .sc-combo.r-140 .dev-laptop { width: 56cqw; }
+.r-140 .dev-window { width: 60.8cqw; } .r-140 .dev-laptop { width: 58.2cqw; } .r-140 .dev-tablet { width: 64.4cqw; } .r-140 .dev-phone { width: 54.2cqw; } .sc-combo.r-140 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-140 { width: 19.6cqw; } .dev-phone.pr-140 .dev-screen { aspect-ratio: 1.4; }
 .r-145 .dev-screen { aspect-ratio: 1.45; }
-.r-145 .dev-window { width: 74.82cqw; } .r-145 .dev-laptop { width: 70.6cqw; } .r-145 .dev-tablet { width: 76.68cqw; } .r-145 .dev-phone { width: 60cqw; } .sc-combo.r-145 .dev-laptop { width: 56cqw; }
+.r-145 .dev-window { width: 62.9cqw; } .r-145 .dev-laptop { width: 60.2cqw; } .r-145 .dev-tablet { width: 66.6cqw; } .r-145 .dev-phone { width: 54.2cqw; } .sc-combo.r-145 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-145 { width: 19.6cqw; } .dev-phone.pr-145 .dev-screen { aspect-ratio: 1.45; }
 .r-150 .dev-screen { aspect-ratio: 1.5; }
-.r-150 .dev-window { width: 77.4cqw; } .r-150 .dev-laptop { width: 72.95cqw; } .r-150 .dev-tablet { width: 79.2cqw; } .r-150 .dev-phone { width: 60cqw; } .sc-combo.r-150 .dev-laptop { width: 56cqw; }
+.r-150 .dev-window { width: 65cqw; } .r-150 .dev-laptop { width: 62.2cqw; } .r-150 .dev-tablet { width: 68.8cqw; } .r-150 .dev-phone { width: 54.2cqw; } .sc-combo.r-150 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-150 { width: 19.6cqw; } .dev-phone.pr-150 .dev-screen { aspect-ratio: 1.5; }
 .r-155 .dev-screen { aspect-ratio: 1.55; }
-.r-155 .dev-window { width: 79.98cqw; } .r-155 .dev-laptop { width: 75.29cqw; } .r-155 .dev-tablet { width: 80cqw; } .r-155 .dev-phone { width: 60cqw; } .sc-combo.r-155 .dev-laptop { width: 56cqw; }
+.r-155 .dev-window { width: 67.1cqw; } .r-155 .dev-laptop { width: 64.2cqw; } .r-155 .dev-tablet { width: 68.8cqw; } .r-155 .dev-phone { width: 54.2cqw; } .sc-combo.r-155 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-155 { width: 19.6cqw; } .dev-phone.pr-155 .dev-screen { aspect-ratio: 1.55; }
 .r-160 .dev-screen { aspect-ratio: 1.6; }
-.r-160 .dev-window { width: 82.56cqw; } .r-160 .dev-laptop { width: 77.64cqw; } .r-160 .dev-tablet { width: 80cqw; } .r-160 .dev-phone { width: 60cqw; } .sc-combo.r-160 .dev-laptop { width: 56cqw; }
+.r-160 .dev-window { width: 69.2cqw; } .r-160 .dev-laptop { width: 66.2cqw; } .r-160 .dev-tablet { width: 68.8cqw; } .r-160 .dev-phone { width: 54.2cqw; } .sc-combo.r-160 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-160 { width: 19.6cqw; } .dev-phone.pr-160 .dev-screen { aspect-ratio: 1.6; }
 .r-165 .dev-screen { aspect-ratio: 1.65; }
-.r-165 .dev-window { width: 85.14cqw; } .r-165 .dev-laptop { width: 78cqw; } .r-165 .dev-tablet { width: 80cqw; } .r-165 .dev-phone { width: 60cqw; } .sc-combo.r-165 .dev-laptop { width: 56cqw; }
+.r-165 .dev-window { width: 71.3cqw; } .r-165 .dev-laptop { width: 68.2cqw; } .r-165 .dev-tablet { width: 68.8cqw; } .r-165 .dev-phone { width: 54.2cqw; } .sc-combo.r-165 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-165 { width: 19.6cqw; } .dev-phone.pr-165 .dev-screen { aspect-ratio: 1.65; }
 .r-170 .dev-screen { aspect-ratio: 1.7; }
-.r-170 .dev-window { width: 86cqw; } .r-170 .dev-laptop { width: 78cqw; } .r-170 .dev-tablet { width: 80cqw; } .r-170 .dev-phone { width: 60cqw; } .sc-combo.r-170 .dev-laptop { width: 56cqw; }
+.r-170 .dev-window { width: 72.5cqw; } .r-170 .dev-laptop { width: 68.2cqw; } .r-170 .dev-tablet { width: 68.8cqw; } .r-170 .dev-phone { width: 54.2cqw; } .sc-combo.r-170 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-170 { width: 19.6cqw; } .dev-phone.pr-170 .dev-screen { aspect-ratio: 1.7; }
 .r-175 .dev-screen { aspect-ratio: 1.75; }
-.r-175 .dev-window { width: 86cqw; } .r-175 .dev-laptop { width: 78cqw; } .r-175 .dev-tablet { width: 80cqw; } .r-175 .dev-phone { width: 60cqw; } .sc-combo.r-175 .dev-laptop { width: 56cqw; }
+.r-175 .dev-window { width: 72.5cqw; } .r-175 .dev-laptop { width: 68.2cqw; } .r-175 .dev-tablet { width: 68.8cqw; } .r-175 .dev-phone { width: 54.2cqw; } .sc-combo.r-175 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-175 { width: 19.6cqw; } .dev-phone.pr-175 .dev-screen { aspect-ratio: 1.75; }
 .r-180 .dev-screen { aspect-ratio: 1.8; }
-.r-180 .dev-window { width: 86cqw; } .r-180 .dev-laptop { width: 78cqw; } .r-180 .dev-tablet { width: 80cqw; } .r-180 .dev-phone { width: 60cqw; } .sc-combo.r-180 .dev-laptop { width: 56cqw; }
+.r-180 .dev-window { width: 72.5cqw; } .r-180 .dev-laptop { width: 68.2cqw; } .r-180 .dev-tablet { width: 68.8cqw; } .r-180 .dev-phone { width: 54.2cqw; } .sc-combo.r-180 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-180 { width: 19.6cqw; } .dev-phone.pr-180 .dev-screen { aspect-ratio: 1.8; }
 .r-185 .dev-screen { aspect-ratio: 1.85; }
-.r-185 .dev-window { width: 86cqw; } .r-185 .dev-laptop { width: 78cqw; } .r-185 .dev-tablet { width: 80cqw; } .r-185 .dev-phone { width: 60cqw; } .sc-combo.r-185 .dev-laptop { width: 56cqw; }
+.r-185 .dev-window { width: 72.5cqw; } .r-185 .dev-laptop { width: 68.2cqw; } .r-185 .dev-tablet { width: 68.8cqw; } .r-185 .dev-phone { width: 54.2cqw; } .sc-combo.r-185 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-185 { width: 19.6cqw; } .dev-phone.pr-185 .dev-screen { aspect-ratio: 1.85; }
 .r-190 .dev-screen { aspect-ratio: 1.9; }
-.r-190 .dev-window { width: 86cqw; } .r-190 .dev-laptop { width: 78cqw; } .r-190 .dev-tablet { width: 80cqw; } .r-190 .dev-phone { width: 60cqw; } .sc-combo.r-190 .dev-laptop { width: 56cqw; }
+.r-190 .dev-window { width: 72.5cqw; } .r-190 .dev-laptop { width: 68.2cqw; } .r-190 .dev-tablet { width: 68.8cqw; } .r-190 .dev-phone { width: 54.2cqw; } .sc-combo.r-190 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-190 { width: 19.6cqw; } .dev-phone.pr-190 .dev-screen { aspect-ratio: 1.9; }
 .r-195 .dev-screen { aspect-ratio: 1.95; }
-.r-195 .dev-window { width: 86cqw; } .r-195 .dev-laptop { width: 78cqw; } .r-195 .dev-tablet { width: 80cqw; } .r-195 .dev-phone { width: 60cqw; } .sc-combo.r-195 .dev-laptop { width: 56cqw; }
+.r-195 .dev-window { width: 72.5cqw; } .r-195 .dev-laptop { width: 68.2cqw; } .r-195 .dev-tablet { width: 68.8cqw; } .r-195 .dev-phone { width: 54.2cqw; } .sc-combo.r-195 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-195 { width: 19.6cqw; } .dev-phone.pr-195 .dev-screen { aspect-ratio: 1.95; }
 .r-200 .dev-screen { aspect-ratio: 2; }
-.r-200 .dev-window { width: 86cqw; } .r-200 .dev-laptop { width: 78cqw; } .r-200 .dev-tablet { width: 80cqw; } .r-200 .dev-phone { width: 60cqw; } .sc-combo.r-200 .dev-laptop { width: 56cqw; }
+.r-200 .dev-window { width: 72.5cqw; } .r-200 .dev-laptop { width: 68.2cqw; } .r-200 .dev-tablet { width: 68.8cqw; } .r-200 .dev-phone { width: 54.2cqw; } .sc-combo.r-200 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-200 { width: 19.6cqw; } .dev-phone.pr-200 .dev-screen { aspect-ratio: 2; }
 .r-205 .dev-screen { aspect-ratio: 2.05; }
-.r-205 .dev-window { width: 86cqw; } .r-205 .dev-laptop { width: 78cqw; } .r-205 .dev-tablet { width: 80cqw; } .r-205 .dev-phone { width: 60cqw; } .sc-combo.r-205 .dev-laptop { width: 56cqw; }
+.r-205 .dev-window { width: 72.5cqw; } .r-205 .dev-laptop { width: 68.2cqw; } .r-205 .dev-tablet { width: 68.8cqw; } .r-205 .dev-phone { width: 54.2cqw; } .sc-combo.r-205 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-205 { width: 19.6cqw; } .dev-phone.pr-205 .dev-screen { aspect-ratio: 2.05; }
 .r-210 .dev-screen { aspect-ratio: 2.1; }
-.r-210 .dev-window { width: 86cqw; } .r-210 .dev-laptop { width: 78cqw; } .r-210 .dev-tablet { width: 80cqw; } .r-210 .dev-phone { width: 60cqw; } .sc-combo.r-210 .dev-laptop { width: 56cqw; }
+.r-210 .dev-window { width: 72.5cqw; } .r-210 .dev-laptop { width: 68.2cqw; } .r-210 .dev-tablet { width: 68.8cqw; } .r-210 .dev-phone { width: 54.2cqw; } .sc-combo.r-210 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-210 { width: 19.6cqw; } .dev-phone.pr-210 .dev-screen { aspect-ratio: 2.1; }
 .r-215 .dev-screen { aspect-ratio: 2.15; }
-.r-215 .dev-window { width: 86cqw; } .r-215 .dev-laptop { width: 78cqw; } .r-215 .dev-tablet { width: 80cqw; } .r-215 .dev-phone { width: 60cqw; } .sc-combo.r-215 .dev-laptop { width: 56cqw; }
+.r-215 .dev-window { width: 72.5cqw; } .r-215 .dev-laptop { width: 68.2cqw; } .r-215 .dev-tablet { width: 68.8cqw; } .r-215 .dev-phone { width: 54.2cqw; } .sc-combo.r-215 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-215 { width: 19.6cqw; } .dev-phone.pr-215 .dev-screen { aspect-ratio: 2.15; }
 .r-220 .dev-screen { aspect-ratio: 2.2; }
-.r-220 .dev-window { width: 86cqw; } .r-220 .dev-laptop { width: 78cqw; } .r-220 .dev-tablet { width: 80cqw; } .r-220 .dev-phone { width: 60cqw; } .sc-combo.r-220 .dev-laptop { width: 56cqw; }
+.r-220 .dev-window { width: 72.5cqw; } .r-220 .dev-laptop { width: 68.2cqw; } .r-220 .dev-tablet { width: 68.8cqw; } .r-220 .dev-phone { width: 54.2cqw; } .sc-combo.r-220 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-220 { width: 19.6cqw; } .dev-phone.pr-220 .dev-screen { aspect-ratio: 2.2; }
 .r-225 .dev-screen { aspect-ratio: 2.25; }
-.r-225 .dev-window { width: 86cqw; } .r-225 .dev-laptop { width: 78cqw; } .r-225 .dev-tablet { width: 80cqw; } .r-225 .dev-phone { width: 60cqw; } .sc-combo.r-225 .dev-laptop { width: 56cqw; }
+.r-225 .dev-window { width: 72.5cqw; } .r-225 .dev-laptop { width: 68.2cqw; } .r-225 .dev-tablet { width: 68.8cqw; } .r-225 .dev-phone { width: 54.2cqw; } .sc-combo.r-225 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-225 { width: 19.6cqw; } .dev-phone.pr-225 .dev-screen { aspect-ratio: 2.25; }
 .r-230 .dev-screen { aspect-ratio: 2.3; }
-.r-230 .dev-window { width: 86cqw; } .r-230 .dev-laptop { width: 78cqw; } .r-230 .dev-tablet { width: 80cqw; } .r-230 .dev-phone { width: 60cqw; } .sc-combo.r-230 .dev-laptop { width: 56cqw; }
+.r-230 .dev-window { width: 72.5cqw; } .r-230 .dev-laptop { width: 68.2cqw; } .r-230 .dev-tablet { width: 68.8cqw; } .r-230 .dev-phone { width: 54.2cqw; } .sc-combo.r-230 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-230 { width: 19.6cqw; } .dev-phone.pr-230 .dev-screen { aspect-ratio: 2.3; }
 .r-235 .dev-screen { aspect-ratio: 2.35; }
-.r-235 .dev-window { width: 86cqw; } .r-235 .dev-laptop { width: 78cqw; } .r-235 .dev-tablet { width: 80cqw; } .r-235 .dev-phone { width: 60cqw; } .sc-combo.r-235 .dev-laptop { width: 56cqw; }
+.r-235 .dev-window { width: 72.5cqw; } .r-235 .dev-laptop { width: 68.2cqw; } .r-235 .dev-tablet { width: 68.8cqw; } .r-235 .dev-phone { width: 54.2cqw; } .sc-combo.r-235 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-235 { width: 19.6cqw; } .dev-phone.pr-235 .dev-screen { aspect-ratio: 2.35; }
 .r-240 .dev-screen { aspect-ratio: 2.4; }
-.r-240 .dev-window { width: 86cqw; } .r-240 .dev-laptop { width: 78cqw; } .r-240 .dev-tablet { width: 80cqw; } .r-240 .dev-phone { width: 60cqw; } .sc-combo.r-240 .dev-laptop { width: 56cqw; }
+.r-240 .dev-window { width: 72.5cqw; } .r-240 .dev-laptop { width: 68.2cqw; } .r-240 .dev-tablet { width: 68.8cqw; } .r-240 .dev-phone { width: 54.2cqw; } .sc-combo.r-240 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-240 { width: 19.6cqw; } .dev-phone.pr-240 .dev-screen { aspect-ratio: 2.4; }
 .r-245 .dev-screen { aspect-ratio: 2.45; }
-.r-245 .dev-window { width: 86cqw; } .r-245 .dev-laptop { width: 78cqw; } .r-245 .dev-tablet { width: 80cqw; } .r-245 .dev-phone { width: 60cqw; } .sc-combo.r-245 .dev-laptop { width: 56cqw; }
+.r-245 .dev-window { width: 72.5cqw; } .r-245 .dev-laptop { width: 68.2cqw; } .r-245 .dev-tablet { width: 68.8cqw; } .r-245 .dev-phone { width: 54.2cqw; } .sc-combo.r-245 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-245 { width: 19.6cqw; } .dev-phone.pr-245 .dev-screen { aspect-ratio: 2.45; }
 .r-250 .dev-screen { aspect-ratio: 2.5; }
-.r-250 .dev-window { width: 86cqw; } .r-250 .dev-laptop { width: 78cqw; } .r-250 .dev-tablet { width: 80cqw; } .r-250 .dev-phone { width: 60cqw; } .sc-combo.r-250 .dev-laptop { width: 56cqw; }
+.r-250 .dev-window { width: 72.5cqw; } .r-250 .dev-laptop { width: 68.2cqw; } .r-250 .dev-tablet { width: 68.8cqw; } .r-250 .dev-phone { width: 54.2cqw; } .sc-combo.r-250 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-250 { width: 19.6cqw; } .dev-phone.pr-250 .dev-screen { aspect-ratio: 2.5; }
 .r-255 .dev-screen { aspect-ratio: 2.55; }
-.r-255 .dev-window { width: 86cqw; } .r-255 .dev-laptop { width: 78cqw; } .r-255 .dev-tablet { width: 80cqw; } .r-255 .dev-phone { width: 60cqw; } .sc-combo.r-255 .dev-laptop { width: 56cqw; }
+.r-255 .dev-window { width: 72.5cqw; } .r-255 .dev-laptop { width: 68.2cqw; } .r-255 .dev-tablet { width: 68.8cqw; } .r-255 .dev-phone { width: 54.2cqw; } .sc-combo.r-255 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-255 { width: 19.6cqw; } .dev-phone.pr-255 .dev-screen { aspect-ratio: 2.55; }
 .r-260 .dev-screen { aspect-ratio: 2.6; }
-.r-260 .dev-window { width: 86cqw; } .r-260 .dev-laptop { width: 78cqw; } .r-260 .dev-tablet { width: 80cqw; } .r-260 .dev-phone { width: 60cqw; } .sc-combo.r-260 .dev-laptop { width: 56cqw; }
+.r-260 .dev-window { width: 72.5cqw; } .r-260 .dev-laptop { width: 68.2cqw; } .r-260 .dev-tablet { width: 68.8cqw; } .r-260 .dev-phone { width: 54.2cqw; } .sc-combo.r-260 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-260 { width: 19.6cqw; } .dev-phone.pr-260 .dev-screen { aspect-ratio: 2.6; }
 .r-265 .dev-screen { aspect-ratio: 2.65; }
-.r-265 .dev-window { width: 86cqw; } .r-265 .dev-laptop { width: 78cqw; } .r-265 .dev-tablet { width: 80cqw; } .r-265 .dev-phone { width: 60cqw; } .sc-combo.r-265 .dev-laptop { width: 56cqw; }
+.r-265 .dev-window { width: 72.5cqw; } .r-265 .dev-laptop { width: 68.2cqw; } .r-265 .dev-tablet { width: 68.8cqw; } .r-265 .dev-phone { width: 54.2cqw; } .sc-combo.r-265 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-265 { width: 19.6cqw; } .dev-phone.pr-265 .dev-screen { aspect-ratio: 2.65; }
 .r-270 .dev-screen { aspect-ratio: 2.7; }
-.r-270 .dev-window { width: 86cqw; } .r-270 .dev-laptop { width: 78cqw; } .r-270 .dev-tablet { width: 80cqw; } .r-270 .dev-phone { width: 60cqw; } .sc-combo.r-270 .dev-laptop { width: 56cqw; }
+.r-270 .dev-window { width: 72.5cqw; } .r-270 .dev-laptop { width: 68.2cqw; } .r-270 .dev-tablet { width: 68.8cqw; } .r-270 .dev-phone { width: 54.2cqw; } .sc-combo.r-270 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-270 { width: 19.6cqw; } .dev-phone.pr-270 .dev-screen { aspect-ratio: 2.7; }
 .r-275 .dev-screen { aspect-ratio: 2.75; }
-.r-275 .dev-window { width: 86cqw; } .r-275 .dev-laptop { width: 78cqw; } .r-275 .dev-tablet { width: 80cqw; } .r-275 .dev-phone { width: 60cqw; } .sc-combo.r-275 .dev-laptop { width: 56cqw; }
+.r-275 .dev-window { width: 72.5cqw; } .r-275 .dev-laptop { width: 68.2cqw; } .r-275 .dev-tablet { width: 68.8cqw; } .r-275 .dev-phone { width: 54.2cqw; } .sc-combo.r-275 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-275 { width: 19.6cqw; } .dev-phone.pr-275 .dev-screen { aspect-ratio: 2.75; }
 .r-280 .dev-screen { aspect-ratio: 2.8; }
-.r-280 .dev-window { width: 86cqw; } .r-280 .dev-laptop { width: 78cqw; } .r-280 .dev-tablet { width: 80cqw; } .r-280 .dev-phone { width: 60cqw; } .sc-combo.r-280 .dev-laptop { width: 56cqw; }
+.r-280 .dev-window { width: 72.5cqw; } .r-280 .dev-laptop { width: 68.2cqw; } .r-280 .dev-tablet { width: 68.8cqw; } .r-280 .dev-phone { width: 54.2cqw; } .sc-combo.r-280 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-280 { width: 19.6cqw; } .dev-phone.pr-280 .dev-screen { aspect-ratio: 2.8; }
 .r-285 .dev-screen { aspect-ratio: 2.85; }
-.r-285 .dev-window { width: 86cqw; } .r-285 .dev-laptop { width: 78cqw; } .r-285 .dev-tablet { width: 80cqw; } .r-285 .dev-phone { width: 60cqw; } .sc-combo.r-285 .dev-laptop { width: 56cqw; }
+.r-285 .dev-window { width: 72.5cqw; } .r-285 .dev-laptop { width: 68.2cqw; } .r-285 .dev-tablet { width: 68.8cqw; } .r-285 .dev-phone { width: 54.2cqw; } .sc-combo.r-285 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-285 { width: 19.6cqw; } .dev-phone.pr-285 .dev-screen { aspect-ratio: 2.85; }
 .r-290 .dev-screen { aspect-ratio: 2.9; }
-.r-290 .dev-window { width: 86cqw; } .r-290 .dev-laptop { width: 78cqw; } .r-290 .dev-tablet { width: 80cqw; } .r-290 .dev-phone { width: 60cqw; } .sc-combo.r-290 .dev-laptop { width: 56cqw; }
+.r-290 .dev-window { width: 72.5cqw; } .r-290 .dev-laptop { width: 68.2cqw; } .r-290 .dev-tablet { width: 68.8cqw; } .r-290 .dev-phone { width: 54.2cqw; } .sc-combo.r-290 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-290 { width: 19.6cqw; } .dev-phone.pr-290 .dev-screen { aspect-ratio: 2.9; }
 .r-295 .dev-screen { aspect-ratio: 2.95; }
-.r-295 .dev-window { width: 86cqw; } .r-295 .dev-laptop { width: 78cqw; } .r-295 .dev-tablet { width: 80cqw; } .r-295 .dev-phone { width: 60cqw; } .sc-combo.r-295 .dev-laptop { width: 56cqw; }
+.r-295 .dev-window { width: 72.5cqw; } .r-295 .dev-laptop { width: 68.2cqw; } .r-295 .dev-tablet { width: 68.8cqw; } .r-295 .dev-phone { width: 54.2cqw; } .sc-combo.r-295 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-295 { width: 19.6cqw; } .dev-phone.pr-295 .dev-screen { aspect-ratio: 2.95; }
 .r-300 .dev-screen { aspect-ratio: 3; }
-.r-300 .dev-window { width: 86cqw; } .r-300 .dev-laptop { width: 78cqw; } .r-300 .dev-tablet { width: 80cqw; } .r-300 .dev-phone { width: 60cqw; } .sc-combo.r-300 .dev-laptop { width: 56cqw; }
+.r-300 .dev-window { width: 72.5cqw; } .r-300 .dev-laptop { width: 68.2cqw; } .r-300 .dev-tablet { width: 68.8cqw; } .r-300 .dev-phone { width: 54.2cqw; } .sc-combo.r-300 .dev-laptop { width: 52.2cqw; }
 .showcase .dev-phone.pr-300 { width: 19.6cqw; } .dev-phone.pr-300 .dev-screen { aspect-ratio: 3; }
 
 /* Motion, in the style of the reference site. Only for visitors who have not asked their device for reduced motion. */
