@@ -245,6 +245,36 @@ $router->get('/cron/{token}', function (string $token) {
     return run_scheduled_tasks(false);
 });
 
+$router->get('/team', function () {
+    $members = Team::members();
+    if (!$members || setting('team_list', '1') !== '1') {
+        abort(404);
+    }
+    $site = setting('site_name', 'AivraSol');
+    return view('pages/team', [
+        'pageTitle' => 'Meet the Team: Developers, Designers and Experts | ' . $site,
+        'metaDescription' => 'Meet the ' . $site . ' team. See each person\'s experience, skills and recent work, and talk to us about building your next project together.',
+        'members' => $members,
+        'crumbs' => ['Team' => 'team'],
+    ]);
+});
+
+$router->get('/team/{slug}', function (string $slug) {
+    $m = Team::member($slug) ?? abort(404);
+    $site = setting('site_name', 'AivraSol');
+    $about = Seo::plainText((string) ($m['about'] ?? ''));
+    $desc = $m['name'] . ', ' . $m['headline'] . ' at ' . $site . '.' . ($about !== '' ? ' ' . $about : (!empty($m['skills']) ? ' Skills: ' . implode(', ', array_slice($m['skills'], 0, 8)) . '.' : ''));
+    return view('pages/member', [
+        'pageTitle' => $m['name'] . ', ' . $m['headline'] . ' | ' . $site,
+        'metaDescription' => mb_strimwidth($desc, 0, 160, '...'),
+        'ogImage' => $m['photo'] ?? '',
+        'm' => $m,
+        'preview' => false,
+        'schema' => [Team::schema($m)],
+        'crumbs' => setting('team_list', '1') === '1' ? ['Team' => 'team', $m['name'] => 'team/' . $slug] : [$m['name'] => 'team/' . $slug],
+    ]);
+});
+
 $router->get('/sitemap.xml', function () {
     header('Content-Type: application/xml; charset=utf-8');
     return render('sitemap', [
@@ -253,6 +283,7 @@ $router->get('/sitemap.xml', function () {
         'projects' => Content::projects(),
         'jobs' => Content::jobs(),
         'posts' => Content::posts(),
+        'members' => Team::members(),
     ]);
 });
 

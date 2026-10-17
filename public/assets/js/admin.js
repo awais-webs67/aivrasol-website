@@ -631,4 +631,42 @@
     snap();
     state();
   });
+
+  // Repeating rows (experience, education...): add and remove rows without reloading.
+  Array.prototype.forEach.call(document.querySelectorAll('[data-repeat]'), function (box) {
+    var rows = box.querySelector('[data-rows]');
+    var add = box.querySelector('[data-add-row]');
+    var max = parseInt(box.getAttribute('data-max'), 10) || 10;
+    var key = box.getAttribute('data-repeat');
+    var blank = rows.lastElementChild.cloneNode(true);
+    var next = rows.children.length;
+    function refresh() {
+      var n = rows.children.length;
+      add.hidden = n >= max;
+      Array.prototype.forEach.call(rows.querySelectorAll('[data-remove-row]'), function (b) { b.hidden = n <= 1; });
+    }
+    function wire(row) {
+      row.querySelector('[data-remove-row]').addEventListener('click', function () {
+        row.remove();
+        refresh();
+      });
+    }
+    Array.prototype.forEach.call(rows.children, wire);
+    add.addEventListener('click', function () {
+      var row = blank.cloneNode(true);
+      var i = next++;
+      Array.prototype.forEach.call(row.querySelectorAll('[name]'), function (el) {
+        el.name = el.name.replace(new RegExp('^' + key + '\\[\\d+\\]'), key + '[' + i + ']');
+        el.value = '';
+      });
+      var legend = row.querySelector('legend');
+      if (legend) legend.textContent = legend.textContent.replace(/\d+$/, String(rows.children.length + 1));
+      rows.appendChild(row);
+      wire(row);
+      refresh();
+      var first = row.querySelector('input, textarea');
+      if (first) first.focus();
+    });
+    refresh();
+  });
 })();

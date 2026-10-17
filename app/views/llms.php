@@ -50,6 +50,13 @@ $out .= "\n## Key pages\n\n";
 foreach (['pricing' => 'Pricing and free quote: plans for projects and hired developers', 'portfolio' => 'Portfolio: case studies of delivered projects', 'about' => 'About the company, values and locations', 'careers' => 'Careers: open jobs and internships', 'contact' => 'Contact: email, phone, WhatsApp and contact form', 'blog' => 'Blog: guides on software costs, hiring and technology'] as $p => $d) {
     $out .= '- [' . strtok($d, ':') . '](' . absolute_url($p) . '):' . substr($d, strpos($d, ':') + 1) . "\n";
 }
+$team = Team::members();
+if ($team) {
+    $out .= "\n## Team\n\n";
+    foreach ($team as $m) {
+        $out .= '- [' . $m['name'] . '](' . absolute_url('team/' . $m['slug']) . '): ' . $line($m['headline'] ?? '') . (!empty($m['skills']) ? '. Skills: ' . implode(', ', array_slice($m['skills'], 0, 8)) : '') . "\n";
+    }
+}
 $posts = Content::posts();
 if ($posts) {
     $out .= "\n## Articles\n\n";

@@ -35,6 +35,7 @@ $whatsapp = setting('whatsapp');
           <h3>Company</h3>
           <ul>
             <li><a href="<?= e(url('about')) ?>">About us</a></li>
+            <?php if (setting('team_list', '1') === '1' && Team::members()): ?><li><a href="<?= e(url('team')) ?>">Our team</a></li><?php endif; ?>
             <li><a href="<?= e(url('portfolio')) ?>">Portfolio</a></li>
             <li><a href="<?= e(url('pricing')) ?>">Pricing</a></li>
             <li><a href="<?= e(url('blog')) ?>">Blog</a></li>

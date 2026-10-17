@@ -6,6 +6,7 @@ require APP_PATH . '/admin/staff.php';
 require APP_PATH . '/admin/clients.php';
 require APP_PATH . '/admin/campaigns.php';
 require APP_PATH . '/admin/system.php';
+require APP_PATH . '/admin/team.php';
 
 /** @var Router $router */
 $router->any('/admin/login', fn () => admin_login());
@@ -31,6 +32,10 @@ $router->any('/admin/settings', fn () => admin_settings());
 $router->any('/admin/email', fn () => admin_email());
 $router->any('/admin/users', fn () => admin_users());
 $router->any('/admin/profile', fn () => admin_profile());
+$router->any('/admin/portfolio', fn () => admin_portfolio());
+$router->get('/admin/portfolio/preview', fn () => admin_portfolio_preview());
+$router->any('/admin/team-pages', fn () => admin_team_pages());
+$router->get('/admin/team-pages/{id}/preview', fn (string $id) => admin_portfolio_preview($id));
 $router->get('/admin/account', fn () => redirect(url('admin/profile')));
 
 $router->get('/admin/employees', fn () => admin_employees());

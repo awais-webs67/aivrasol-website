@@ -453,6 +453,23 @@ CREATE TABLE IF NOT EXISTS system_checks (
   KEY idx_sc_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS team_profiles (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id      INT UNSIGNED NOT NULL UNIQUE,
+  allowed      TINYINT(1)   NOT NULL DEFAULT 0 COMMENT 'Admin lets this person have a public page',
+  slug         VARCHAR(60)  NULL UNIQUE COMMENT 'Address of the live page, /team/{slug}',
+  draft        MEDIUMTEXT   NULL COMMENT 'JSON the member is editing',
+  live         MEDIUMTEXT   NULL COMMENT 'JSON shown on the website',
+  pending      TINYINT(1)   NOT NULL DEFAULT 0 COMMENT 'Draft sent for admin review',
+  hidden       TINYINT(1)   NOT NULL DEFAULT 0 COMMENT 'Taken offline by an admin',
+  admin_note   VARCHAR(500) NOT NULL DEFAULT '',
+  submitted_at DATETIME     NULL,
+  published_at DATETIME     NULL,
+  created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_tp_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS schema_migrations (
   name       VARCHAR(100) NOT NULL PRIMARY KEY,
   applied_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP

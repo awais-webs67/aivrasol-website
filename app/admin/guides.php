@@ -117,6 +117,25 @@ function admin_guide(string $template, array $data): ?array
                 ['h' => 'Recent activity', 'p' => 'Every sign-in, change and download is recorded at the bottom for security.'],
             ],
         ],
+        'portfolio' => [
+            'title' => 'How your portfolio page works',
+            'intro' => 'Your own public page on the website at ' . public_url('team/your-name') . '. Share it on LinkedIn, in your email signature and with clients.',
+            'sections' => [
+                ['h' => 'Step 1: The basics', 'list' => ['Choose your page address, for example ali-ahmed. Use lowercase letters, numbers and dashes.', 'Add your name, job title and city.', 'Upload a clear, friendly photo. Square works best.']],
+                ['h' => 'Step 2: Tell your story', 'list' => ['Introduction: two or three short paragraphs about what you do and what you are good at. The toolbar works like Word: bold, links, lists.', 'Skills: separate with commas, for example Laravel, Vue.js, MySQL.', 'Experience, featured work, education and certifications: fill one row each. Click Add for more rows. Empty rows are skipped.', 'Links: your LinkedIn, GitHub or personal website. They must start with https://']],
+                ['h' => 'Step 3: Check and publish', 'list' => ['Save draft keeps your changes private.', 'Preview draft shows exactly how the page will look.', 'Save and publish (or send for review) makes it live. If review is on, an admin checks it first and you get an email when it is live or if changes are needed.', 'While a change is waiting for review, your current live page stays as it is.']],
+                ['h' => 'Good to know', 'list' => ['Take page offline hides your page at any time. Your draft is kept.', 'Do not share private details such as your home address, ID numbers or client secrets.', 'Featured work: only add projects you are allowed to show publicly.']],
+            ],
+        ],
+        'team-pages' => [
+            'title' => 'How team portfolio pages work',
+            'intro' => 'Team members can have their own public page at ' . public_url('team/their-name') . '. You decide who can have one and what goes live.',
+            'sections' => [
+                ['h' => 'Step 1: Allow people', 'list' => ['Click Allow next to a person. They get an email and see "My portfolio page" in their menu.', 'Turn off takes their page offline straight away. Their draft is kept, so you can allow it again later.']],
+                ['h' => 'Step 2: Review', 'list' => ['With "Check pages before they go live" ticked, you get an email when someone sends their page.', 'Click Preview to see it exactly as visitors will.', 'Approve makes it live. Send back emails them your note, for example "Please add a photo".', 'Their old live page stays online until you approve the new version.']],
+                ['h' => 'Step 3: Keep it tidy', 'list' => ['Hide takes a page off the website without turning the feature off for that person.', 'Pages of disabled users go offline automatically.', 'Live pages are added to the sitemap and marked up for Google and AI search, so people can find your team by name.']],
+            ],
+        ],
         'profile' => [
             'title' => 'Your profile',
             'sections' => [

@@ -12,6 +12,10 @@ foreach ($hires as $h) { $add('hire/' . $h['slug'], $h['updated_at'] ?? null, 'm
 foreach ($projects as $p) { $add('portfolio/' . $p['slug'], $p['updated_at'] ?? null, 'yearly', '0.5'); }
 foreach ($jobs as $j) { $add('careers/' . $j['slug'], $j['updated_at'] ?? null, 'weekly', '0.5'); }
 foreach ($posts as $p) { $add('blog/' . $p['slug'], $p['updated_at'], 'monthly', '0.7'); }
+if ($members) {
+    if (setting('team_list', '1') === '1') { $add('team', null, 'monthly', '0.5'); }
+    foreach ($members as $m) { $add('team/' . $m['slug'], $m['updated_at'], 'monthly', '0.5'); }
+}
 foreach (['privacy-policy', 'terms', 'cookie-policy'] as $p) { $add($p, null, 'yearly', '0.2'); }
 echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
 ?>

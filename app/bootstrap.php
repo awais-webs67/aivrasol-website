@@ -26,6 +26,7 @@ require APP_PATH . '/lib/Upload.php';
 require APP_PATH . '/lib/Content.php';
 require APP_PATH . '/lib/Seo.php';
 require APP_PATH . '/lib/Portal.php';
+require APP_PATH . '/lib/Team.php';
 
 $isDev = config('env') === 'development';
 error_reporting(E_ALL);

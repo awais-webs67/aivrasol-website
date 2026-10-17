@@ -124,4 +124,7 @@ return [
             $pdo->exec("ALTER TABLE offices ADD COLUMN whatsapp VARCHAR(40) NOT NULL DEFAULT '' AFTER email");
         }
     },
+    '2026_10_28_team_pages' => function (PDO $pdo): void {
+        // schema.sql has already created team_profiles (personal portfolio pages at /team/{slug}).
+    },
 ];

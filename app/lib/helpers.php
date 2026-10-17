@@ -282,6 +282,7 @@ function icon(string $name, string $class = 'icon'): string
         'facebook' => '<path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8z"/>',
         'instagram' => '<rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><circle cx="12" cy="12" r="4"/><path d="M17 7v.01"/>',
         'x' => '<path d="M4 4l11.7 16H20L8.3 4z"/><path d="M4 20l6.6-7M13.4 11L20 4"/>',
+        'globe' => '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>',
         'youtube' => '<rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="M10 9.2v5.6l4.8-2.8z"/>',
         'tiktok' => '<path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 3c.4 2.6 2.1 4.3 5 4.6"/>',
         'behance' => '<path d="M3 7h5a2.5 2.5 0 0 1 0 5H3zM3 12h5.5a2.75 2.75 0 0 1 0 5.5H3zM3 7v10.5"/><path d="M14 13.5h7a3.5 3.5 0 1 0-1 2.5M15 8h5"/>',

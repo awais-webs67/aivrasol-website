@@ -20,6 +20,7 @@ $work = array_filter([
 $people = array_filter([
     'admin/employees' => ['users', 'Employees', 'employees'],
     'admin/documents' => ['file', 'Letters and ID cards', 'settings'],
+    'admin/team-pages' => ['user', 'Team pages', 'users'],
 ], fn ($n) => $can($n[2]));
 $system = array_filter([
     'admin/settings' => ['settings', 'Settings', 'settings'],
@@ -29,9 +30,14 @@ $system = array_filter([
     'admin/system' => ['check', 'System check', 'settings'],
     'admin/profile' => ['user', 'My profile', 'profile'],
 ], fn ($n) => $can($n[2]));
+$myPage = $can('profile') ? Database::one('SELECT allowed FROM team_profiles WHERE user_id = ?', [$user['id']]) : null;
+if ($myPage && (int) $myPage['allowed']) {
+    $system['admin/portfolio'] = ['layers', 'My portfolio page', 'profile'];
+}
 $current = trim(request_path(), '/');
 $isOn = fn (string $p) => $p === 'admin' ? $current === 'admin' : str_starts_with($current, $p);
 $unreadChat = $can('projects') ? (int) Database::value("SELECT COUNT(DISTINCT project_id) FROM project_messages WHERE sender_type = 'client' AND read_by_staff = 0") : 0;
+$teamReview = $can('users') ? (int) Database::value('SELECT COUNT(*) FROM team_profiles WHERE pending = 1 AND allowed = 1') : 0;
 $newLeads = $can('leads') ? (int) Database::value("SELECT COUNT(*) FROM leads WHERE status = 'new'") : 0;
 ?><!doctype html>
 <html lang="en">
@@ -82,7 +88,7 @@ $newLeads = $can('leads') ? (int) Database::value("SELECT COUNT(*) FROM leads WH
       <p class="admin-side-label">People</p>
       <ul>
         <?php foreach ($people as $path => [$ic, $label]): ?>
-        <li><a href="<?= e(url($path)) ?>"<?= $isOn($path) ? ' aria-current="page"' : '' ?>><?= icon($ic) ?><span><?= e($label) ?></span></a></li>
+        <li><a href="<?= e(url($path)) ?>"<?= $isOn($path) ? ' aria-current="page"' : '' ?>><?= icon($ic) ?><span><?= e($label) ?></span><?php if ($path === 'admin/team-pages' && $teamReview): ?><b class="pill"><?= $teamReview ?></b><?php endif; ?></a></li>
         <?php endforeach; ?>
       </ul>
       <?php endif; ?>
