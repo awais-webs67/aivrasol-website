@@ -52,31 +52,65 @@ final class Emails
         return [$subject, $text, $html];
     }
 
+    /** Reference number shown to the visitor and the team, for example AVS-00042 (enquiries) or AVS-J00042 (job applications). */
+    public static function reference(string $type, int $id): string
+    {
+        $prefix = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', setting('site_name', 'AivraSol')) ?: 'REF', 0, 3));
+        return $prefix . '-' . ($type === 'application' ? 'J' : '') . str_pad((string) $id, 5, '0', STR_PAD_LEFT);
+    }
+
     /** Automatic reply to the visitor, or null when turned off. Returns [subject, text, html]. */
-    public static function autoReply(string $type, string $name, array $summary): ?array
+    public static function autoReply(string $type, string $name, array $summary, string $ref = ''): ?array
     {
         if (setting('autoreply_enabled', '1') !== '1') {
             return null;
         }
-        $vars = ['{name}' => self::firstName($name), '{site_name}' => setting('site_name', 'AivraSol')];
-        $subject = strtr(setting("autoreply_{$type}_subject", 'We received your message, {name}'), $vars);
-        $body = strtr(setting("autoreply_{$type}_body", 'Thank you for contacting {site_name}. We will reply within one business day.'), $vars);
+        $site = setting('site_name', 'AivraSol');
+        $vars = ['{name}' => self::firstName($name), '{site_name}' => $site, '{ref}' => $ref];
+        $defaults = require ROOT_PATH . '/database/data/autoreplies.php';
+        $subject = strtr(setting("autoreply_{$type}_subject", $defaults[$type]['subject'] ?? 'We have received your message'), $vars);
+        $body = strtr(setting("autoreply_{$type}_body", $defaults[$type]['body'] ?? 'Thank you for contacting {site_name}. We will reply within one business day.'), $vars);
+        $subject = trim(preg_replace('/\s*\(Ref\.?\s*\)$/i', '', $subject) ?? $subject);
+        $team = $type === 'application' ? 'Human Resources' : 'Client Services';
+        $replyTo = $type === 'application' ? setting('email_hr', setting('email_info')) : setting('email_info');
 
-        $html = '<h1 style="margin:0 0 18px;font-size:22px;line-height:30px;color:#191F24;">Hi ' . e($vars['{name}']) . ',</h1>' . self::paragraphs($body);
-        $text = "Hi {$vars['{name}']},\n\n$body\n";
+        $html = '<p style="margin:0 0 18px;font-size:16px;color:#191F24;">Dear ' . e($vars['{name}']) . ',</p>' . self::paragraphs($body);
+        $text = "Dear {$vars['{name}']},\n\n$body\n";
         $summary = array_filter($summary, fn ($v) => (string) $v !== '');
+        if ($ref !== '') {
+            $summary = ['Reference' => $ref] + $summary;
+        }
         if ($summary) {
-            $html .= '<p style="margin:22px 0 8px;font-weight:bold;color:#191F24;">Your request</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F6F7F8;border-radius:6px;">';
-            $text .= "\nYour request:\n";
+            $html .= '<p style="margin:24px 0 8px;font-weight:bold;color:#191F24;">Summary of your ' . ($type === 'application' ? 'application' : 'request') . '</p>'
+                . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F6F7F8;border-radius:6px;border-left:3px solid #FF5B35;">';
+            $text .= "\nSummary:\n";
             foreach ($summary as $k => $v) {
-                $html .= '<tr><td style="padding:9px 14px;color:#5F666B;font-size:14px;width:150px;">' . e(ucfirst((string) $k)) . '</td><td style="padding:9px 14px;color:#191F24;font-size:14px;">' . e((string) $v) . '</td></tr>';
+                $strong = $k === 'Reference' ? 'font-weight:bold;letter-spacing:.5px;' : '';
+                $html .= '<tr><td style="padding:9px 14px;color:#5F666B;font-size:14px;width:150px;vertical-align:top;">' . e(ucfirst((string) $k)) . '</td><td style="padding:9px 14px;color:#191F24;font-size:14px;' . $strong . '">' . e((string) $v) . '</td></tr>';
                 $text .= "$k: $v\n";
             }
             $html .= '</table>';
         }
-        $html .= '<p style="margin:24px 0 4px;">Kind regards,<br><strong>The ' . e($vars['{site_name}']) . ' team</strong></p>'
-            . '<p style="margin:18px 0 0;font-size:13px;color:#5F666B;">You can reply to this email if you want to add anything.</p>';
-        $text .= "\nKind regards,\nThe {$vars['{site_name}']} team\n";
+        $contact = array_filter([
+            'Email' => $replyTo,
+            'Phone' => setting('phone'),
+            'Website' => preg_replace('#^https?://#', '', rtrim(absolute_url(), '/')),
+        ]);
+        $sign = '<p style="margin:26px 0 2px;color:#191F24;">Kind regards,</p>'
+            . '<p style="margin:0 0 2px;font-weight:bold;color:#191F24;">' . e($team) . ' Team</p>'
+            . '<p style="margin:0 0 12px;color:#191F24;">' . e($site) . '</p>'
+            . '<p style="margin:0;font-size:13px;line-height:21px;color:#5F666B;">';
+        $textSign = "\nKind regards,\n$team Team\n$site\n";
+        foreach ($contact as $k => $v) {
+            $link = $k === 'Email' ? 'mailto:' . $v : ($k === 'Phone' ? phone_href($v) : rtrim(absolute_url(), '/'));
+            $sign .= e($k) . ': <a href="' . e($link) . '" style="color:#B8380F;text-decoration:none;">' . e($v) . '</a><br>';
+            $textSign .= "$k: $v\n";
+        }
+        $sign .= '</p>';
+        $html .= $sign . '<p style="margin:22px 0 0;padding-top:14px;border-top:1px solid #E1E3E5;font-size:12px;line-height:19px;color:#8A9095;">This is an automatic confirmation'
+            . ($ref !== '' ? '. Please quote reference <strong>' . e($ref) . '</strong> in any future correspondence' : '')
+            . '. You can reply to this email to add information or documents.</p>';
+        $text .= $textSign . "\nThis is an automatic confirmation" . ($ref !== '' ? ". Please quote reference $ref in any future correspondence" : '') . ". You can reply to this email to add information.\n";
         return [$subject, $text, render('emails/layout', ['content' => $html, 'preheader' => mb_substr(strtok($body, "\n") ?: '', 0, 120)])];
     }
 

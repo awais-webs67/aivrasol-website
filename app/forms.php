@@ -27,13 +27,13 @@ function form_fail(string $message, array $errors = [], int $code = 422): never
     redirect(url(form_back()));
 }
 
-function form_ok(string $message): never
+function form_ok(string $message, string $title = 'Thank you', string $ref = ''): never
 {
     clear_old();
     if (wants_json()) {
-        json_response(['ok' => true, 'message' => $message]);
+        json_response(['ok' => true, 'title' => $title, 'message' => $message, 'ref' => $ref]);
     }
-    flash('form_success', $message);
+    flash('form_success', $message . ($ref !== '' ? " Your reference is $ref." : ''));
     redirect(url(form_back()));
 }
 
@@ -72,7 +72,7 @@ function save_lead(string $type, array $data, array $details = []): int
     }
     $fields['Sent from page'] = form_back();
     $summary = array_map(fn ($v) => preg_replace('/^(other|something else):.*$/is', '$1 (as you described)', (string) $v), $details);
-    send_form_emails($type, setting('notify_emails', setting('email_info')), $fields, $data['message'] ?? null, 'admin/leads/' . $id, $data['name'], $data['email'], $summary);
+    send_form_emails($type, setting('notify_emails', setting('email_info')), $fields, $data['message'] ?? null, 'admin/leads/' . $id, $data['name'], $data['email'], $summary, Emails::reference($type, $id));
     return $id;
 }
 
@@ -80,19 +80,21 @@ function save_lead(string $type, array $data, array $details = []): int
  * Queues the team alert and the visitor's automatic reply. Both are sent after the visitor gets their answer.
  * The auto-reply never repeats the visitor's own message, so the form cannot be used to send spam to other people.
  */
-function send_form_emails(string $type, string $recipients, array $fields, ?string $message, string $adminPath, string $name, string $email, array $summary): void
+function send_form_emails(string $type, string $recipients, array $fields, ?string $message, string $adminPath, string $name, string $email, array $summary, string $ref = ''): void
 {
     $to = Mailer::addressList($recipients);
     if ($to) {
-        [$subject, $text, $html] = Emails::alert($type, $fields, $message, $adminPath, Emails::safeName($name), $email);
-        Mailer::queue($to, $subject, $text, $html, $email, $type . '_alert');
+        [$subject, $text, $html] = Emails::alert($type, $ref !== '' ? ['Reference' => $ref] + $fields : $fields, $message, $adminPath, Emails::safeName($name), $email);
+        Mailer::queue($to, $subject . ($ref !== '' ? " [$ref]" : ''), $text, $html, $email, $type . '_alert');
     }
-    // At most 3 automatic replies per address per day.
-    if (Security::rateLimit('autoreply', 3, 86400, hash_hmac('sha256', strtolower($email), (string) config('app_key')))) {
-        $reply = Emails::autoReply($type, $name, ['Request' => Emails::TYPES[$type] ?? ''] + $summary);
+    // At most 3 automatic replies per form type, per address, per day: enough for real visitors,
+    // too few for anyone trying to flood someone else's inbox through the forms.
+    if (Security::rateLimit('autoreply_' . $type, 3, 86400, hash_hmac('sha256', strtolower($email), (string) config('app_key')))) {
+        $reply = Emails::autoReply($type, $name, ['Request' => Emails::TYPES[$type] ?? ''] + $summary, $ref);
         if ($reply) {
             [$subject, $text, $html] = $reply;
-            Mailer::queue($email, $subject, $text, $html, setting('email_info') ?: null, $type . '_autoreply');
+            $replyTo = $type === 'application' ? setting('email_hr', setting('email_info')) : setting('email_info');
+            Mailer::queue($email, $subject, $text, $html, $replyTo ?: null, $type . '_autoreply');
         }
     }
 }
@@ -129,8 +131,8 @@ function handle_consultation(): never
     if ($v->fails()) {
         form_fail('Please check the highlighted fields.', $v->errors());
     }
-    save_lead('consultation', $v->clean());
-    form_ok('Thank you. An expert will contact you within one business day.');
+    $id = save_lead('consultation', $v->clean());
+    form_ok('An expert will contact you within one business day to arrange your free consultation. We have also sent a confirmation to your email.', 'Request received', Emails::reference('consultation', $id));
 }
 
 function handle_contact(): never
@@ -160,8 +162,9 @@ function handle_contact(): never
         form_fail('Please check the highlighted fields.', $errors);
     }
     $isHire = in_array($data['interest'], array_column(Content::offerings('hire'), 'short_title'), true);
-    save_lead($isHire ? 'hire' : 'contact', $data, $data['interest'] !== '' ? ['interest' => $data['interest']] : []);
-    form_ok('Thank you for your message. Our team will reply within one business day.');
+    $type = $isHire ? 'hire' : 'contact';
+    $id = save_lead($type, $data, $data['interest'] !== '' ? ['interest' => $data['interest']] : []);
+    form_ok('Thank you for contacting us. Our team will reply within one business day. We have also sent a confirmation to your email.', 'Message sent', Emails::reference($type, $id));
 }
 
 function handle_quote(): never
@@ -191,12 +194,12 @@ function handle_quote(): never
     if ($errors) {
         form_fail('Please check the highlighted fields.', $errors);
     }
-    save_lead('quote', $data, [
+    $id = save_lead('quote', $data, [
         'plan' => $plan['title'],
         rtrim($plan['q1_label'], '?') => $data['q1'],
         rtrim($plan['q2_label'], '?') => $data['q2'],
     ]);
-    form_ok('Thank you. We will send your free quote within one business day.');
+    form_ok('We will send your free, no-obligation quote within one business day. We have also sent a confirmation to your email.', 'Quote requested', Emails::reference('quote', $id));
 }
 
 function handle_application(): never
@@ -242,6 +245,6 @@ function handle_application(): never
     send_form_emails('application', setting('notify_emails_hr', setting('email_hr', setting('email_info'))), [
         'Name' => $data['name'], 'Email' => $data['email'], 'Phone' => $data['phone'], 'Position' => $position,
         'Profile' => $data['profile_url'], 'CV file' => $original,
-    ], $data['message'] ?: null, 'admin/applications/' . $id, $data['name'], $data['email'], ['Position' => $position]);
-    form_ok('Thank you for applying. Our HR team will review your CV and get back to you.');
+    ], $data['message'] ?: null, 'admin/applications/' . $id, $data['name'], $data['email'], ['Position' => $position], Emails::reference('application', $id));
+    form_ok('Thank you for applying. Our HR team will review your CV and contact you if your profile matches the role. We have also sent a confirmation to your email.', 'Application received', Emails::reference('application', $id));
 }

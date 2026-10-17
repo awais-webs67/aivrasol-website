@@ -1,8 +1,8 @@
 <?php
 // Default settings. Added on install and on every update with INSERT IGNORE,
 // so values you change in the admin panel are never overwritten.
-$next = "Here is what happens next:\n- One of our experts reads your request today.\n- We reply within one business day, usually much sooner.\n- If it helps, we set up a short call to understand your goals.";
-return [
+$replies = require __DIR__ . '/autoreplies.php';
+$out = [
     'site_name' => 'AivraSol',
     'site_tagline' => 'Custom Software Development Company',
     'meta_description' => 'AivraSol builds custom web apps, mobile apps, AI solutions and cloud systems for startups and growing businesses. Book a free consultation.',
@@ -64,14 +64,10 @@ return [
     'smtp_username' => '',
     'smtp_password' => '',
     'autoreply_enabled' => '1',
-    'autoreply_contact_subject' => 'We received your message, {name}',
-    'autoreply_contact_body' => "Thank you for contacting {site_name}. We have received your message and our team is already looking at it.\n\n$next",
-    'autoreply_consultation_subject' => 'Your free consultation request, {name}',
-    'autoreply_consultation_body' => "Thank you for booking a free consultation with {site_name}.\n\n$next\n\nTo save time, feel free to reply to this email with any documents, links or ideas you would like us to see.",
-    'autoreply_quote_subject' => 'Your free quote is on its way, {name}',
-    'autoreply_quote_body' => "Thank you for asking {site_name} for a quote. We will study your needs and send you a clear, fixed quote with no hidden fees.\n\n$next",
-    'autoreply_hire_subject' => 'About hiring a developer, {name}',
-    'autoreply_hire_body' => "Thank you for your interest in hiring a developer from {site_name}. We will shortlist suitable, pre-vetted developers for you to interview.\n\n$next",
-    'autoreply_application_subject' => 'We received your application, {name}',
-    'autoreply_application_body' => "Thank you for applying to {site_name}. Our HR team will review your CV carefully.\n\nIf your profile matches the role, we will contact you to arrange an interview. Because we receive many applications, we can only reply to shortlisted candidates.\n\nWe wish you the best of luck.",
+    // Automatic replies: formal defaults live in data/autoreplies.php.
 ];
+foreach ($replies as $type => $r) {
+    $out["autoreply_{$type}_subject"] = $r['subject'];
+    $out["autoreply_{$type}_body"] = $r['body'];
+}
+return $out;

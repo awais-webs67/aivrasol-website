@@ -127,4 +127,28 @@ return [
     '2026_10_28_team_pages' => function (PDO $pdo): void {
         // schema.sql has already created team_profiles (personal portfolio pages at /team/{slug}).
     },
+    '2026_10_29_formal_autoreplies' => function (PDO $pdo): void {
+        // Swap the old friendly auto-replies for the formal ones, but only where nobody has edited them.
+        $next = "Here is what happens next:\n- One of our experts reads your request today.\n- We reply within one business day, usually much sooner.\n- If it helps, we set up a short call to understand your goals.";
+        $old = [
+            'contact' => ['We received your message, {name}', "Thank you for contacting {site_name}. We have received your message and our team is already looking at it.\n\n$next"],
+            'consultation' => ['Your free consultation request, {name}', "Thank you for booking a free consultation with {site_name}.\n\n$next\n\nTo save time, feel free to reply to this email with any documents, links or ideas you would like us to see."],
+            'quote' => ['Your free quote is on its way, {name}', "Thank you for asking {site_name} for a quote. We will study your needs and send you a clear, fixed quote with no hidden fees.\n\n$next"],
+            'hire' => ['About hiring a developer, {name}', "Thank you for your interest in hiring a developer from {site_name}. We will shortlist suitable, pre-vetted developers for you to interview.\n\n$next"],
+            'application' => ['We received your application, {name}', "Thank you for applying to {site_name}. Our HR team will review your CV carefully.\n\nIf your profile matches the role, we will contact you to arrange an interview. Because we receive many applications, we can only reply to shortlisted candidates.\n\nWe wish you the best of luck."],
+        ];
+        $new = require __DIR__ . '/data/autoreplies.php';
+        $get = $pdo->prepare('SELECT setting_value FROM settings WHERE setting_key = ?');
+        $set = $pdo->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
+        foreach ($old as $type => [$oldSubject, $oldBody]) {
+            foreach (['subject' => $oldSubject, 'body' => $oldBody] as $part => $was) {
+                $key = "autoreply_{$type}_{$part}";
+                $get->execute([$key]);
+                $now = $get->fetchColumn();
+                if ($now === false || trim(str_replace("\r\n", "\n", (string) $now)) === '' || str_replace("\r\n", "\n", (string) $now) === $was) {
+                    $set->execute([$key, $new[$type][$part]]);
+                }
+            }
+        }
+    },
 ];

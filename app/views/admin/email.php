@@ -61,7 +61,7 @@ $hasSavedPassword = setting('smtp_password') !== '';
   <fieldset class="card">
     <legend>Automatic replies to visitors</legend>
     <label class="check"><input type="checkbox" name="autoreply_enabled" value="1"<?= ($posted !== null ? isset($posted['autoreply_enabled']) : setting('autoreply_enabled', '1') === '1') ? ' checked' : '' ?>> <span>Send an automatic, branded reply after every form</span></label>
-    <p class="small muted">You can use <code>{name}</code> (the visitor's first name) and <code>{site_name}</code>. Start a line with <code>- </code> to make a bullet list. The visitor's own message is never copied into the reply, so the forms cannot be used to send spam.</p>
+    <p class="small muted">You can use <code>{name}</code> (the visitor's first name), <code>{site_name}</code> and <code>{ref}</code> (the reference number, for example AVS-00042). Start a line with <code>- </code> to make a bullet list. The visitor's own message is never copied into the reply, so the forms cannot be used to send spam.</p>
     <div class="reply-grid">
       <?php foreach (Emails::TYPES as $t => $label): ?>
       <div class="reply-item">

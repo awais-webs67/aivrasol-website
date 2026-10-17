@@ -84,6 +84,8 @@ final class Mailer
         }
         if (function_exists('fastcgi_finish_request')) {
             fastcgi_finish_request();
+        } else {
+            self::finishResponse();
         }
         ignore_user_abort(true);
         @set_time_limit(120);
@@ -91,6 +93,32 @@ final class Mailer
             self::send(...$m);
         }
         self::$queue = [];
+    }
+
+    /**
+     * Ends the visitor's request before slow work starts on servers without PHP-FPM (Apache mod_php, XAMPP):
+     * the page tells the browser its exact length and to close the connection, so the browser shows the
+     * result straight away while the emails are sent in the background.
+     */
+    private static function finishResponse(): void
+    {
+        if (headers_sent()) {
+            @flush();
+            return;
+        }
+        $body = '';
+        while (ob_get_level() > 0) {
+            $body = (string) ob_get_clean() . $body;
+        }
+        if (function_exists('apache_setenv')) {
+            @apache_setenv('no-gzip', '1');
+        }
+        @ini_set('zlib.output_compression', '0');
+        header('Content-Encoding: none');
+        header('Content-Length: ' . strlen($body));
+        header('Connection: close');
+        echo $body;
+        @flush();
     }
 
     /** Sends one message (to one or more people, each receiving their own copy). Returns null on success or the error text. */
