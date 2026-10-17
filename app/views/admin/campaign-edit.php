@@ -10,7 +10,7 @@ $err = fn ($k) => isset($errors[$k]) ? '<span class="field-error">' . e($errors[
     <div class="btn-group">
       <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="test"><button class="btn btn-sm btn-outline" type="submit"><?= icon('mail') ?>Send me a test</button></form>
       <?php if ($c['status'] === 'draft'): ?><form method="post" data-confirm="Start sending to <?= (int) $audience ?> contacts? Emails go out slowly within your limits."><?= csrf_field() ?><input type="hidden" name="action" value="start"><button class="btn btn-sm" type="submit">Start campaign</button></form><?php endif; ?>
-      <?php if ($c['status'] === 'sending'): ?><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="pause"><button class="btn btn-sm btn-outline" type="submit">Pause</button></form><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="send_batch"><button class="btn btn-sm btn-outline" type="submit">Send next few now</button></form><?php endif; ?>
+      <?php if ($c['status'] === 'sending'): ?><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="pause"><button class="btn btn-sm btn-outline" type="submit">Pause</button></form><?php endif; ?>
       <?php if ($c['status'] === 'paused'): ?><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="resume"><button class="btn btn-sm" type="submit">Resume</button></form><?php endif; ?>
       <?php if (in_array($c['status'], ['sending', 'paused'], true)): ?><form method="post" data-confirm="Cancel this campaign? Nothing more will be sent."><?= csrf_field() ?><input type="hidden" name="action" value="cancel"><button class="btn btn-sm btn-danger" type="submit">Cancel</button></form><?php endif; ?>
     </div>
@@ -22,6 +22,7 @@ $err = fn ($k) => isset($errors[$k]) ? '<span class="field-error">' . e($errors[
   <p class="small muted">Audience now: <strong><?= (int) $audience ?></strong> subscribed contact<?= $audience === 1 ? '' : 's' ?><?= $values['audience_tag'] !== '' ? ' tagged "' . e($values['audience_tag']) . '"' : '' ?>.</p>
   <?php endif; ?>
   <?php if ($c['status'] === 'sending'): ?><p class="small muted" data-campaign-tick="<?= e(url('admin/campaigns/tick')) ?>">While this page is open it also sends now and then, within your limits.</p><?php endif; ?>
+  <?php if (in_array($c['status'], ['sending', 'paused'], true)): ?><?= partial('campaign-status', ['c' => $c]) ?><?php endif; ?>
 </section>
 <?php endif; ?>
 <?php if (!$c && $templates): ?>

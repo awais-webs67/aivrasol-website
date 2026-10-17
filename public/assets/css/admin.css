@@ -366,3 +366,16 @@ details[open] > .card-summary.is-plain::after { content: "Hide"; }
 .mbox-intro p { margin: 0; }
 @media (max-width: 700px) { .mbox-head { flex-direction: column; align-items: flex-start; } .mbox-badges { max-width: none; justify-content: flex-start; } }
 .mbox[open] .mbox-flow { display: none; }
+
+/* Campaign sending status */
+.send-status { margin: 14px 0; padding: 14px 16px; border: 1px solid var(--line); border-left-width: 4px; border-radius: var(--radius-md); background: var(--grey-soft); }
+.send-status.is-go { border-left-color: var(--success); background: #EEF8F2; }
+.send-status.is-wait { border-left-color: #E0A800; background: #FFF8E6; }
+.send-status.is-idle { border-left-color: var(--line-strong); }
+.ss-head { display: flex; align-items: center; gap: 8px; font-size: 15.5px; color: var(--ink); }
+.ss-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
+.is-go .ss-dot { background: var(--success); }
+.is-wait .ss-dot { background: #E0A800; }
+.ss-list { margin: 8px 0 10px; padding-left: 18px; display: grid; gap: 4px; font-size: 14.5px; }
+.send-status .btn-group { margin-top: 6px; }
+.send-status p { margin: 6px 0 0; }

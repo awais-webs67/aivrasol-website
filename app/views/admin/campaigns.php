@@ -9,7 +9,7 @@ $cronOk = $cronAge !== null && $cronAge < 900;
   <div class="stat-card"><span>Daily limit</span><strong><?= $limits['per_day'] ?></strong></div>
   <div class="stat-card"><span>Hourly limit</span><strong><?= $limits['per_hour'] ?></strong></div>
 </div>
-<p class="small muted">Right now: <?= $allowed > 0 ? 'ready to send.' : e($why) ?> Background sender: <?= $cronOk ? 'running (last run ' . (int) floor($cronAge / 60) . ' min ago).' : 'not set up yet. Click "How this works" for the 2-minute setup. Until then, emails send only while a campaign page is open.' ?><?php if (setting('camp_last_run') !== ''): ?> Last run: <?= e(setting('camp_last_run')) ?><?php endif; ?></p>
+<?= partial('campaign-status') ?>
 <div class="list-head">
   <h2 class="sr-only">Campaigns</h2>
   <div class="btn-group">

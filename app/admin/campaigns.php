@@ -249,7 +249,7 @@ function admin_campaign_edit(?string $id = null): string
     if (is_post()) {
         admin_csrf();
         $action = $_POST['action'] ?? 'save';
-        if ($c && in_array($action, ['start', 'pause', 'resume', 'cancel', 'delete', 'test', 'send_batch'], true)) {
+        if ($c && in_array($action, ['start', 'pause', 'resume', 'cancel', 'delete', 'test', 'send_batch', 'send_now'], true)) {
             $back = url('admin/campaigns/' . $c['id']);
             switch ($action) {
                 case 'test':
@@ -284,7 +284,9 @@ function admin_campaign_edit(?string $id = null): string
                     flash('success', 'Campaign cancelled. Nothing more will be sent.');
                     break;
                 case 'send_batch':
-                    flash('success', Campaigns::run(3, false));
+                case 'send_now':
+                    $report = Campaigns::run($action === 'send_now' ? 1 : 3, false, $action === 'send_now');
+                    flash(preg_match('/^Sent [1-9]/', $report) ? 'success' : 'error', $report);
                     break;
                 case 'delete':
                     if ($c['status'] === 'sending') {

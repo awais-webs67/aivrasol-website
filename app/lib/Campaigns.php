@@ -47,17 +47,33 @@ final class Campaigns
         return (int) Database::value("SELECT COUNT(*) FROM campaign_recipients WHERE status IN ('sent', 'failed') AND sent_at > UTC_TIMESTAMP() - INTERVAL ? SECOND", [$seconds]);
     }
 
-    /** How many emails may go out right now, and why not when the answer is zero. */
-    public static function allowance(): array
+    /** When the sending window next opens, for example "Monday 19 Oct, 09:00 (Asia/Karachi)". Null when it is open now. */
+    public static function nextWindow(): ?string
+    {
+        $l = self::limits();
+        $t = new DateTime('now', new DateTimeZone($l['tz']));
+        for ($i = 0; $i < 24 * 9; $i++) {
+            $hour = (int) $t->format('G');
+            $dayOk = !$l['weekdays'] || (int) $t->format('N') < 6;
+            if ($dayOk && $hour >= $l['start'] && $hour < $l['end']) {
+                return $i === 0 ? null : $t->format('l j M') . ', ' . sprintf('%02d:00', $hour) . ' (' . $l['tz'] . ')';
+            }
+            $t->modify('+1 hour')->setTime((int) $t->format('G'), 0);
+        }
+        return null;
+    }
+
+    /** How many emails may go out right now, and why not when the answer is zero. $anyTime skips the days and hours rule (manual sends). */
+    public static function allowance(bool $anyTime = false): array
     {
         $l = self::limits();
         $now = new DateTime('now', new DateTimeZone($l['tz']));
         $hour = (int) $now->format('G');
-        if ($l['weekdays'] && (int) $now->format('N') >= 6) {
-            return [0, 'Outside sending days (weekdays only, ' . $l['tz'] . ' time).'];
+        if (!$anyTime && $l['weekdays'] && (int) $now->format('N') >= 6) {
+            return [0, 'Outside sending days (weekdays only, ' . $l['tz'] . ' time). Next window: ' . self::nextWindow() . '.'];
         }
-        if ($hour < $l['start'] || $hour >= $l['end']) {
-            return [0, sprintf('Outside the sending window (%02d:00 to %02d:00, %s time).', $l['start'], $l['end'], $l['tz'])];
+        if (!$anyTime && ($hour < $l['start'] || $hour >= $l['end'])) {
+            return [0, sprintf('Outside the sending hours (%02d:00 to %02d:00, %s time).', $l['start'], $l['end'], $l['tz']) . ' Next window: ' . self::nextWindow() . '.'];
         }
         $hourLeft = $l['per_hour'] - self::sentSince(3600);
         $dayLeft = $l['per_day'] - self::sentSince(86400);
@@ -192,7 +208,7 @@ final class Campaigns
      * between emails is fine; web requests send at most $max without waiting.
      * Returns a short report.
      */
-    public static function run(int $max, bool $sleep): string
+    public static function run(int $max, bool $sleep, bool $anyTime = false): string
     {
         if ((int) Database::value("SELECT GET_LOCK('avs_campaign_run', 0)") !== 1) {
             return 'Another sending run is in progress.';
@@ -203,7 +219,7 @@ final class Campaigns
             $note = '';
             $deadline = time() + ($sleep ? 240 : 20);
             while ($sent + $failed < $max && time() < $deadline) {
-                [$allowed, $why] = self::allowance();
+                [$allowed, $why] = self::allowance($anyTime);
                 if ($allowed <= 0) {
                     if ($sleep && str_starts_with($why, 'Waiting')) {
                         sleep(min(60, (int) filter_var($why, FILTER_SANITIZE_NUMBER_INT) + random_int(1, 15)));
