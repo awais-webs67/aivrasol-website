@@ -80,7 +80,7 @@
 
 <?php if ($projects && home_section('portfolio')): ?>
 <section class="section section-soft" aria-labelledby="work-title">
-  <div class="container showcase" data-slider>
+  <div class="container work-slider" data-slider>
     <div>
       <h2 class="display-2" id="work-title">Discover our successful projects</h2>
       <span class="bar"></span>
