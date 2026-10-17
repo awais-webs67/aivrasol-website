@@ -136,19 +136,23 @@ For a private repository, add the SSH key from cPanel (**SSH Access**, Manage Ke
 
 ## Manual install on cPanel
 
-1. **Upload** the whole `aivrasol` folder. The best setup is pointing the domain's document root at the `public` folder. If your host does not allow that, upload everything into `public_html`; the root `.htaccess` sends visitors into `public` and blocks the private folders.
-2. **Create a database** in cPanel (MySQL Databases). Create a user and give it only `SELECT, INSERT, UPDATE, DELETE` on that database.
-3. **Import** `database/schema.sql` and then `database/seed.sql` with phpMyAdmin. (The import needs a user with CREATE rights; use the cPanel main user for the import only.)
-4. **Configure**: copy `app/config.sample.php` to `app/config.php` and fill in:
-   - `base_url`: `https://www.aivrasol.com`
-   - the database name, user and password
-   - `app_key`: a 64-character random string
-   - `setup_token`: a long random string
-   - the `mail` section with your SMTP details (for example your hosting email account) so lead alerts arrive
-5. **Folder permissions**: `storage/` and `public/uploads/` must be writable by PHP (usually 755 for folders, 644 for files).
-6. **Create your admin account**: open `https://www.aivrasol.com/admin/setup`, enter the setup token and your details. This page switches itself off after the first admin is created.
-7. **Turn on HTTPS redirect**: in `public/.htaccess`, remove the `#` in front of the three "Force HTTPS" lines.
-8. **Sign in** at `/admin`, work through the launch checklist on the dashboard, and fill in Settings.
+1. **PHP version**: cPanel, **Select PHP Version** (or MultiPHP Manager): choose PHP 8.1 or newer and tick `gd`, `mbstring`, `fileinfo`, `openssl`, `pdo_mysql`, `zip`.
+2. **Upload**: download the project as a ZIP, upload it in **File Manager** into `public_html`, and **Extract**. Move the files so `public_html` directly contains `app`, `public`, `database`, `bin`, `storage` and `.htaccess` (turn on "Show Hidden Files" to see `.htaccess`). The root `.htaccess` sends visitors into `public` and blocks the private folders. If your host lets you set the domain's document root, point it at `public_html/public` instead.
+3. **Database**: cPanel, **MySQL Databases**: create a database and a user, then add the user to the database with **All Privileges** (the installer and future updates need to create and change tables).
+4. **Configure**: in File Manager copy `app/config.sample.php` to `app/config.php` and edit it:
+   - `env`: `production`
+   - `base_url`: `https://www.aivrasol.com` (no slash at the end)
+   - `db`: host `localhost`, the database name, user and password (cPanel adds your account prefix, for example `aivrasol_web`)
+   - `app_key` and `setup_token`: two different long random strings (see below)
+   - `mail`: optional, you can set the mailboxes later in Admin, Email and mailboxes
+5. **Create the tables and starter content**: cPanel, **Terminal**: `cd public_html && php database/install.php`. No Terminal? Add a cron job set to run once with `php /home/YOUR_CPANEL_USER/public_html/database/install.php`, wait a minute, then delete that cron job.
+6. **Folder permissions**: `storage/` (and its sub-folders) and `public/uploads/` must be writable: 755 for folders, 644 for files.
+7. **SSL**: cPanel, **SSL/TLS Status**, **Run AutoSSL**. When the padlock works, remove the `#` in front of the three "Force HTTPS" lines in `public/.htaccess`.
+8. **Create your admin account**: open `https://www.aivrasol.com/admin/setup`, enter the setup token and your details. The page switches itself off after the first admin exists.
+9. **Cron job** (campaigns, backups): see "Cron job" above.
+10. **Sign in** at `/admin`, set up **Email and mailboxes** (send a test from each), then work through the launch checklist on the dashboard and run **System check**.
+
+To bring content you already added on your computer (projects, posts, people): in your local admin open Backups, make a full backup and download it. Upload the ZIP to `storage/backups` on the server and run `php database/restore.php storage/backups/FILE-NAME.zip`, then `php database/install.php`. Copy `app_key` from your local `app/config.php` to the server first, so saved passwords and ID numbers still open.
 
 To generate the random strings, run this on any computer with PHP:
 
