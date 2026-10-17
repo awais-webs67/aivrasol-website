@@ -15,6 +15,9 @@ function admin_portfolio(): string
         admin_csrf();
         $action = (string) ($_POST['action'] ?? 'save');
         $before = team_photos($row);
+        if ($action === 'offline' && $row['slug']) {
+            Seo::ping([absolute_url('team/' . $row['slug']), absolute_url('team')]);
+        }
         if ($action === 'offline') {
             Database::run('UPDATE team_profiles SET live = NULL, slug = NULL, pending = 0 WHERE id = ?', [$row['id']]);
             team_cleanup_photos((int) $row['id'], $before);
@@ -161,6 +164,9 @@ function admin_team_pages(): string
                 flash('error', 'Unknown action.');
         }
         Auth::audit((int) $user['id'], 'team_' . $action, $member['email']);
+        if (in_array($action, ['hide', 'show', 'revoke', 'allow'], true) && $row['slug']) {
+            Seo::ping([absolute_url('team/' . $row['slug']), absolute_url('team')]);
+        }
         redirect(url('admin/team-pages'));
     }
     $rows = Database::all('SELECT u.id AS user_id, u.name, u.email, u.role, u.is_active, t.id, t.allowed, t.slug, t.draft, t.live, t.pending, t.hidden, t.admin_note, t.submitted_at, t.published_at

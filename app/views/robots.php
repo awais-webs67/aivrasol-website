@@ -8,5 +8,6 @@ if (!Seo::indexingOn()) {
 foreach ($bots as $b) {
     echo "User-agent: $b\n";
 }
-echo "Allow: /\nDisallow: /admin\nDisallow: /portal\nDisallow: /submit\n\n";
+echo "Allow: /\nDisallow: /admin\nDisallow: /portal\nDisallow: /submit\nDisallow: /verify/\nDisallow: /unsubscribe/\nDisallow: /cron/\n\n";
 echo 'Sitemap: ' . absolute_url('sitemap.xml') . "\n";
+echo '# A plain summary for AI assistants: ' . absolute_url('llms.txt') . ' (full details: ' . absolute_url('llms-full.txt') . ")\n";

@@ -152,6 +152,10 @@ final class Team
         $row = Database::one('SELECT draft FROM team_profiles WHERE id = ?', [$id]);
         $d = self::decode($row['draft'] ?? null);
         Database::run('UPDATE team_profiles SET live = draft, slug = ?, pending = 0, admin_note = "", published_at = NOW() WHERE id = ?', [$d['slug'] ?? null, $id]);
+        if (!empty($d['slug'])) {
+            // Tell search engines (IndexNow) the page and the team list changed.
+            Seo::ping([absolute_url('team/' . $d['slug']), absolute_url('team')]);
+        }
     }
 
     public static function approvalOn(): bool
@@ -175,6 +179,18 @@ final class Team
     {
         foreach (self::members() as $m) {
             if ($m['slug'] === $slug) {
+                return $m;
+            }
+        }
+        return null;
+    }
+
+    /** A live team member with this exact name, for linking blog authors to their profile. */
+    public static function byName(string $name): ?array
+    {
+        $name = mb_strtolower(trim($name));
+        foreach (self::members() as $m) {
+            if (mb_strtolower(trim((string) $m['name'])) === $name) {
                 return $m;
             }
         }

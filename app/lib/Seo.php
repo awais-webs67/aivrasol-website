@@ -258,6 +258,26 @@ function service_schema(array $item, string $path): array
     ]);
 }
 
+/** Article author: a team member's profile when one exists, so search engines see who wrote it. */
+function article_author(array $post): array
+{
+    if ($post['author_name'] === '') {
+        return ['@id' => Seo::orgId()];
+    }
+    if ($m = Team::byName($post['author_name'])) {
+        return array_filter([
+            '@type' => 'Person',
+            'name' => $m['name'],
+            'url' => absolute_url('team/' . $m['slug']),
+            'jobTitle' => $m['headline'] ?? null,
+            'image' => !empty($m['photo']) ? absolute_url($m['photo']) : null,
+            'sameAs' => array_values($m['links'] ?? []) ?: null,
+            'worksFor' => ['@id' => Seo::orgId()],
+        ]);
+    }
+    return ['@type' => str_ends_with($post['author_name'], 'Team') ? 'Organization' : 'Person', 'name' => $post['author_name'], 'url' => absolute_url('about'), 'worksFor' => ['@id' => Seo::orgId()]];
+}
+
 function article_schema(array $post): array
 {
     $img = $post['image'] !== '' ? absolute_url($post['image']) : absolute_url('assets/img/og-image.jpg');
@@ -267,14 +287,12 @@ function article_schema(array $post): array
         'headline' => mb_substr($post['title'], 0, 110),
         'description' => $post['excerpt'],
         'image' => [$img],
-        'datePublished' => $post['published_at'],
+        'datePublished' => gmdate('c', strtotime($post['published_at'] . ' UTC')),
         'dateModified' => gmdate('c', strtotime($post['updated_at'] . ' UTC')),
         'mainEntityOfPage' => absolute_url('blog/' . $post['slug']),
         'articleSection' => $post['category'],
         'wordCount' => str_word_count(Seo::plainText($post['body'])),
-        'author' => $post['author_name'] !== ''
-            ? ['@type' => str_ends_with($post['author_name'], 'Team') ? 'Organization' : 'Person', 'name' => $post['author_name'], 'url' => absolute_url('about')]
-            : ['@id' => Seo::orgId()],
+        'author' => article_author($post),
         'publisher' => ['@id' => Seo::orgId()],
     ];
 }

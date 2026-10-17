@@ -8,7 +8,7 @@
       <span class="bar"></span>
       <p class="lead"><?= e($post['excerpt']) ?></p>
       <p class="post-byline">
-        <?php if ($post['author_name'] !== ''): ?><strong><?= e($post['author_name']) ?></strong><?= $post['author_role'] !== '' ? ', ' . e($post['author_role']) : '' ?> · <?php endif; ?>
+        <?php if ($post['author_name'] !== ''): ?><?php $authorPage = Team::byName($post['author_name']); ?><strong><?php if ($authorPage): ?><a href="<?= e(url('team/' . $authorPage['slug'])) ?>" rel="author"><?= e($post['author_name']) ?></a><?php else: ?><?= e($post['author_name']) ?><?php endif; ?></strong><?= $post['author_role'] !== '' ? ', ' . e($post['author_role']) : '' ?> · <?php endif; ?>
         <time datetime="<?= e($post['published_at']) ?>"><?= e(date('j F Y', strtotime($post['published_at']))) ?></time> · <?= Seo::readingMinutes($post['body']) ?> min read
       </p>
     </div>

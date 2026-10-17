@@ -25,6 +25,7 @@ $org = array_filter([
     'sameAs' => array_column(Content::socials(), 'url') ?: null,
     'areaServed' => seo_area_served() ?: null,
     'knowsAbout' => array_column(Content::offerings('service'), 'short_title') ?: null,
+    'employee' => array_map(fn ($m) => array_filter(['@type' => 'Person', 'name' => $m['name'], 'jobTitle' => $m['headline'] ?? null, 'url' => absolute_url('team/' . $m['slug'])]), array_slice(Team::members(), 0, 50)) ?: null,
 ]);
 $locations = [];
 foreach (Content::offices() as $o) {
