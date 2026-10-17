@@ -78,7 +78,7 @@ return [
             'category' => ['label' => 'Category', 'type' => 'text', 'max' => 60, 'required' => true, 'help' => 'e.g. Guides, Hiring, Technology, News'],
             'published_at' => ['label' => 'Publish date', 'type' => 'date', 'required' => true, 'help' => 'Posts with a future date stay hidden until that day.'],
             'excerpt' => ['label' => 'Summary (shown on cards and in Google)', 'type' => 'textarea', 'max' => 400, 'required' => true],
-            'body' => ['label' => 'Article', 'type' => 'markdown', 'max' => 60000, 'required' => true, 'help' => 'Use the toolbar for headings, bold, italic, links, lists, quotes and alignment. Press Enter for a new line and leave an empty line for a new paragraph. Click Preview to see it as visitors will.'],
+            'body' => ['label' => 'Article', 'type' => 'markdown', 'max' => 60000, 'required' => true, 'help' => 'Write it like a document: what you see is what visitors see. Use the toolbar or Ctrl+B, Ctrl+I, Ctrl+K. Ctrl+Z undoes and Ctrl+Y redoes. Enter starts a new paragraph, Shift+Enter a new line.'],
             'image' => ['label' => 'Cover image (1200 x 630 works best, also used when shared)', 'type' => 'image', 'folder' => 'blog', 'width' => 1200],
             'author_name' => ['label' => 'Author name', 'type' => 'text', 'max' => 80],
             'author_role' => ['label' => 'Author role', 'type' => 'text', 'max' => 80],

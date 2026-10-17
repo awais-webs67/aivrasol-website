@@ -9,8 +9,8 @@ $simple = ['/about' => 'About', '/portfolio' => 'Portfolio', '/blog' => 'Blog', 
       <img src="<?= e(asset('assets/img/logo.svg')) ?>" alt="<?= e(setting('site_name', 'AivraSol')) ?>" width="160" height="31">
     </a>
     <button class="nav-toggle" type="button" aria-controls="main-nav" aria-expanded="false" data-nav-toggle>
-      <span class="sr-only">Menu</span>
       <?= icon('menu', 'icon icon-open') ?><?= icon('close', 'icon icon-close') ?>
+      <span class="nt-open">Menu</span><span class="nt-close">Close</span>
     </button>
     <nav class="main-nav" id="main-nav" aria-label="Main">
       <ul class="nav-list">
@@ -46,5 +46,6 @@ $simple = ['/about' => 'About', '/portfolio' => 'Portfolio', '/blog' => 'Blog', 
       </ul>
       <div class="nav-cta"><a class="btn" href="<?= e(url('contact')) ?>">Contact us</a></div>
     </nav>
+    <div class="nav-shade" data-nav-shade></div>
   </div>
 </header>

@@ -120,7 +120,7 @@ foreach (['ga' => $gaId, 'gads' => $adsId, 'gads-lead' => setting('google_ads_le
 <?= partial('cookie') ?>
 <button class="fab fab-cookie" type="button" data-cookie-open aria-label="Cookie settings"><?= icon('cookie') ?></button>
 <?php $wa = setting('whatsapp'); $waOn = $wa !== '' && setting('whatsapp_button', '1') === '1'; ?>
-<?php if ($waOn): ?><a class="fab fab-wa" href="<?= e(whatsapp_href($wa, setting('whatsapp_message'))) ?>" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp"><?= icon('whatsapp') ?><span class="fab-label">Chat with us</span></a><?php endif; ?>
+<?php if ($waOn): ?><a class="fab fab-wa" href="<?= e(whatsapp_href($wa, setting('whatsapp_message'))) ?>" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp"><span class="fab-wa-label"><strong>Need help?</strong> Chat with us</span><span class="fab-wa-btn"><?= icon('whatsapp') ?></span></a><?php endif; ?>
 <a class="fab fab-top<?= $waOn ? ' above-wa' : '' ?>" href="#main" data-to-top aria-label="Back to top"><?= icon('arrow-up') ?></a>
 <div class="toast" role="status" aria-live="polite" data-toast></div>
 </body>

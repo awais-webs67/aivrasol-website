@@ -10,7 +10,8 @@ function admin_guide(string $template, array $data): ?array
     $site = setting('site_name', 'AivraSol');
     $root = str_replace('\\', '/', ROOT_PATH);
     $onWindows = PHP_OS_FAMILY === 'Windows';
-    $cronLine = 'php ' . ($onWindows ? '/home/YOUR_CPANEL_USER/public_html' : $root) . '/bin/cron.php >/dev/null 2>&1';
+    $local = is_local_site();
+    $cronLine = 'php ' . ($onWindows || $local ? '/home/YOUR_CPANEL_USER/public_html' : $root) . '/bin/cron.php >/dev/null 2>&1';
     $cronSection = [
         'h' => 'Turn on the background sender (cron job)',
         'p' => 'Campaign emails and daily backups run in the background every 5 minutes. Set this up once on the live server.',
@@ -18,7 +19,7 @@ function admin_guide(string $template, array $data): ?array
             'In cPanel, open Cron Jobs.',
             'Under "Common Settings" choose "Once Per Five Minutes (*/5 * * * *)".',
             'Paste the command below in the "Command" box and click Add New Cron Job.',
-            $onWindows ? 'You are on a Windows test computer (XAMPP), which has no cron. Replace YOUR_CPANEL_USER with your cPanel username on the live server. If your files are in a subfolder, add it to the path.' : 'Check the path matches where the website files are. Ask your host if PHP is at a different path, for example /usr/local/bin/php.',
+            $onWindows || $local ? 'You are on a test computer, so the command shows an example path. Replace YOUR_CPANEL_USER with your cPanel username on the live server. If your files are in a subfolder, add it to the path.' : 'Check the path matches where the website files are. Ask your host if PHP is at a different path, for example /usr/local/bin/php.',
             'Come back here after 10 minutes. "Background sender: running" means it works.',
         ],
         'code' => [$cronLine],
@@ -26,7 +27,7 @@ function admin_guide(string $template, array $data): ?array
     if (Auth::can('settings')) {
         require_once APP_PATH . '/lib/Campaigns.php';
         $cronSection['list'][] = 'No Cron Jobs in your hosting? Create a free account at cron-job.org and make a job that opens the private address below every 5 minutes. Keep this address secret.';
-        $cronSection['code'][] = absolute_url('cron/' . Campaigns::cronToken());
+        $cronSection['code'][] = public_url('cron/' . Campaigns::cronToken());
     }
 
     $guides = [
@@ -68,7 +69,7 @@ function admin_guide(string $template, array $data): ?array
                 ['h' => 'Contact details and offices', 'p' => 'Phone, WhatsApp and emails show in the footer, the contact page and Google data. Each office can have its own phone, WhatsApp and email in Website content, Offices.'],
                 ['h' => 'Social links and the WhatsApp button', 'list' => ['Paste the full link of each social page (starting with https://). Only filled ones appear as icons in the footer.', 'The floating WhatsApp button uses the WhatsApp number in Contact details. Write the message that is filled in when someone taps it, or untick the box to hide the button.']],
                 ['h' => 'Get verified on Google', 'list' => [
-                    'Open search.google.com/search-console and click Add property. Choose "URL prefix" and enter ' . rtrim(absolute_url(), '/') . '.',
+                    'Open search.google.com/search-console and click Add property. Choose "URL prefix" and enter ' . rtrim(public_url(), '/') . '.',
                     'Choose the "HTML tag" method and copy the whole tag.',
                     'Paste it in "Google Search Console code" here and save.',
                     'Go back to Search Console and click Verify.',
@@ -79,7 +80,7 @@ function admin_guide(string $template, array $data): ?array
                     'If adding by hand, choose the meta tag method, paste the tag in "Bing Webmaster Tools code" here, save, then click Verify in Bing.',
                     'Submit the sitemap in Bing too.',
                 ]],
-                ['h' => 'Company summary for AI assistants', 'p' => 'Write two or three plain sentences: what you do, for whom, and where. It goes into ' . absolute_url('llms.txt') . ' and Google business data, which AI tools read.'],
+                ['h' => 'Company summary for AI assistants', 'p' => 'Write two or three plain sentences: what you do, for whom, and where. It goes into ' . public_url('llms.txt') . ' and Google business data, which AI tools read.'],
                 ['h' => 'Google Ads', 'list' => [
                     'In Google Ads open Goals, then Conversions, then New conversion action, then Website. Create a "Submit lead form" action.',
                     'Choose "Use Google tag" set up manually. You will see a tag ID like AW-123456789 and a conversion label like AbC-D_efG123.',
@@ -150,7 +151,7 @@ function admin_guide(string $template, array $data): ?array
         ],
         'clients' => [
             'title' => 'How clients and the client portal work',
-            'intro' => 'Each client gets a private portal at ' . absolute_url('portal') . ' to see their projects, chat with your team and check payments.',
+            'intro' => 'Each client gets a private portal at ' . public_url('portal') . ' to see their projects, chat with your team and check payments.',
             'sections' => [
                 ['h' => 'Step 1: Add the client', 'list' => ['Click Add client, or open a won lead and click "Create client".', 'The email is their portal sign-in.', 'Keep "Email a portal invitation" ticked. They receive a link to choose a password (valid for 7 days).']],
                 ['h' => 'Step 2: Create their project', 'p' => 'Open the client and click New project. Add the budget, currency, dates and project manager.'],
@@ -216,7 +217,7 @@ function admin_guide(string $template, array $data): ?array
         $tips = [
             'offerings' => ['Type "Service" shows under Services; "Hire a developer" shows under Hire Developers and in the hire pricing plan.', 'Features: one per line as Title | Description.', 'Untick "Show on website" to hide a page without deleting it.'],
             'projects' => ['Upload a plain screenshot. No need to crop or add borders: it is placed in a device frame on a backdrop made from its own colours.', 'Choose the frame in "Show the screenshot in": Browser for websites, Desktop app for Windows or Mac software, Tablet or Mobile for apps. Auto picks one from the image shape.', 'Add a phone screenshot too and Auto shows a laptop with a phone in front.', 'Background colour: Auto gives each project a different soft colour from the brand palette. Pick one yourself to match the project, or "Colours from the screenshot" for a blurred backdrop.', 'After saving, the preview at the top of the page shows exactly how it looks.', 'Untick "Sample content" once a project is real. Samples show on the launch checklist until replaced.', 'Feature on home page puts it in the home page slider.'],
-            'posts' => ['Write normally. A blank line starts a new paragraph.', '## Heading makes a section (it also appears in "On this page"). ### makes a smaller heading.', '- item makes a list. 1. item makes a numbered list. **bold** and *italic* work.', '[link text](/pricing) links to your own page. [link text](https://...) links to another site.', 'A post with a future date stays hidden until that day. Aim for two good posts a month.', 'Search engines are told about new and changed posts automatically.'],
+            'posts' => ['Write in the body box like a normal document. What you see is how it looks on the website.', 'Toolbar: undo and redo, B bold, I italic, link, Text, H2 heading (also listed under "On this page"), H3 smaller heading, bullet and numbered lists, quote, align left, centre, justify, divider line and clear formatting.', 'Shortcuts: Ctrl+Z undo, Ctrl+Y redo, Ctrl+B bold, Ctrl+I italic, Ctrl+K link, Ctrl+Shift+8 bullets, Ctrl+Shift+7 numbers. Enter starts a new paragraph, Shift+Enter a new line.', 'Links: select text, click the link button and type /pricing for your own page or https://... for another site. Links show in orange.', 'Pasting from Word or Google Docs keeps bold, italic, lists and links and removes other styling. "Code" shows the saved text if you ever need it.', 'A post with a future date stays hidden until that day. Aim for two good posts a month.', 'Search engines are told about new and changed posts automatically.'],
             'plans' => ['Group "Build a project" or "Hire developers" decides where it shows on the Pricing page.', 'Write [hire-roles] in an options list to show every live hire page automatically.', 'Every question also gets an "Other" choice with a text box.'],
             'jobs' => ['Open jobs show on Careers and are marked up so Google Jobs can list them.', 'Location "Remote" marks it as a remote job for Google.'],
             'faqs' => ['Scope "general" shows on the home page, "pricing" on Pricing and hire pages, "careers" on Careers.', 'Use a page address (for example web-development) to show a question only on that service page.'],
@@ -234,5 +235,9 @@ function admin_guide(string $template, array $data): ?array
         ];
     }
     $g = $guides[$template] ?? null;
-    return is_string($g) ? $guides[$g] : $g;
+    $g = is_string($g) ? $guides[$g] : $g;
+    if ($g && $local && str_contains(json_encode($g) ?: '', 'yourdomain.com')) {
+        $g['intro'] .= ' You are on a test computer, so web addresses here show yourdomain.com. On the live server they show your real domain.';
+    }
+    return $g;
 }

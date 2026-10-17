@@ -24,7 +24,7 @@ $err = fn ($k) => isset($errors[$k]) ? '<span class="field-error">' . e($errors[
     <dl class="dl mb">
       <dt>Status</dt><dd><?= $client['is_active'] ? 'On' : 'Off' ?><?= $client['must_change_password'] ? ' (temporary password)' : '' ?></dd>
       <dt>Last sign in</dt><dd><?= $client['last_login_at'] ? e(date('j M Y, H:i', strtotime($client['last_login_at'] . ' UTC'))) : 'Never' ?></dd>
-      <dt>Portal address</dt><dd><?= e(absolute_url('portal')) ?></dd>
+      <dt>Portal address</dt><dd><?= e(public_url('portal')) ?></dd>
     </dl>
     <div class="form-grid">
       <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="link"><button class="btn btn-sm btn-outline btn-block" type="submit"><?= icon('mail') ?><?= $client['last_login_at'] ? 'Email a password reset link' : 'Email the invitation again' ?></button></form>

@@ -18,7 +18,7 @@
     <?php if ($f['type'] === 'select'): ?>
     <select class="select" id="<?= e($id) ?>" name="<?= e($name) ?>"<?= $err ? ' aria-invalid="true"' : '' ?>><?php foreach ($f['options'] as $ov => $ol): ?><option value="<?= e($ov) ?>"<?= $val === (string) $ov ? ' selected' : '' ?>><?= e($ol) ?></option><?php endforeach; ?></select>
     <?php elseif (in_array($f['type'], ['textarea', 'lines', 'markdown'], true)): ?>
-    <textarea<?= $f['type'] === 'markdown' && empty($f['plain']) ? ' data-md' : '' ?> class="textarea<?= $f['type'] === 'lines' ? ' tall' : ($f['type'] === 'markdown' ? ' editor' : '') ?>" id="<?= e($id) ?>" name="<?= e($name) ?>"<?= isset($f['max']) ? ' maxlength="' . (int) $f['max'] . '"' : '' ?><?= $err ? ' aria-invalid="true"' : '' ?>><?= e($val) ?></textarea>
+    <textarea<?= $f['type'] === 'markdown' && empty($f['plain']) ? ' data-md data-base="' . e(url('')) . '" data-html="' . e(Seo::markdown($val)) . '"' : '' ?> class="textarea<?= $f['type'] === 'lines' ? ' tall' : ($f['type'] === 'markdown' ? ' editor' : '') ?>" id="<?= e($id) ?>" name="<?= e($name) ?>"<?= isset($f['max']) ? ' maxlength="' . (int) $f['max'] . '"' : '' ?><?= $err ? ' aria-invalid="true"' : '' ?>><?= e($val) ?></textarea>
     <?php elseif ($f['type'] === 'image'): ?>
     <?php if ($val !== ''): ?><img class="thumb" src="<?= e(url($val)) ?>" alt="" width="240" height="150"><label class="check"><input type="checkbox" name="<?= e($name) ?>_remove" value="1"> <span>Remove this image</span></label><?php endif; ?>
     <input class="file-input" id="<?= e($id) ?>" type="file" name="<?= e($name) ?>" accept="image/jpeg,image/png,image/webp">

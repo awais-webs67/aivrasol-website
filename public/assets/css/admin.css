@@ -216,15 +216,29 @@ tr.is-current td { background: var(--orange-tint); }
 .frame-preview .showcase { max-width: 720px; border-radius: var(--radius-md); margin-bottom: 10px; }
 
 /* Writing toolbar */
-.md-toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; background: var(--grey-soft); border: 1px solid var(--line-strong); border-bottom: 0; border-radius: var(--radius) var(--radius) 0 0; }
-.md-toolbar + .textarea { border-top-left-radius: 0; border-top-right-radius: 0; }
-.md-btn { min-width: 34px; height: 32px; padding: 0 10px; font-size: 13px; font-weight: 600; color: var(--slate); background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; }
-.md-btn:hover:not(:disabled) { color: var(--orange-text); border-color: var(--orange); }
-.md-btn:disabled { opacity: .45; cursor: default; }
-.md-b { font-weight: 800; }
-.md-i { font-style: italic; font-family: Georgia, serif; }
-.md-preview-btn { margin-left: auto; color: var(--white); background: var(--slate); border-color: var(--slate); }
-.md-preview-btn:hover { color: var(--white) !important; background: var(--ink); }
-.md-preview-btn[aria-pressed="true"] { background: var(--orange-text); border-color: var(--orange-text); }
-.md-preview { max-width: none; padding: 16px 18px; background: var(--white); border: 1px solid var(--line-strong); border-radius: 0 0 var(--radius) var(--radius); font-size: 15.5px; line-height: 1.7; overflow-wrap: anywhere; }
-.md-preview img { max-width: 100%; height: auto; }
+.wys { border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--white); }
+.wys:focus-within { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255, 91, 53, .15); }
+.wys-bar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 3px; padding: 6px; background: var(--grey-soft); border-bottom: 1px solid var(--line); border-radius: var(--radius) var(--radius) 0 0; }
+.wys-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: 34px; height: 34px; padding: 0 8px; font: inherit; font-size: 13px; font-weight: 600; color: var(--slate); background: transparent; border: 1px solid transparent; border-radius: var(--radius); cursor: pointer; }
+.wys-btn svg { width: 18px; height: 18px; }
+.wys-btn b { font-size: 16px; font-weight: 800; }
+.wys-btn i { font-size: 17px; font-family: Georgia, serif; }
+.wys-btn:hover:not(:disabled) { color: var(--orange-text); background: var(--white); border-color: var(--line); }
+.wys-btn.is-on { color: var(--orange-text); background: #FFF1EC; border-color: #FFD6C8; }
+.wys-btn:disabled { opacity: .35; cursor: default; }
+.wys-sep { width: 1px; height: 22px; margin: 0 4px; background: var(--line-strong); }
+.wys-code { margin-left: auto; color: var(--white); background: var(--slate); }
+.wys-code:hover:not(:disabled) { color: var(--white) !important; background: var(--ink) !important; }
+.wys-code[aria-pressed="true"] { background: var(--orange-text); }
+.wys-area { position: relative; min-height: 220px; max-height: 70vh; overflow-y: auto; padding: 16px 18px; font-size: 15.5px; line-height: 1.7; color: var(--body); outline: none; overflow-wrap: anywhere; }
+.wys-area.is-empty::before { content: attr(data-placeholder); color: var(--muted); pointer-events: none; position: absolute; }
+.wys-area h2 { font-size: 24px; line-height: 1.3; margin: 1.1em 0 .5em; color: var(--ink); }
+.wys-area h3 { font-size: 19px; line-height: 1.35; margin: 1em 0 .45em; color: var(--ink); }
+.wys-area h4 { font-size: 17px; margin: 1em 0 .4em; color: var(--ink); }
+.wys-area hr { margin: 1.4em 0; border: 0; border-top: 2px solid var(--line-strong); }
+.wys-area img { max-width: 100%; height: auto; }
+.wys-area a { cursor: text; }
+.wys-area .text-center, .wys-area .text-justify, .wys-area .text-right { position: relative; padding-left: 10px; border-left: 2px dashed #FFD6C8; }
+.wys .wys-source { display: block; width: 100%; min-height: 220px; border: 0; border-radius: 0 0 var(--radius) var(--radius); font-family: ui-monospace, Consolas, monospace; font-size: 13.5px; }
+.wys .wys-source:focus { box-shadow: none; }
+@media (max-width: 600px) { .wys-btn { min-width: 32px; height: 32px; padding: 0 6px; } .wys-sep { display: none; } .wys-code span { display: none; } }

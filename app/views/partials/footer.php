@@ -44,7 +44,7 @@ $whatsapp = setting('whatsapp');
         </div>
       </div>
     </div>
-    <?php if ($offices || $socials || $whatsapp !== '' || setting('office_hours') !== ''): ?>
+    <?php if ($offices || setting('office_hours') !== ''): ?>
     <div class="footer-mid">
       <?php foreach ($offices as $o): ?>
       <div class="office">
@@ -54,21 +54,21 @@ $whatsapp = setting('whatsapp');
       </div>
       <?php endforeach; ?>
       <?php if (setting('office_hours') !== ''): ?>
-      <div><h3>Office hours</h3><p><?= e(setting('office_hours')) ?></p></div>
+      <div class="office"><h3>Office hours</h3><p><?= e(setting('office_hours')) ?></p></div>
       <?php endif; ?>
-      <?php if ($whatsapp !== ''): ?>
-      <div><h3>WhatsApp</h3><p><a href="<?= e(whatsapp_href($whatsapp)) ?>" rel="noopener" target="_blank"><?= e($whatsapp) ?></a></p></div>
-      <?php endif; ?>
-      <?php if ($socials): ?>
-      <div>
-        <h3>Follow us</h3>
-        <ul class="socials">
-          <?php foreach ($socials as $s): ?>
-          <li><a href="<?= e($s['url']) ?>" rel="noopener" target="_blank" aria-label="<?= e($s['label']) ?>"><?= icon($s['icon']) ?></a></li>
-          <?php endforeach; ?>
-        </ul>
-      </div>
-      <?php endif; ?>
+    </div>
+    <?php endif; ?>
+    <?php if ($socials || $whatsapp !== ''): ?>
+    <div class="footer-social">
+      <h3>Connect with us</h3>
+      <ul class="socials">
+        <?php if ($whatsapp !== ''): ?>
+        <li><a class="s-whatsapp" href="<?= e(whatsapp_href($whatsapp, setting('whatsapp_message'))) ?>" rel="noopener" target="_blank"><span class="s-ico"><?= icon('whatsapp') ?></span>WhatsApp</a></li>
+        <?php endif; ?>
+        <?php foreach ($socials as $s): ?>
+        <li><a class="s-<?= e($s['icon']) ?>" href="<?= e($s['url']) ?>" rel="noopener" target="_blank"><span class="s-ico"><?= icon($s['icon']) ?></span><?= e($s['label']) ?></a></li>
+        <?php endforeach; ?>
+      </ul>
     </div>
     <?php endif; ?>
     <div class="footer-bottom">

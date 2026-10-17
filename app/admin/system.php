@@ -110,7 +110,7 @@ function system_check_run(array $user, bool $sendEmail): array
     $baseHost = (string) parse_url($base, PHP_URL_HOST) . (parse_url($base, PHP_URL_PORT) ? ':' . parse_url($base, PHP_URL_PORT) : '');
     $add('Configuration', 'Website address (base_url)', $host === '' || strcasecmp($baseHost, $host) === 0 ? 'ok' : 'warn', $base . ($host !== '' && strcasecmp($baseHost, $host) !== 0 ? " (you opened the site at $host)" : ''), 'Set base_url in app/config.php to the real address. QR codes, emails and Google links use it.');
     $https = Security::isHttps();
-    $local = in_array(parse_url($base, PHP_URL_HOST), ['localhost', '127.0.0.1'], true);
+    $local = is_local_site();
     $add('Configuration', 'HTTPS', $https ? 'ok' : ($local ? 'warn' : 'fail'), $https ? 'Secure connection' : ($local ? 'Not needed on a test computer' : 'The site is not on HTTPS'), 'Install a free SSL in cPanel (SSL/TLS Status, Run AutoSSL), then turn on the HTTPS lines in public/.htaccess.');
     $add('Configuration', 'Mode', config('env') === 'production' || $local ? 'ok' : 'warn', 'env = ' . (string) config('env'), "Set 'env' => 'production' in app/config.php on the live site so errors are never shown to visitors.");
     $add('Configuration', 'Search indexing', Seo::indexingOn() ? 'ok' : 'warn', Seo::indexingOn() ? 'On' : 'Off: Google will not list the site', 'Admin, Settings: tick "Let search engines and AI tools index the website".');

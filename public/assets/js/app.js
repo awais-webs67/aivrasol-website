@@ -36,6 +36,8 @@
       if (e.target.closest('a')) setNav(false);
     });
   }
+  var shade = $('[data-nav-shade]');
+  if (shade) shade.addEventListener('click', function () { setNav(false); });
   desktop.addEventListener('change', function () { setNav(false); });
 
   /* Dropdowns: click to toggle (needed on touch and in the mobile menu); hover is handled by CSS on desktop */

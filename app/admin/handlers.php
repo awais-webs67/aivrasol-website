@@ -44,7 +44,7 @@ function admin_resource(string $key): array
  */
 function admin_launch_checklist(): array
 {
-    $local = in_array(parse_url((string) config('base_url'), PHP_URL_HOST), ['localhost', '127.0.0.1'], true);
+    $local = is_local_site();
     $items = [];
     $add = function (bool $done, string $doneText, string $todoText, string $hint, ?string $link, bool $liveOnly = false) use (&$items, $local): void {
         $state = $done ? 'done' : ($liveOnly && $local ? 'later' : 'todo');

@@ -18,7 +18,7 @@ $router->get('/', fn () => view('pages/home', [
 ]));
 
 $router->get('/services', fn () => view('pages/offerings', [
-    'pageTitle' => 'Our Services | AivraSol',
+    'pageTitle' => 'Our Services | ' . setting('site_name', 'AivraSol'),
     'metaDescription' => 'Web, mobile, UI/UX, cloud, AI and SEO services from AivraSol. One team from idea to launch.',
     'type' => 'service',
     'items' => Content::offerings('service'),
@@ -28,7 +28,7 @@ $router->get('/services', fn () => view('pages/offerings', [
 $router->get('/services/{slug}', function (string $slug) {
     $item = Content::offering('service', $slug) ?? abort(404);
     return view('pages/offering', [
-        'pageTitle' => $item['meta_title'] ?: $item['title'] . ' | AivraSol',
+        'pageTitle' => $item['meta_title'] ?: $item['title'] . ' | ' . setting('site_name', 'AivraSol'),
         'metaDescription' => $item['meta_description'] ?: $item['summary'],
         'item' => $item,
         'type' => 'service',
@@ -39,7 +39,7 @@ $router->get('/services/{slug}', function (string $slug) {
 });
 
 $router->get('/hire', fn () => view('pages/offerings', [
-    'pageTitle' => 'Hire Developers | AivraSol',
+    'pageTitle' => 'Hire Developers | ' . setting('site_name', 'AivraSol'),
     'metaDescription' => 'Hire vetted React, Node.js, Laravel, Python, React Native and DevOps developers from AivraSol on flexible terms.',
     'type' => 'hire',
     'items' => Content::offerings('hire'),
@@ -49,7 +49,7 @@ $router->get('/hire', fn () => view('pages/offerings', [
 $router->get('/hire/{slug}', function (string $slug) {
     $item = Content::offering('hire', $slug) ?? abort(404);
     return view('pages/offering', [
-        'pageTitle' => $item['meta_title'] ?: $item['title'] . ' | AivraSol',
+        'pageTitle' => $item['meta_title'] ?: $item['title'] . ' | ' . setting('site_name', 'AivraSol'),
         'metaDescription' => $item['meta_description'] ?: $item['summary'],
         'item' => $item,
         'type' => 'hire',
@@ -60,8 +60,8 @@ $router->get('/hire/{slug}', function (string $slug) {
 });
 
 $router->get('/portfolio', fn () => view('pages/portfolio', [
-    'pageTitle' => 'Portfolio | AivraSol',
-    'metaDescription' => 'Selected web, mobile and e-commerce projects built by AivraSol.',
+    'pageTitle' => 'Portfolio: Web, Mobile and E-commerce Projects | ' . setting('site_name', 'AivraSol'),
+    'metaDescription' => 'Case studies of web apps, mobile apps, online stores and business systems built by AivraSol, with the challenge, our solution and the results.',
     'projects' => Content::projects(),
     'crumbs' => ['Portfolio' => 'portfolio'],
 ]));
@@ -69,7 +69,7 @@ $router->get('/portfolio', fn () => view('pages/portfolio', [
 $router->get('/portfolio/{slug}', function (string $slug) {
     $project = Content::project($slug) ?? abort(404);
     return view('pages/project', [
-        'pageTitle' => $project['title'] . ' | AivraSol Portfolio',
+        'pageTitle' => $project['title'] . ' | ' . setting('site_name', 'AivraSol') . ' Portfolio',
         'metaDescription' => $project['summary'],
         'ogImage' => $project['image'],
         'project' => $project,
@@ -81,7 +81,7 @@ $router->get('/portfolio/{slug}', function (string $slug) {
 $router->get('/pricing', function () {
     $selected = Content::plan((int) ($_GET['plan'] ?? 0));
     return view('pages/pricing', [
-        'pageTitle' => 'Pricing & Free Quote | AivraSol',
+        'pageTitle' => 'Pricing & Free Quote | ' . setting('site_name', 'AivraSol'),
         'metaDescription' => 'Flexible pricing for product development, dedicated teams and hired developers. Get a free, no-obligation quote.',
         'plans' => Content::plans(),
         'selected' => $selected,
@@ -96,7 +96,7 @@ $router->get('/pricing', function () {
 });
 
 $router->get('/careers', fn () => view('pages/careers', [
-    'pageTitle' => 'Careers | AivraSol',
+    'pageTitle' => 'Careers: Jobs and Internships | ' . setting('site_name', 'AivraSol'),
     'metaDescription' => 'Join AivraSol. Open roles, internships and benefits for developers, designers and marketers.',
     'jobs' => Content::jobs(),
     'faqs' => Content::faqs('careers'),
@@ -106,7 +106,7 @@ $router->get('/careers', fn () => view('pages/careers', [
 $router->get('/careers/{slug}', function (string $slug) {
     $job = Content::job($slug) ?? abort(404);
     return view('pages/job', [
-        'pageTitle' => $job['title'] . ' | Careers at AivraSol',
+        'pageTitle' => $job['title'] . ' | Careers at ' . setting('site_name', 'AivraSol'),
         'metaDescription' => $job['summary'],
         'job' => $job,
         'crumbs' => ['Careers' => 'careers', $job['title'] => 'careers/' . $slug],
@@ -115,22 +115,26 @@ $router->get('/careers/{slug}', function (string $slug) {
 });
 
 $router->get('/about', fn () => view('pages/about', [
-    'pageTitle' => 'About Us | AivraSol',
+    'pageTitle' => 'About Us: Software Development Company | ' . setting('site_name', 'AivraSol'),
     'metaDescription' => 'AivraSol is a software development company that builds web apps, mobile apps and AI solutions for growing businesses.',
     'stats' => Content::stats(),
     'crumbs' => ['About us' => 'about'],
 ]));
 
 $router->get('/contact', fn () => view('pages/contact', [
-    'pageTitle' => 'Contact Us | AivraSol',
+    'pageTitle' => 'Contact Us | ' . setting('site_name', 'AivraSol'),
     'metaDescription' => 'Talk to AivraSol about your project. Email, phone, WhatsApp or send a message and we reply within one business day.',
     'crumbs' => ['Contact us' => 'contact'],
 ]));
 
 foreach (['privacy-policy' => 'Privacy Policy', 'terms' => 'Terms & Conditions', 'cookie-policy' => 'Cookie Policy'] as $slug => $title) {
     $router->get('/' . $slug, fn () => view('pages/legal/' . $slug, [
-        'pageTitle' => $title . ' | AivraSol',
-        'metaDescription' => $title . ' for the AivraSol website.',
+        'pageTitle' => $title . ' | ' . setting('site_name', 'AivraSol'),
+        'metaDescription' => [
+            'privacy-policy' => 'How ' . setting('site_name', 'AivraSol') . ' collects, uses and protects your personal data, how long we keep it, and how to exercise your privacy rights.',
+            'terms' => 'The terms and conditions for using the ' . setting('site_name', 'AivraSol') . ' website and our software development services, quotes and hiring plans.',
+            'cookie-policy' => 'Which cookies the ' . setting('site_name', 'AivraSol') . ' website uses, why we use them, and how to change your cookie choices at any time.',
+        ][$slug],
         'legalTitle' => $title,
     ]));
 }
