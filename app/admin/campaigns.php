@@ -192,12 +192,14 @@ function admin_campaigns(): string
         }
         redirect(url('admin/campaigns'));
     }
-    $rows = Database::all('SELECT k.*, u.name AS author,
+    [$page, $per, $offset] = admin_page(20);
+    $total = (int) Database::value('SELECT COUNT(*) FROM campaigns');
+    $rows = Database::all("SELECT k.*, u.name AS author,
         (SELECT COUNT(*) FROM campaign_recipients r WHERE r.campaign_id = k.id) AS total,
-        (SELECT COUNT(*) FROM campaign_recipients r WHERE r.campaign_id = k.id AND r.status = \'sent\') AS sent
-        FROM campaigns k LEFT JOIN users u ON u.id = k.created_by ORDER BY k.id DESC');
+        (SELECT COUNT(*) FROM campaign_recipients r WHERE r.campaign_id = k.id AND r.status = 'sent') AS sent
+        FROM campaigns k LEFT JOIN users u ON u.id = k.created_by ORDER BY k.id DESC LIMIT $per OFFSET $offset");
     [$allowed, $why] = Campaigns::allowance();
-    return admin_view('campaigns', [
+    return admin_view('campaigns', ['listTotal' => $total, 'page' => $page, 'per' => $per,
         'rows' => $rows, 'allowed' => $allowed, 'why' => $why, 'limits' => Campaigns::limits(),
         'sent24' => (int) Database::value("SELECT COUNT(*) FROM campaign_recipients WHERE status = 'sent' AND sent_at > UTC_TIMESTAMP() - INTERVAL 1 DAY"),
         'queued' => (int) Database::value("SELECT COUNT(*) FROM campaign_recipients r JOIN campaigns k ON k.id = r.campaign_id WHERE r.status = 'queued' AND k.status = 'sending'"),
@@ -342,7 +344,9 @@ function admin_campaign_edit(?string $id = null): string
         'c' => $c, 'values' => $values, 'errors' => $errors, 'templates' => $templates, 'editable' => $editable, 'preview' => $preview,
         'tags' => Campaigns::tags(), 'audience' => Campaigns::audience((string) $values['audience_tag']),
         'stats' => $c ? Campaigns::stats((int) $c['id']) : null,
-        'recent' => $c ? Database::all('SELECT r.status, r.error, r.sent_at, ct.email FROM campaign_recipients r JOIN contacts ct ON ct.id = r.contact_id WHERE r.campaign_id = ? AND r.status <> \'queued\' ORDER BY r.sent_at DESC, r.id DESC LIMIT 20', [$c['id']]) : [],
+        'recentTotal' => $c ? (int) Database::value("SELECT COUNT(*) FROM campaign_recipients WHERE campaign_id = ? AND status <> 'queued'", [$c['id']]) : 0,
+        'rPage' => admin_page(20, 'rp')[0],
+        'recent' => $c ? Database::all('SELECT r.status, r.error, r.sent_at, ct.email FROM campaign_recipients r JOIN contacts ct ON ct.id = r.contact_id WHERE r.campaign_id = ? AND r.status <> \'queued\' ORDER BY r.sent_at DESC, r.id DESC LIMIT 20 OFFSET ' . admin_page(20, 'rp')[2], [$c['id']]) : [],
         'pageTitle' => $c ? $c['name'] : 'New campaign',
     ]);
 }

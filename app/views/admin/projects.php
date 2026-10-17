@@ -24,5 +24,6 @@
   <?php endforeach; ?>
   </tbody>
 </table></div>
+<?= admin_pager($total, $per, $page) ?>
 <?php endif; ?>
 </div>

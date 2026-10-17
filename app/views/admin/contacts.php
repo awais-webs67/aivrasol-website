@@ -33,9 +33,7 @@
   <?php endforeach; ?>
   </tbody>
 </table></div>
-<?php if ($total > $per): ?>
-<nav class="pager" aria-label="Pages"><?php for ($i = 1; $i <= (int) ceil($total / $per); $i++): ?><a href="<?= e(url('admin/contacts') . '?' . http_build_query(array_filter(['status' => $status, 'tag' => $tag, 'q' => $q, 'page' => $i]))) ?>"<?= $i === $page ? ' aria-current="page"' : '' ?>><?= $i ?></a><?php endfor; ?></nav>
-<?php endif; ?>
+<?= admin_pager($total, $per, $page) ?>
 <?php endif; ?>
 </div>
 <div class="admin-grid">

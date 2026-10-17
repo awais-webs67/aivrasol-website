@@ -35,6 +35,7 @@ $cronOk = $cronAge !== null && $cronAge < 900;
   <?php endforeach; ?>
   </tbody>
 </table></div>
+<?= admin_pager($listTotal, $per, $page) ?>
 <?php endif; ?>
 </div>
 

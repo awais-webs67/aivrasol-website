@@ -34,11 +34,13 @@ function admin_issuance(): string
     } elseif ($f['state'] === 'withdrawn') {
         $where[] = 'd.revoked_at IS NOT NULL';
     }
-    $rows = Database::all('SELECT d.id, d.doc_type, d.ref_no, d.title, d.issued_at, d.revoked_at, e.id AS employee_id, e.full_name, e.employee_code, u.name AS issuer
-        FROM employee_documents d JOIN employees e ON e.id = d.employee_id LEFT JOIN users u ON u.id = d.issued_by '
-        . ($where ? 'WHERE ' . implode(' AND ', $where) : '') . ' ORDER BY d.id DESC LIMIT 500', $params);
+    $w = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+    [$page, $per, $offset] = admin_page(25);
+    $total = (int) Database::value("SELECT COUNT(*) FROM employee_documents d JOIN employees e ON e.id = d.employee_id $w", $params);
+    $rows = Database::all("SELECT d.id, d.doc_type, d.ref_no, d.title, d.issued_at, d.revoked_at, e.id AS employee_id, e.full_name, e.employee_code, u.name AS issuer
+        FROM employee_documents d JOIN employees e ON e.id = d.employee_id LEFT JOIN users u ON u.id = d.issued_by $w ORDER BY d.id DESC LIMIT $per OFFSET $offset", $params);
     $types = Database::all('SELECT doc_type, COUNT(*) AS n FROM employee_documents GROUP BY doc_type ORDER BY doc_type');
-    return admin_view('issuance', ['rows' => $rows, 'f' => $f, 'types' => $types, 'templates' => issuance_templates(), 'pageTitle' => 'Issuance: certificates and letters']);
+    return admin_view('issuance', ['rows' => $rows, 'total' => $total, 'page' => $page, 'per' => $per, 'f' => $f, 'types' => $types, 'templates' => issuance_templates(), 'pageTitle' => 'Issuance: certificates and letters']);
 }
 
 function issuance_doc_type(array $tpl): string

@@ -15,4 +15,5 @@
   <?php endforeach; ?>
 </ul>
 <?php endif; ?>
+<?= admin_pager($total, $per, $page) ?>
 </div>

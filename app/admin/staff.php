@@ -96,15 +96,18 @@ function admin_employees(): string
     } else {
         $f['q'] = '';
     }
-    $rows = Database::all('SELECT e.id, e.employee_code, e.full_name, e.designation, e.department, e.status, e.approval, e.join_date, e.photo, e.user_id,
+    $w = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+    [$page, $per, $offset] = admin_page(30);
+    $total = (int) Database::value("SELECT COUNT(*) FROM employees e LEFT JOIN users u ON u.id = e.user_id $w", $params);
+    $rows = Database::all("SELECT e.id, e.employee_code, e.full_name, e.designation, e.department, e.status, e.approval, e.join_date, e.photo, e.user_id,
             u.email AS login_email, u.role, u.is_active AS login_active, u.last_login_at
-        FROM employees e LEFT JOIN users u ON u.id = e.user_id ' . ($where ? 'WHERE ' . implode(' AND ', $where) : '') . "
-        ORDER BY e.approval = 'pending' DESC, e.status = 'active' DESC, e.full_name", $params);
+        FROM employees e LEFT JOIN users u ON u.id = e.user_id $w
+        ORDER BY e.approval = 'pending' DESC, e.status = 'active' DESC, e.full_name LIMIT $per OFFSET $offset", $params);
     $stats = Database::one("SELECT COUNT(*) AS total, SUM(e.status = 'active') AS active, SUM(e.approval = 'pending') AS pending,
         SUM(e.user_id IS NOT NULL AND u.is_active = 1) AS logins FROM employees e LEFT JOIN users u ON u.id = e.user_id");
     $roleCounts = array_column(Database::all('SELECT role, COUNT(*) AS n FROM users GROUP BY role'), 'n', 'role');
     return admin_view('employees', [
-        'rows' => $rows, 'f' => $f, 'stats' => $stats, 'roleCounts' => $roleCounts,
+        'rows' => $rows, 'f' => $f, 'stats' => $stats, 'roleCounts' => $roleCounts, 'total' => $total, 'page' => $page, 'per' => $per,
         'audit' => Auth::can('users', $user) ? Database::all('SELECT a.action, a.target, a.created_at, u.name FROM audit_log a LEFT JOIN users u ON u.id = a.user_id ORDER BY a.id DESC LIMIT 25') : [],
         'pageTitle' => 'People',
     ]);

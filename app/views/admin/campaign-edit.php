@@ -58,6 +58,7 @@ $err = fn ($k) => isset($errors[$k]) ? '<span class="field-error">' . e($errors[
     <?php if ($recent): ?>
     <h3 class="mt">Latest sends</h3>
     <div class="table-wrap"><table class="table"><tbody><?php foreach ($recent as $r): ?><tr><td class="small"><?= e($r['email']) ?><?= $r['error'] !== '' ? '<br><span class="muted">' . e($r['error']) . '</span>' : '' ?></td><td class="small"><?= e(ucfirst($r['status'])) ?></td></tr><?php endforeach; ?></tbody></table></div>
+    <?= admin_pager($recentTotal, 20, $rPage, 'rp') ?>
     <?php endif; ?>
   </section>
 </div>

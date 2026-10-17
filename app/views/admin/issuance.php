@@ -49,4 +49,5 @@ $issued = (int) ($_GET['issued'] ?? 0);
     </tbody>
   </table></div>
   <?php endif; ?>
+  <?= admin_pager($total, $per, $page) ?>
 </section>

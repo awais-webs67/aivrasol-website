@@ -36,7 +36,7 @@ $accClass = ['active' => 'won', 'invited' => 'qualified', 'disabled' => 'lost', 
 <p class="muted"><?= $filtered ? 'Nobody matches these filters.' : 'No people yet. Add your first team member to create their account and ID card.' ?></p>
 <?php else: ?>
 <div class="card-head">
-  <p class="small muted"><?= count($rows) ?> <?= count($rows) === 1 ? 'person' : 'people' ?><?= $filtered ? ' match' : '' ?>. Tick people to message them.</p>
+  <p class="small muted"><?= $total ?> <?= $total === 1 ? 'person' : 'people' ?><?= $filtered ? ' match' : '' ?>. Tick people to message them.</p>
   <?php if (Auth::can('employees', $user)): ?><button class="btn btn-sm btn-outline" type="submit"><?= icon('mail') ?>Message selected</button><?php endif; ?>
 </div>
 <div class="table-wrap"><table class="table people-table">
@@ -61,6 +61,7 @@ $accClass = ['active' => 'won', 'invited' => 'qualified', 'disabled' => 'lost', 
   </tbody>
 </table></div>
 <?php endif; ?>
+<?= admin_pager($total, $per, $page) ?>
 </form>
 
 <details class="card">

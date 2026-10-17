@@ -16,10 +16,12 @@ function admin_clients(): string
     } else {
         $q = '';
     }
+    [$page, $per, $offset] = admin_page(25);
+    $total = (int) Database::value("SELECT COUNT(*) FROM clients c $where", $params);
     $rows = Database::all("SELECT c.id, c.company_name, c.contact_name, c.email, c.country, c.is_active, c.last_login_at,
         (SELECT COUNT(*) FROM client_projects p WHERE p.client_id = c.id) AS projects
-        FROM clients c $where ORDER BY c.is_active DESC, c.company_name, c.contact_name", $params);
-    return admin_view('clients', ['rows' => $rows, 'q' => $q, 'pageTitle' => 'Clients']);
+        FROM clients c $where ORDER BY c.is_active DESC, c.company_name, c.contact_name LIMIT $per OFFSET $offset", $params);
+    return admin_view('clients', ['rows' => $rows, 'q' => $q, 'total' => $total, 'page' => $page, 'per' => $per, 'pageTitle' => 'Clients']);
 }
 
 function admin_client_edit(?string $id = null): string
@@ -135,8 +137,9 @@ function admin_projects(): string
         (SELECT COUNT(*) FROM project_messages m WHERE m.project_id = p.id AND m.sender_type = \'client\' AND m.read_by_staff = 0) AS unread,
         (SELECT COALESCE(SUM(CASE type WHEN \'payment\' THEN amount WHEN \'refund\' THEN -amount ELSE 0 END), 0) FROM project_transactions t WHERE t.project_id = p.id) AS paid
         FROM client_projects p JOIN clients c ON c.id = p.client_id LEFT JOIN users u ON u.id = p.manager_id ' . ($status !== '' ? 'WHERE p.status = ? ' : '') . '
-        ORDER BY unread DESC, FIELD(p.status, \'in_progress\', \'review\', \'planning\', \'on_hold\', \'completed\', \'cancelled\'), p.updated_at DESC', $status !== '' ? [$status] : []);
-    return admin_view('projects', ['rows' => $rows, 'status' => $status, 'pageTitle' => 'Client projects']);
+        ORDER BY unread DESC, FIELD(p.status, \'in_progress\', \'review\', \'planning\', \'on_hold\', \'completed\', \'cancelled\'), p.updated_at DESC LIMIT ' . admin_page(25)[1] . ' OFFSET ' . admin_page(25)[2], $status !== '' ? [$status] : []);
+    $total = (int) Database::value('SELECT COUNT(*) FROM client_projects p' . ($status !== '' ? ' WHERE p.status = ?' : ''), $status !== '' ? [$status] : []);
+    return admin_view('projects', ['rows' => $rows, 'status' => $status, 'total' => $total, 'page' => admin_page(25)[0], 'per' => 25, 'pageTitle' => 'Client projects']);
 }
 
 function admin_project_find(string $id): array

@@ -68,15 +68,18 @@ function admin_messages(): string
 {
     Auth::require('employees');
     $show = ($_GET['show'] ?? '') === 'unread' ? 'unread' : '';
+    $filter = $show === 'unread' ? "AND EXISTS (SELECT 1 FROM staff_messages x WHERE x.thread_id = r.id AND x.direction = 'in' AND x.read_at IS NULL)" : '';
+    [$page, $per, $offset] = admin_page(25);
+    $total = (int) Database::value("SELECT COUNT(*) FROM staff_messages r WHERE r.thread_id IS NULL $filter");
     $rows = Database::all("SELECT r.id, r.subject, r.kind, r.created_at, e.id AS employee_id, e.full_name, e.designation,
             (SELECT MAX(x.created_at) FROM staff_messages x WHERE x.id = r.id OR x.thread_id = r.id) AS last_at,
             (SELECT COUNT(*) FROM staff_messages x WHERE x.thread_id = r.id) AS replies,
             (SELECT COUNT(*) FROM staff_messages x WHERE (x.id = r.id OR x.thread_id = r.id) AND x.direction = 'in' AND x.read_at IS NULL) AS unread,
             (SELECT COUNT(*) FROM staff_messages x WHERE (x.id = r.id OR x.thread_id = r.id) AND x.direction = 'out' AND x.read_at IS NULL) AS unseen
         FROM staff_messages r JOIN employees e ON e.id = r.employee_id
-        WHERE r.thread_id IS NULL " . ($show === 'unread' ? "AND EXISTS (SELECT 1 FROM staff_messages x WHERE x.thread_id = r.id AND x.direction = 'in' AND x.read_at IS NULL)" : '') . '
-        ORDER BY last_at DESC LIMIT 300');
-    return admin_view('messages', ['rows' => $rows, 'show' => $show, 'unread' => msg_unread(), 'pageTitle' => 'Messages to the team']);
+        WHERE r.thread_id IS NULL $filter
+        ORDER BY last_at DESC LIMIT $per OFFSET $offset");
+    return admin_view('messages', ['rows' => $rows, 'show' => $show, 'total' => $total, 'page' => $page, 'per' => $per, 'unread' => msg_unread(), 'pageTitle' => 'Messages to the team']);
 }
 
 /** Write to one person, a selection, or a whole group. */
@@ -186,10 +189,12 @@ function admin_inbox(): string
 {
     $user = Auth::require('profile');
     $me = msg_me($user);
+    [$page, $per, $offset] = admin_page(25);
+    $total = $me ? (int) Database::value('SELECT COUNT(*) FROM staff_messages WHERE thread_id IS NULL AND employee_id = ?', [$me['id']]) : 0;
     $rows = $me ? Database::all("SELECT r.id, r.subject, r.kind, r.created_at,
             (SELECT MAX(x.created_at) FROM staff_messages x WHERE x.id = r.id OR x.thread_id = r.id) AS last_at,
             (SELECT COUNT(*) FROM staff_messages x WHERE x.thread_id = r.id) AS replies,
             (SELECT COUNT(*) FROM staff_messages x WHERE (x.id = r.id OR x.thread_id = r.id) AND x.direction = 'out' AND x.read_at IS NULL) AS unread
-        FROM staff_messages r WHERE r.thread_id IS NULL AND r.employee_id = ? ORDER BY last_at DESC LIMIT 200", [$me['id']]) : [];
-    return admin_view('inbox', ['rows' => $rows, 'pageTitle' => 'My messages']);
+        FROM staff_messages r WHERE r.thread_id IS NULL AND r.employee_id = ? ORDER BY last_at DESC LIMIT $per OFFSET $offset", [$me['id']]) : [];
+    return admin_view('inbox', ['rows' => $rows, 'total' => $total, 'page' => $page, 'per' => $per, 'pageTitle' => 'My messages']);
 }

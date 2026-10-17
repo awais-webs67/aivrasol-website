@@ -379,3 +379,36 @@ details[open] > .card-summary.is-plain::after { content: "Hide"; }
 .ss-list { margin: 8px 0 10px; padding-left: 18px; display: grid; gap: 4px; font-size: 14.5px; }
 .send-status .btn-group { margin-top: 6px; }
 .send-status p { margin: 6px 0 0; }
+
+/* Admin menu on phones and tablets */
+.admin-side-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.admin-side-close { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border: 1px solid rgba(255, 255, 255, .2); border-radius: var(--radius); background: transparent; color: var(--white); cursor: pointer; }
+.admin-side-close .icon { width: 20px; height: 20px; }
+.admin-side-close:hover { background: rgba(255, 255, 255, .1); }
+@media (max-width: 1023px) {
+  .admin-side { width: min(300px, 86vw); height: 100vh; height: 100dvh; overscroll-behavior: contain; padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px)); }
+  html.admin-menu-open { overflow: hidden; }
+  .admin-side a { padding: 11px 10px; }
+}
+@media (min-width: 1024px) { .admin-side-close { display: none; } }
+.admin-side-top { margin-bottom: 18px; }
+.admin-side-top .admin-brand { padding-bottom: 4px; }
+/* Wide tables scroll sideways on small screens, with soft shadows that show there is more */
+.table-wrap {
+  background: linear-gradient(to right, var(--white) 30%, rgba(255, 255, 255, 0)), linear-gradient(to left, var(--white) 30%, rgba(255, 255, 255, 0)) 100% 0,
+    radial-gradient(farthest-side at 0 50%, rgba(25, 31, 36, .14), transparent), radial-gradient(farthest-side at 100% 50%, rgba(25, 31, 36, .14), transparent) 100% 0;
+  background-repeat: no-repeat; background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%; background-attachment: local, local, scroll, scroll;
+  overscroll-behavior-x: contain;
+}
+@media (max-width: 639px) { .admin-top { padding: 10px 14px; gap: 10px; } .admin-top h1 { font-size: 17px; } .card { padding: 18px 14px; } }
+
+/* Page numbers */
+.pager-wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-top: 16px; }
+.pager-info { margin: 0; }
+.pager { align-items: center; }
+.pager .pager-step { display: inline-flex; gap: 6px; width: auto; padding: 0 12px; }
+.pager .pager-step .icon { width: 16px; height: 16px; }
+.pager span.pager-step { display: inline-flex; align-items: center; height: 38px; color: var(--muted); opacity: .5; }
+.pager-gap { padding: 0 4px; color: var(--muted); }
+@media (max-width: 639px) { .pager .pager-step span { display: none; } .pager-wrap { justify-content: center; } }
+@media (max-width: 639px) { .pager { gap: 4px; } .pager a, .pager span.pager-step { min-width: 34px; height: 34px; padding: 0 8px; } }

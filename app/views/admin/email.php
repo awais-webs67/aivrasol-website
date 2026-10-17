@@ -1,5 +1,5 @@
 <?php
-/** @var array $errors @var ?array $posted @var string $openBox @var array $log @var array $user */
+/** @var array $errors @var ?array $posted @var string $openBox @var array $logData @var array $user */
 $cfgMail = config('mail', []);
 $gv = fn (string $k) => $posted !== null && ($posted['action'] ?? '') === 'general' ? (string) ($posted[$k] ?? '') : setting($k);
 ?>
@@ -132,15 +132,24 @@ foreach (Mailer::BOXES as $key => $b):
   <div class="sticky-save"><button class="btn" type="submit">Save automatic replies</button></div>
 </form>
 
-<section class="card">
-  <h2>Recent emails</h2>
-  <?php if (!$log): ?>
-  <p class="muted">No emails sent yet.</p>
+<section class="card" id="email-log">
+  <div class="card-head"><h2>Sent emails</h2></div>
+  <form class="filters-bar" method="get" action="<?= e(url('admin/email')) ?>#email-log">
+    <label class="sr-only" for="lg-q">Search</label>
+    <input class="input" id="lg-q" type="search" name="log_q" value="<?= e($logData['f']['q']) ?>" placeholder="Search address or subject">
+    <label class="sr-only" for="lg-box">Mailbox</label>
+    <select class="select" id="lg-box" name="log_box"><option value="">All mailboxes</option><?php foreach (Mailer::BOXES as $k => $bx): ?><option value="<?= e($k) ?>"<?= $logData['f']['box'] === $k ? ' selected' : '' ?>><?= e($bx['label']) ?></option><?php endforeach; ?></select>
+    <label class="sr-only" for="lg-st">Status</label>
+    <select class="select" id="lg-st" name="log_status"><option value="">Sent and failed</option><option value="sent"<?= $logData['f']['status'] === 'sent' ? ' selected' : '' ?>>Sent</option><option value="failed"<?= $logData['f']['status'] === 'failed' ? ' selected' : '' ?>>Failed</option></select>
+    <button class="btn btn-sm" type="submit">Filter</button>
+  </form>
+  <?php if (!$logData['rows']): ?>
+  <p class="muted"><?= array_filter($logData['f']) ? 'No emails match these filters.' : 'No emails sent yet.' ?></p>
   <?php else: ?>
   <div class="table-wrap"><table class="table">
     <thead><tr><th>When (UTC)</th><th>Mailbox</th><th>Type</th><th>To</th><th>Subject</th><th>Status</th></tr></thead>
     <tbody>
-    <?php foreach ($log as $l): ?>
+    <?php foreach ($logData['rows'] as $l): ?>
     <tr>
       <td class="small nowrap"><?= e($l['created_at']) ?></td>
       <td class="small"><?= e(Mailer::BOXES[Mailer::boxFor($l['type'])]['label'] ?? '') ?></td>
@@ -153,4 +162,5 @@ foreach (Mailer::BOXES as $key => $b):
     </tbody>
   </table></div>
   <?php endif; ?>
+  <?= admin_pager($logData['total'], $logData['per'], $logData['page'], 'log_page', 'email-log') ?>
 </section>

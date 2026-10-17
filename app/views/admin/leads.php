@@ -29,10 +29,4 @@
 </table></div>
 <?php endif; ?>
 </div>
-<?php $pages = (int) ceil($total / $per); if ($pages > 1): ?>
-<nav class="pager" aria-label="Pages">
-  <?php for ($i = 1; $i <= $pages; $i++): ?>
-  <a href="<?= e(url('admin/leads?' . http_build_query(array_filter($filters + ['page' => $i])))) ?>"<?= $i === $page ? ' aria-current="page"' : '' ?>><?= $i ?></a>
-  <?php endfor; ?>
-</nav>
-<?php endif; ?>
+<?= admin_pager($total, $per, $page) ?>

@@ -36,5 +36,6 @@
       <td class="small nowrap"><span class="sc sc-ok"><?= (int) $r['passed'] ?></span> <span class="sc sc-warn"><?= (int) $r['warnings'] ?></span> <span class="sc sc-fail"><?= (int) $r['failed'] ?></span></td>
     </tr><?php endforeach; ?></tbody>
   </table></div>
+  <?= admin_pager($runsTotal, $runsPer, $runsPage, 'runs_page') ?>
 </section>
 <?php endif; ?>

@@ -1,5 +1,6 @@
 <form class="filters-bar" method="get" action="<?= e(url('admin/applications')) ?>">
   <label class="sr-only" for="af-status">Status</label>
+  <label class="sr-only" for="af-q">Search</label><input class="input" id="af-q" type="search" name="q" value="<?= e($q ?? '') ?>" placeholder="Search name, email or job">
   <select class="select" id="af-status" name="status"><option value="">All statuses</option><?php foreach (APP_STATUSES as $k => $v): ?><option value="<?= e($k) ?>"<?= $status === $k ? ' selected' : '' ?>><?= e($v) ?></option><?php endforeach; ?></select>
   <button class="btn btn-sm" type="submit">Filter</button>
 </form>
@@ -17,3 +18,4 @@
 </table></div>
 <?php endif; ?>
 </div>
+<?= admin_pager($total, $per, $page) ?>

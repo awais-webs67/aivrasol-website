@@ -6,7 +6,9 @@
   var backdrop;
   function set(open) {
     side.classList.toggle('is-open', open);
+    document.documentElement.classList.toggle('admin-menu-open', open);
     btn.setAttribute('aria-expanded', String(open));
+    if (open) { var c = side.querySelector('[data-admin-close]'); if (c) c.focus(); } else if (backdrop) { btn.focus(); }
     if (open) {
       backdrop = document.createElement('div');
       backdrop.className = 'admin-backdrop';
@@ -20,6 +22,10 @@
   if (btn && side) {
     btn.addEventListener('click', function () { set(!side.classList.contains('is-open')); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && side.classList.contains('is-open')) set(false); });
+    var closeBtn = side.querySelector('[data-admin-close]');
+    if (closeBtn) closeBtn.addEventListener('click', function () { set(false); });
+    side.addEventListener('click', function (e) { if (e.target.closest('a') && side.classList.contains('is-open')) set(false); });
+    window.matchMedia('(min-width: 1024px)').addEventListener('change', function (m) { if (m.matches && side.classList.contains('is-open')) set(false); });
   }
   Array.prototype.forEach.call(document.querySelectorAll('form[data-confirm]'), function (form) {
     form.addEventListener('submit', function (e) {

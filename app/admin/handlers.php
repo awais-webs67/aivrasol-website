@@ -19,6 +19,53 @@ function admin_view(string $template, array $data = []): string
     return view('admin/' . $template, $data + ['user' => Auth::user()], 'admin/layout');
 }
 
+/** Current page number and SQL offset for a list. Returns [page, per, offset]. */
+function admin_page(int $per = 25, string $param = 'page'): array
+{
+    $page = max(1, min(10000, (int) ($_GET[$param] ?? 1)));
+    return [$page, $per, ($page - 1) * $per];
+}
+
+/**
+ * Page links for long lists: "Showing 26 to 50 of 312", Previous, 1 ... 4 5 6 ... 13, Next.
+ * Keeps the current search and filters in the links.
+ */
+function admin_pager(int $total, int $per, int $page, string $param = 'page', string $anchor = ''): string
+{
+    $pages = (int) ceil($total / max(1, $per));
+    if ($total === 0) {
+        return '';
+    }
+    $from = ($page - 1) * $per + 1;
+    $to = min($total, $page * $per);
+    $info = '<p class="pager-info small muted">Showing ' . number_format($from) . ' to ' . number_format($to) . ' of ' . number_format($total) . '</p>';
+    if ($pages <= 1) {
+        return '<div class="pager-wrap">' . $info . '</div>';
+    }
+    $query = $_GET;
+    $link = function (int $n) use ($query, $param, $anchor): string {
+        $query[$param] = $n;
+        if ($n === 1) {
+            unset($query[$param]);
+        }
+        return e(strtok((string) ($_SERVER['REQUEST_URI'] ?? ''), '?') . ($query ? '?' . http_build_query($query) : '') . ($anchor !== '' ? '#' . $anchor : ''));
+    };
+    $nums = array_unique(array_filter([1, 2, $page - 1, $page, $page + 1, $pages - 1, $pages], fn ($n) => $n >= 1 && $n <= $pages));
+    sort($nums);
+    $out = '<nav class="pager" aria-label="Pages">';
+    $out .= $page > 1 ? '<a class="pager-step" href="' . $link($page - 1) . '" rel="prev">' . icon('arrow-left') . '<span>Previous</span></a>' : '<span class="pager-step is-off">' . icon('arrow-left') . '<span>Previous</span></span>';
+    $last = 0;
+    foreach ($nums as $n) {
+        if ($n - $last > 1) {
+            $out .= '<span class="pager-gap">...</span>';
+        }
+        $out .= $n === $page ? '<a href="' . $link($n) . '" aria-current="page">' . $n . '</a>' : '<a href="' . $link($n) . '">' . $n . '</a>';
+        $last = $n;
+    }
+    $out .= $page < $pages ? '<a class="pager-step" href="' . $link($page + 1) . '" rel="next"><span>Next</span>' . icon('arrow-right') . '</a>' : '<span class="pager-step is-off"><span>Next</span>' . icon('arrow-right') . '</span>';
+    return '<div class="pager-wrap">' . $info . $out . '</nav></div>';
+}
+
 function admin_csrf(): void
 {
     if (!Security::verifyCsrf($_POST['_csrf'] ?? null)) {
@@ -337,10 +384,25 @@ function admin_applications(): string
 {
     Auth::require('applications');
     $status = isset(APP_STATUSES[$_GET['status'] ?? '']) ? $_GET['status'] : '';
-    $rows = $status
-        ? Database::all('SELECT id, position, name, email, status, created_at FROM applications WHERE status = ? ORDER BY created_at DESC LIMIT 200', [$status])
-        : Database::all('SELECT id, position, name, email, status, created_at FROM applications ORDER BY created_at DESC LIMIT 200');
-    return admin_view('applications', ['rows' => $rows, 'status' => $status, 'pageTitle' => 'Job applications']);
+    $q = trim((string) ($_GET['q'] ?? ''));
+    $where = [];
+    $params = [];
+    if ($status !== '') {
+        $where[] = 'status = ?';
+        $params[] = $status;
+    }
+    if ($q !== '' && mb_strlen($q) <= 100) {
+        $like = '%' . addcslashes($q, '%_\\') . '%';
+        $where[] = '(name LIKE ? OR email LIKE ? OR position LIKE ?)';
+        array_push($params, $like, $like, $like);
+    } else {
+        $q = '';
+    }
+    $w = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+    [$page, $per, $offset] = admin_page(25);
+    $total = (int) Database::value("SELECT COUNT(*) FROM applications $w", $params);
+    $rows = Database::all("SELECT id, position, name, email, status, created_at FROM applications $w ORDER BY created_at DESC LIMIT $per OFFSET $offset", $params);
+    return admin_view('applications', ['rows' => $rows, 'status' => $status, 'q' => $q, 'total' => $total, 'page' => $page, 'per' => $per, 'pageTitle' => 'Job applications']);
 }
 
 function admin_application(string $id): string
@@ -396,8 +458,10 @@ function admin_content_list(string $key): string
 {
     $res = admin_resource($key);
     Auth::require($res['cap'] ?? 'content:' . $key);
-    $rows = Database::all("SELECT * FROM `{$res['table']}` ORDER BY {$res['order']}");
-    return admin_view('content-list', ['key' => $key, 'res' => $res, 'rows' => $rows, 'pageTitle' => $res['label']]);
+    [$page, $per, $offset] = admin_page(30);
+    $total = (int) Database::value("SELECT COUNT(*) FROM `{$res['table']}`");
+    $rows = Database::all("SELECT * FROM `{$res['table']}` ORDER BY {$res['order']} LIMIT $per OFFSET $offset");
+    return admin_view('content-list', ['key' => $key, 'res' => $res, 'rows' => $rows, 'total' => $total, 'page' => $page, 'per' => $per, 'pageTitle' => $res['label']]);
 }
 
 function admin_content_edit(string $key, ?string $id = null): string
@@ -698,6 +762,40 @@ function admin_profile(): string
 
 /* ---------- Email settings ---------- */
 
+/** Email log with filters (mailbox, sent or failed, search) and page numbers. */
+function admin_email_log(): array
+{
+    $hr = "(type IN ('invite', 'password_reset', 'team_page', 'team_review') OR type LIKE 'application%' OR type LIKE 'staff%' OR type LIKE 'hr%')";
+    $cl = "(type LIKE 'client%' OR type LIKE 'portal%')";
+    $boxSql = ['campaign' => "type LIKE 'campaign%'", 'clients' => $cl, 'hr' => $hr, 'main' => "NOT (type LIKE 'campaign%' OR $cl OR $hr)"];
+    $f = ['box' => (string) ($_GET['log_box'] ?? ''), 'status' => (string) ($_GET['log_status'] ?? ''), 'q' => trim((string) ($_GET['log_q'] ?? ''))];
+    $where = [];
+    $params = [];
+    if (isset($boxSql[$f['box']])) {
+        $where[] = $boxSql[$f['box']];
+    } else {
+        $f['box'] = '';
+    }
+    if (in_array($f['status'], ['sent', 'failed'], true)) {
+        $where[] = 'status = ?';
+        $params[] = $f['status'];
+    } else {
+        $f['status'] = '';
+    }
+    if ($f['q'] !== '' && mb_strlen($f['q']) <= 100) {
+        $like = '%' . addcslashes($f['q'], '%_\\') . '%';
+        $where[] = '(recipients LIKE ? OR subject LIKE ?)';
+        array_push($params, $like, $like);
+    } else {
+        $f['q'] = '';
+    }
+    $w = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+    [$page, $per, $offset] = admin_page(20, 'log_page');
+    $total = (int) Database::value("SELECT COUNT(*) FROM email_log $w", $params);
+    $rows = Database::all("SELECT type, recipients, subject, status, error, created_at FROM email_log $w ORDER BY id DESC LIMIT $per OFFSET $offset", $params);
+    return ['rows' => $rows, 'f' => $f, 'total' => $total, 'page' => $page, 'per' => $per];
+}
+
 function admin_email(): string
 {
     $user = Auth::require('settings');
@@ -836,7 +934,7 @@ function admin_email(): string
         'errors' => $errors,
         'posted' => is_post() ? $_POST : null,
         'openBox' => $openBox,
-        'log' => Database::all('SELECT type, recipients, subject, status, error, created_at FROM email_log ORDER BY id DESC LIMIT 30'),
+        'logData' => admin_email_log(),
         'user' => $user,
     ]);
 }

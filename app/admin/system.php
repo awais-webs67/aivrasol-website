@@ -184,8 +184,10 @@ function admin_system(): string
         Auth::audit((int) $user['id'], 'system_check', $count('ok') . ' ok, ' . $count('warn') . ' warn, ' . $count('fail') . ' fail');
         redirect(url('admin/system') . '?run=' . $id);
     }
-    $runs = Database::all('SELECT s.id, s.passed, s.warnings, s.failed, s.created_at, u.name FROM system_checks s LEFT JOIN users u ON u.id = s.user_id ORDER BY s.id DESC LIMIT 15');
+    [$runsPage, $runsPer, $runsOffset] = admin_page(10, 'runs_page');
+    $runsTotal = (int) Database::value('SELECT COUNT(*) FROM system_checks');
+    $runs = Database::all("SELECT s.id, s.passed, s.warnings, s.failed, s.created_at, u.name FROM system_checks s LEFT JOIN users u ON u.id = s.user_id ORDER BY s.id DESC LIMIT $runsPer OFFSET $runsOffset");
     $runId = ctype_digit((string) ($_GET['run'] ?? '')) ? (int) $_GET['run'] : (int) ($runs[0]['id'] ?? 0);
     $run = $runId ? Database::one('SELECT s.*, u.name FROM system_checks s LEFT JOIN users u ON u.id = s.user_id WHERE s.id = ?', [$runId]) : null;
-    return admin_view('system', ['runs' => $runs, 'run' => $run, 'results' => $run ? (json_decode($run['results'], true) ?: []) : [], 'pageTitle' => 'System check']);
+    return admin_view('system', ['runsTotal' => $runsTotal, 'runsPage' => $runsPage, 'runsPer' => $runsPer, 'runs' => $runs, 'run' => $run, 'results' => $run ? (json_decode($run['results'], true) ?: []) : [], 'pageTitle' => 'System check']);
 }

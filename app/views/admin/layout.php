@@ -70,7 +70,10 @@ $newLeads = $can('leads') ? (int) Database::value("SELECT COUNT(*) FROM leads WH
 <a class="skip-link" href="#admin-main">Skip to content</a>
 <div class="admin-shell">
   <aside class="admin-side" id="admin-side">
-    <a class="admin-brand" href="<?= e(Auth::home($user)) ?>"><img src="<?= e(asset('assets/img/logo-white.svg')) ?>" alt="<?= e(setting('site_name', 'AivraSol')) ?>" width="130" height="25"><span>Admin</span></a>
+    <div class="admin-side-top">
+      <a class="admin-brand" href="<?= e(Auth::home($user)) ?>"><img src="<?= e(asset('assets/img/logo-white.svg')) ?>" alt="<?= e(setting('site_name', 'AivraSol')) ?>" width="130" height="25"><span>Admin</span></a>
+      <button class="admin-side-close" type="button" data-admin-close aria-label="Close menu"><?= icon('close') ?></button>
+    </div>
     <nav aria-label="Admin">
       <?php if ($main): ?>
       <ul>
