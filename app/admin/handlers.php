@@ -727,11 +727,13 @@ function admin_email(): string
                 $cfg = Mailer::settings($box);
                 $via = $cfg['host'] !== '' ? $cfg['host'] . ':' . $cfg['port'] : 'PHP mail()';
                 $err === null ? flash('success', Mailer::BOXES[$box]['label'] . ": test email sent to $to from {$cfg['from_email']} through $via. Check the inbox and the spam folder.") : flash('error', Mailer::BOXES[$box]['label'] . ': the test email failed. ' . $err);
+                $stmt->execute([Mailer::testKey($box), json_encode(['ok' => $err === null, 'at' => gmdate('Y-m-d H:i'), 'to' => $to, 'via' => $via, 'error' => mb_substr((string) $err, 0, 300)], JSON_UNESCAPED_SLASHES)]);
                 Auth::audit((int) $user['id'], 'email_test', $box);
             }
             redirect($back);
         }
         if ($action === 'box_reset') {
+            $stmt->execute([Mailer::testKey($box), '']);
             if ($box === 'main') {
                 $stmt->execute(['mail_source', 'config']);
                 foreach (array_diff(Mailer::boxKeys('main'), ['mail_source']) as $k) {
@@ -765,6 +767,21 @@ function admin_email(): string
             $save[$k('smtp_port')] = (string) max(1, min(65535, (int) ($_POST['smtp_port'] ?? 465)));
             $save[$k('smtp_encryption')] = in_array($_POST['smtp_encryption'] ?? '', ['ssl', 'tls', 'none'], true) ? $_POST['smtp_encryption'] : 'ssl';
             $save[$k('smtp_username')] = mb_substr(trim((string) ($_POST['smtp_username'] ?? '')), 0, 190);
+            if ($own && $save[$k('smtp_username')] === '') {
+                // cPanel mailboxes sign in with the full address, which is almost always the "send from" address.
+                $save[$k('smtp_username')] = $save[$k('from_email')];
+            }
+            if ($alertKey = Mailer::ALERT_KEYS[$box] ?? null) {
+                $raw = (string) ($_POST['alerts'] ?? '');
+                $list = Mailer::addressList($raw);
+                $typed = array_filter(preg_split('/[\s,;]+/', trim($raw)) ?: []);
+                if (count($typed) !== count($list)) {
+                    $errors["$box.alerts"] = 'One or more alert addresses are not valid.';
+                } elseif (count($list) > 15) {
+                    $errors["$box.alerts"] = 'Add 15 addresses at most.';
+                }
+                $save[$alertKey] = implode("\n", $list);
+            }
             foreach (['from_email' => 'The "send from" address', 'reply_to' => 'The reply-to address'] as $f => $label) {
                 if ($save[$k($f)] !== '' && !filter_var($save[$k($f)], FILTER_VALIDATE_EMAIL)) {
                     $errors["$box.$f"] = "$label is not a valid email.";
@@ -786,6 +803,7 @@ function admin_email(): string
                 foreach ($save as $key => $val) {
                     $stmt->execute([$key, $val]);
                 }
+                $stmt->execute([Mailer::testKey($box), '']);
                 Auth::audit((int) $user['id'], 'email_box_save', $box);
                 flash('success', Mailer::BOXES[$box]['label'] . ' mailbox saved. Send a test email to check it.');
                 redirect($back);
@@ -793,17 +811,6 @@ function admin_email(): string
         }
         if ($action === 'general') {
             $save = [];
-            foreach (['notify_emails' => 'Enquiry recipients', 'notify_emails_hr' => 'Job application recipients'] as $key => $label) {
-                $raw = (string) ($_POST[$key] ?? '');
-                $list = Mailer::addressList($raw);
-                $typed = preg_split('/[\s,;]+/', trim($raw)) ?: [];
-                if (count(array_filter($typed)) !== count($list)) {
-                    $errors[$key] = "$label: one or more addresses are not valid.";
-                } elseif (count($list) > 15) {
-                    $errors[$key] = "$label: add 15 addresses at most.";
-                }
-                $save[$key] = implode("\n", $list);
-            }
             $save['autoreply_enabled'] = isset($_POST['autoreply_enabled']) ? '1' : '0';
             foreach (array_keys(Emails::TYPES) as $t) {
                 $subj = trim((string) ($_POST["autoreply_{$t}_subject"] ?? ''));
@@ -819,7 +826,7 @@ function admin_email(): string
                     $stmt->execute([$key, $val]);
                 }
                 Auth::audit((int) $user['id'], 'email_settings_update');
-                flash('success', 'Recipients and automatic replies saved.');
+                flash('success', 'Automatic replies saved.');
                 redirect(url('admin/email'));
             }
         }

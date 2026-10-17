@@ -677,4 +677,39 @@
       Array.prototype.forEach.call(table.querySelectorAll('tbody input[type=checkbox]'), function (c) { c.checked = all.checked; });
     });
   });
+
+  // Mailbox settings: the summary sentence follows what is typed, the server part hides when it is not used,
+  // and the port follows the security choice (SSL 465, TLS 587).
+  Array.prototype.forEach.call(document.querySelectorAll('[data-flow-form]'), function (form) {
+    var live = form.querySelector('[data-flow]');
+    var server = form.querySelector('[data-server]');
+    var f = function (n) { return form.querySelector('[data-f="' + n + '"]'); };
+    function ownOn() {
+      var r = form.querySelector('[data-own]');
+      return r ? r.checked : true;
+    }
+    function render() {
+      var own = ownOn();
+      if (server) server.hidden = !own;
+      var from = f('from').value.trim(), name = f('name').value.trim() || f('name').placeholder;
+      var host = f('host').value.trim(), enc = f('enc').value, port = f('port').value;
+      var reply = f('reply').value.trim();
+      var alerts = f('alerts') ? f('alerts').value.split(/[\s,;]+/).filter(Boolean).join(', ') : '';
+      var fromText = from || (own ? '' : live.getAttribute('data-fallback-from'));
+      var serverText = own ? (host ? host + ' (' + (enc === 'none' ? 'no encryption' : enc.toUpperCase()) + ', port ' + port + ')' : 'a mail server you have not entered yet') : live.getAttribute('data-fallback-server') + ' (the website mailbox)';
+      live.textContent = live.getAttribute('data-flow')
+        .replace('{from}', name + ' <' + (fromText || 'not set') + '>')
+        .replace('{server}', serverText)
+        .replace('{reply}', reply || fromText || 'the sender')
+        .replace('{alerts}', alerts || 'nobody yet');
+    }
+    var enc = f('enc'), port = f('port');
+    if (enc && port) enc.addEventListener('change', function () {
+      if (enc.value === 'ssl' && (port.value === '587' || port.value === '25' || port.value === '')) port.value = '465';
+      if (enc.value === 'tls' && (port.value === '465' || port.value === '')) port.value = '587';
+    });
+    form.addEventListener('input', render);
+    form.addEventListener('change', render);
+    render();
+  });
 })();

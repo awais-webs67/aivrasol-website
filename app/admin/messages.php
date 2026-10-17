@@ -162,7 +162,7 @@ function msg_thread(string $id, bool $mine): string
             $mid = Database::insert('staff_messages', ['thread_id' => $root['id'], 'employee_id' => $root['employee_id'], 'direction' => $mine ? 'in' : 'out', 'kind' => 'message', 'subject' => $subject, 'body' => $body, 'sender_id' => $user['id']]);
             if ($mine) {
                 // The person's reply also goes to HR by email.
-                $hr = Mailer::addressList(setting('notify_emails_hr', setting('email_hr', setting('email_info'))));
+                $hr = Mailer::alertList('hr');
                 if ($hr) {
                     [$text, $html] = Emails::notice('Reply from ' . Emails::safeName($person['full_name']), $body, 'Open the conversation', absolute_url('admin/messages/' . $root['id']), 'Subject: ' . $root['subject']);
                     Mailer::queue($hr, $subject . ' (from ' . $person['full_name'] . ')', $text, $html, msg_address($person) ?: null, 'staff_reply');

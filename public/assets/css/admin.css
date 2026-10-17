@@ -348,3 +348,21 @@ details[open] > .card-summary.is-plain::after { content: "Hide"; }
 .table tr.is-new td { background: #EEF8F2; }
 .cert-preview-line { margin: 0; padding: 10px 14px; background: var(--grey-soft); border-radius: var(--radius); }
 .temp-pass { margin-top: 14px; } .temp-pass summary { cursor: pointer; color: var(--orange-text); } .temp-pass form { margin: 10px 0 6px; }
+.mbox-title { display: grid; gap: 4px; min-width: 0; }
+.mbox-flow { color: var(--body); line-height: 1.5; }
+.mbox-badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; flex: none; max-width: 40%; }
+.mbox-form { padding: 6px 20px 4px; display: grid; gap: 16px; }
+.mbox-about { margin: 10px 0 0; }
+.mbox-live { margin: 0; padding: 12px 14px; font-size: 14.5px; line-height: 1.6; color: var(--ink); background: #FFF6F2; border-left: 3px solid var(--orange); border-radius: var(--radius); }
+.mbox-part { margin: 0; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-md); display: grid; gap: 14px; min-width: 0; }
+.mbox-part legend { display: flex; align-items: center; gap: 8px; padding: 0 6px; font-weight: 600; font-size: 15px; color: var(--ink); }
+.mbox-step { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-size: 12.5px; color: var(--white); background: var(--orange); }
+.mbox-server { display: grid; gap: 10px; padding-top: 4px; border-top: 1px dashed var(--line); }
+.mbox-server p { margin: 8px 0 0; }
+.mbox-sec { display: grid; grid-template-columns: minmax(0, 1fr) 110px; gap: 10px; align-items: end; }
+.mbox-sec > div { display: grid; gap: 6px; }
+.mbox-save { padding-bottom: 12px; }
+.mbox-error { flex-basis: 100%; margin: 0; color: var(--danger); }
+.mbox-intro p { margin: 0; }
+@media (max-width: 700px) { .mbox-head { flex-direction: column; align-items: flex-start; } .mbox-badges { max-width: none; justify-content: flex-start; } }
+.mbox[open] .mbox-flow { display: none; }

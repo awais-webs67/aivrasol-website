@@ -23,6 +23,29 @@ final class Mailer
         'campaign' => ['label' => 'Email campaigns (cold email)', 'prefix' => 'camp_', 'about' => 'Cold email and newsletters. Best on a separate domain or mailbox, so spam reports can never hurt your main address.'],
     ];
 
+    /** Where alerts for each mailbox land (enquiries, job applications, client messages). Campaigns have none. */
+    public const ALERT_KEYS = ['main' => 'notify_emails', 'hr' => 'notify_emails_hr', 'clients' => 'cl_notify'];
+
+    /** Alert recipients of a mailbox, with sensible fallbacks. */
+    public static function alertList(string $box): array
+    {
+        $key = self::ALERT_KEYS[$box] ?? null;
+        if ($key === null) {
+            return [];
+        }
+        $list = self::addressList(setting($key));
+        if (!$list && $box !== 'main') {
+            $list = self::addressList(setting($box === 'hr' ? 'email_hr' : 'email_info'));
+        }
+        return $list ?: self::addressList(setting('email_info'));
+    }
+
+    /** Setting key holding the result of the last test for a mailbox. */
+    public static function testKey(string $box): string
+    {
+        return ($box === 'main' ? 'mail_' : self::BOXES[$box]['prefix']) . 'last_test';
+    }
+
     /** Setting keys that belong to a mailbox (used by Save and Reset). */
     public static function boxKeys(string $box): array
     {
@@ -330,7 +353,7 @@ final class Mailer
                 }
                 $cmd("EHLO $helo", [250]);
             }
-            if ($cfg['username'] !== '') {
+            if ($cfg['username'] !== '' && $cfg['password'] !== '') {
                 $cmd('AUTH LOGIN', [334]);
                 $cmd(base64_encode($cfg['username']), [334]);
                 $cmd(base64_encode($cfg['password']), [235]);

@@ -1,29 +1,23 @@
 <?php
 /** @var array $errors @var ?array $posted @var string $openBox @var array $log @var array $user */
-$leadList = Mailer::addressList(setting('notify_emails'));
-$hrList = Mailer::addressList(setting('notify_emails_hr'));
 $cfgMail = config('mail', []);
 $gv = fn (string $k) => $posted !== null && ($posted['action'] ?? '') === 'general' ? (string) ($posted[$k] ?? '') : setting($k);
 ?>
-<section class="card">
-  <h2>Mailboxes at a glance</h2>
-  <p class="small muted">Each part of the business sends from its own mailbox. A mailbox without its own server sends through the website mailbox. Replies go to the reply-to address.</p>
-  <div class="table-wrap"><table class="table">
-    <thead><tr><th>Mailbox</th><th>Sends from</th><th>Through</th><th>Replies go to</th></tr></thead>
-    <tbody>
-    <?php foreach (Mailer::BOXES as $key => $b): $c = Mailer::settings($key); $own = Mailer::hasOwn($key); ?>
-    <tr>
-      <td><a href="#box-<?= e($key) ?>"><?= e($b['label']) ?></a><br><span class="status <?= $own ? 'status-won' : '' ?>"><?= $key === 'main' ? ($own ? 'Settings on this page' : 'From app/config.php') : ($own ? 'Own mailbox' : 'Uses website mailbox') ?></span></td>
-      <td class="small"><?= e($c['from_name']) ?><br><?= e($c['from_email'] ?: 'Not set') ?></td>
-      <td class="small"><?= $c['host'] !== '' ? e($c['host'] . ':' . $c['port']) : 'PHP mail()' ?></td>
-      <td class="small"><?= e(($c['reply_to'] ?? '') ?: 'Same as sender') ?></td>
-    </tr>
-    <?php endforeach; ?>
-    </tbody>
-  </table></div>
+<section class="card mbox-intro">
+  <h2>Your mailboxes</h2>
+  <p class="muted">Each part of the business has its own mailbox. Open one to set where its emails are <strong>sent from</strong> and where <strong>replies and alerts arrive</strong>. The sentence under each name always shows what is saved. Click <strong>Send test</strong> after every change.</p>
 </section>
 
-<?php foreach (Mailer::BOXES as $key => $b):
+
+<?php
+$flowText = [
+    'main' => 'Website emails go out from {from} through {server}. When visitors reply, it reaches {reply}. New enquiry alerts go to {alerts}.',
+    'hr' => 'HR emails to applicants and the team go out from {from} through {server}. Their replies reach {reply}. Job applications and replies from employees go to {alerts}.',
+    'clients' => 'Client portal emails go out from {from} through {server}. Client replies reach {reply}. New client messages (on projects without a manager) go to {alerts}.',
+    'campaign' => 'Campaign emails go out from {from} through {server}. When someone replies to a campaign, it reaches {reply}.',
+];
+$mainCfg = Mailer::settings('main');
+foreach (Mailer::BOXES as $key => $b):
     $p = $b['prefix'];
     $sk = fn (string $n) => $key === 'main' ? (['from_email' => 'mail_from_email', 'from_name' => 'mail_from_name', 'reply_to' => 'mail_reply_to'][$n] ?? $n) : $p . $n;
     $mine = $posted !== null && ($posted['box'] ?? '') === $key && ($posted['action'] ?? '') === 'box_save';
@@ -32,34 +26,73 @@ $gv = fn (string $k) => $posted !== null && ($posted['action'] ?? '') === 'gener
     $err = fn (string $n) => $errors["$key.$n"] ?? null;
     $open = $openBox === $key || $mine;
     $hasPass = setting($sk('smtp_password')) !== '';
+    $alertKey = Mailer::ALERT_KEYS[$key] ?? null;
+    $alertsVal = $mine ? (string) ($posted['alerts'] ?? '') : ($alertKey ? setting($alertKey) : '');
+    $cfg = Mailer::settings($key);
+    $saved = [
+        '{from}' => trim($cfg['from_name'] . ' <' . ($cfg['from_email'] ?: 'not set') . '>'),
+        '{server}' => $cfg['host'] !== '' ? $cfg['host'] . ' (' . ($cfg['encryption'] !== '' ? strtoupper($cfg['encryption']) : 'no encryption') . ', port ' . $cfg['port'] . ')' : 'PHP mail() on this server',
+        '{reply}' => ($cfg['reply_to'] ?? '') !== '' ? $cfg['reply_to'] : ($cfg['from_email'] ?: 'the sender'),
+        '{alerts}' => implode(', ', Mailer::alertList($key)) ?: 'nobody yet',
+    ];
+    $test = json_decode(setting(Mailer::testKey($key)) ?: 'null', true);
 ?>
 <details class="card mbox" id="box-<?= e($key) ?>"<?= $open ? ' open' : '' ?>>
   <summary class="mbox-head">
-    <span><strong><?= e($b['label']) ?></strong><span class="small muted"><?= e($b['about']) ?></span></span>
-    <span class="status <?= Mailer::hasOwn($key) ? 'status-won' : '' ?>"><?= $key === 'main' ? (Mailer::hasOwn($key) ? 'Configured here' : 'app/config.php') : (Mailer::hasOwn($key) ? 'Own mailbox' : 'Uses website mailbox') ?></span>
+    <span class="mbox-title">
+      <strong><?= e($b['label']) ?></strong>
+      <span class="mbox-flow small"><?= e(strtr($flowText[$key], $saved)) ?></span>
+    </span>
+    <span class="mbox-badges">
+      <span class="status <?= Mailer::hasOwn($key) ? 'status-won' : '' ?>"><?= $key === 'main' ? (Mailer::hasOwn($key) ? 'Configured here' : 'From app/config.php') : (Mailer::hasOwn($key) ? 'Own mailbox' : 'Uses website mailbox') ?></span>
+      <?php if ($test): ?><span class="status status-<?= $test['ok'] ? 'won' : 'lost' ?>" title="<?= e($test['ok'] ? 'Sent to ' . $test['to'] : $test['error']) ?>"><?= $test['ok'] ? 'Test passed' : 'Test failed' ?> <?= e(date('j M, H:i', strtotime($test['at'] . ' UTC'))) ?></span><?php else: ?><span class="status">Not tested</span><?php endif; ?>
+    </span>
   </summary>
-  <form method="post" class="form-grid cols-2 mbox-form" autocomplete="off">
+
+  <form method="post" class="mbox-form" autocomplete="off" data-flow-form>
     <?= csrf_field() ?><input type="hidden" name="action" value="box_save"><input type="hidden" name="box" value="<?= e($key) ?>">
-    <?php if ($key === 'main'): ?>
-    <div class="span-2 radio-cards">
-      <label class="radio-card"><input type="radio" name="mail_source" value="config"<?= !$own ? ' checked' : '' ?>>
-        <span><strong>Use app/config.php</strong><span class="small muted">Currently: <?= ($cfgMail['host'] ?? '') !== '' ? e($cfgMail['host'] . ':' . ($cfgMail['port'] ?? '')) : 'no SMTP server' ?>, from <?= e(($cfgMail['from_email'] ?? '') ?: 'not set') ?></span></span></label>
-      <label class="radio-card"><input type="radio" name="mail_source" value="custom"<?= $own ? ' checked' : '' ?>>
-        <span><strong>Use the settings below</strong><span class="small muted">Change the mail server here without editing files</span></span></label>
-    </div>
-    <?php else: ?>
-    <label class="check span-2"><input type="checkbox" name="own" value="1"<?= $own ? ' checked' : '' ?>> <span>Use its own mailbox<br><span class="small muted">Untick to send through the website mailbox. The sender name and reply-to below still apply.</span></span></label>
-    <?php endif; ?>
-    <div class="field"><label for="m-<?= $key ?>-from"><span>Send from (email)</span></label><input class="input" id="m-<?= $key ?>-from" type="email" name="from_email" value="<?= e($v('from_email')) ?>" placeholder="<?= e(['main' => 'no-reply@', 'hr' => 'hr@', 'clients' => 'projects@', 'campaign' => 'hello@'][$key]) ?>yourdomain.com"<?= $err('from_email') ? ' aria-invalid="true"' : '' ?>><?php if ($err('from_email')): ?><span class="field-error"><?= e($err('from_email')) ?></span><?php endif; ?></div>
-    <div class="field"><label for="m-<?= $key ?>-name"><span>Sender name</span></label><input class="input" id="m-<?= $key ?>-name" name="from_name" value="<?= e($v('from_name')) ?>" maxlength="80" placeholder="<?= e(setting('site_name', 'AivraSol') . ['main' => '', 'hr' => ' HR', 'clients' => ' Projects', 'campaign' => ''][$key]) ?>"></div>
-    <div class="field span-2"><label for="m-<?= $key ?>-reply"><span>Replies go to (reply-to)</span></label><input class="input" id="m-<?= $key ?>-reply" type="email" name="reply_to" value="<?= e($v('reply_to')) ?>" placeholder="<?= e(['main' => 'Leave empty to use the sender', 'hr' => setting('email_hr', 'hr@yourdomain.com'), 'clients' => setting('email_info', 'info@yourdomain.com'), 'campaign' => 'you@yourdomain.com'][$key]) ?>"<?= $err('reply_to') ? ' aria-invalid="true"' : '' ?>><span class="small muted">When someone presses Reply, their answer goes here.</span><?php if ($err('reply_to')): ?><span class="field-error"><?= e($err('reply_to')) ?></span><?php endif; ?></div>
-    <div class="field"><label for="m-<?= $key ?>-host"><span>SMTP server</span></label><input class="input" id="m-<?= $key ?>-host" name="smtp_host" value="<?= e($v('smtp_host')) ?>" placeholder="mail.yourdomain.com"<?= $err('smtp_host') ? ' aria-invalid="true"' : '' ?>><span class="small muted">cPanel: Email Accounts, Connect Devices.</span><?php if ($err('smtp_host')): ?><span class="field-error"><?= e($err('smtp_host')) ?></span><?php endif; ?></div>
-    <div class="field"><label for="m-<?= $key ?>-port"><span>Port</span></label><input class="input" id="m-<?= $key ?>-port" type="number" name="smtp_port" value="<?= e($v('smtp_port') ?: '465') ?>" min="1" max="65535"></div>
-    <div class="field"><label for="m-<?= $key ?>-enc"><span>Encryption</span></label>
-      <select class="select" id="m-<?= $key ?>-enc" name="smtp_encryption"><?php foreach (['ssl' => 'SSL (port 465)', 'tls' => 'TLS (port 587)', 'none' => 'None (not recommended)'] as $ek => $el): ?><option value="<?= e($ek) ?>"<?= ($v('smtp_encryption') ?: 'ssl') === $ek ? ' selected' : '' ?>><?= e($el) ?></option><?php endforeach; ?></select></div>
-    <div class="field"><label for="m-<?= $key ?>-user"><span>Username</span></label><input class="input" id="m-<?= $key ?>-user" name="smtp_username" value="<?= e($v('smtp_username')) ?>" autocomplete="off" placeholder="Usually the full email address"></div>
-    <div class="field span-2"><label for="m-<?= $key ?>-pass"><span>Password</span></label><input class="input" id="m-<?= $key ?>-pass" type="password" name="smtp_password" autocomplete="new-password" placeholder="<?= $hasPass ? 'Saved. Leave empty to keep it' : 'Mailbox password' ?>"><span class="small muted">Stored encrypted.</span><?php if ($hasPass): ?><label class="check"><input type="checkbox" name="smtp_password_clear" value="1"> <span>Remove the saved password</span></label><?php endif; ?></div>
-    <div class="span-2"><button class="btn" type="submit">Save <?= e(strtolower($b['label'])) ?> mailbox</button></div>
+    <p class="small muted mbox-about"><?= e($b['about']) ?></p>
+    <p class="mbox-live" data-flow="<?= e($flowText[$key]) ?>" data-fallback-from="<?= e($mainCfg['from_email']) ?>" data-fallback-server="<?= e($mainCfg['host'] !== '' ? $mainCfg['host'] . ' (' . strtoupper($mainCfg['encryption'] ?: 'none') . ', port ' . $mainCfg['port'] . ')' : 'PHP mail()') ?>" aria-live="polite"><?= e(strtr($flowText[$key], $saved)) ?></p>
+
+    <fieldset class="mbox-part">
+      <legend><span class="mbox-step">1</span> Sending: the mailbox emails go out from</legend>
+      <?php if ($key === 'main'): ?>
+      <div class="radio-cards">
+        <label class="radio-card"><input type="radio" name="mail_source" value="custom" data-own<?= $own ? ' checked' : '' ?>><span><strong>Use the settings below</strong><span class="small muted">Recommended. Change the mail server here without editing files.</span></span></label>
+        <label class="radio-card"><input type="radio" name="mail_source" value="config"<?= !$own ? ' checked' : '' ?>><span><strong>Use app/config.php</strong><span class="small muted">Now: <?= ($cfgMail['host'] ?? '') !== '' ? e($cfgMail['host'] . ':' . ($cfgMail['port'] ?? '')) : 'no SMTP server' ?>, from <?= e(($cfgMail['from_email'] ?? '') ?: 'not set') ?></span></span></label>
+      </div>
+      <?php else: ?>
+      <label class="check"><input type="checkbox" name="own" value="1" data-own<?= $own ? ' checked' : '' ?>> <span><strong>Use its own mailbox</strong><br><span class="small muted">Untick to send through the website mailbox (<?= e($mainCfg['from_email'] ?: 'not set yet') ?>). The sender name and reply address below still apply.</span></span></label>
+      <?php endif; ?>
+      <div class="form-grid cols-2">
+        <div class="field"><label for="m-<?= $key ?>-from"><span>Send from (email)</span></label><input class="input" id="m-<?= $key ?>-from" type="email" name="from_email" value="<?= e($v('from_email')) ?>" placeholder="<?= e(['main' => 'no-reply', 'hr' => 'hr', 'clients' => 'projects', 'campaign' => 'hello'][$key]) ?>@yourdomain.com" data-f="from"<?= $err('from_email') ? ' aria-invalid="true"' : '' ?>><?php if ($err('from_email')): ?><span class="field-error"><?= e($err('from_email')) ?></span><?php endif; ?></div>
+        <div class="field"><label for="m-<?= $key ?>-name"><span>Sender name</span></label><input class="input" id="m-<?= $key ?>-name" name="from_name" value="<?= e($v('from_name')) ?>" maxlength="80" placeholder="<?= e(setting('site_name', 'AivraSol') . ['main' => '', 'hr' => ' HR', 'clients' => ' Projects', 'campaign' => ''][$key]) ?>" data-f="name"></div>
+      </div>
+      <div class="mbox-server" data-server>
+        <p class="small muted">Mail server. In cPanel: Email Accounts, then "Connect Devices" next to the mailbox.</p>
+        <div class="form-grid cols-2">
+          <div class="field"><label for="m-<?= $key ?>-host"><span>SMTP server</span></label><input class="input" id="m-<?= $key ?>-host" name="smtp_host" value="<?= e($v('smtp_host')) ?>" placeholder="mail.yourdomain.com" data-f="host"<?= $err('smtp_host') ? ' aria-invalid="true"' : '' ?>><?php if ($err('smtp_host')): ?><span class="field-error"><?= e($err('smtp_host')) ?></span><?php endif; ?></div>
+          <div class="field mbox-sec">
+            <div><label for="m-<?= $key ?>-enc"><span>Security</span></label>
+              <select class="select" id="m-<?= $key ?>-enc" name="smtp_encryption" data-f="enc"><?php foreach (['ssl' => 'SSL (recommended)', 'tls' => 'TLS / STARTTLS', 'none' => 'None (not secure)'] as $ek => $el): ?><option value="<?= e($ek) ?>"<?= ($v('smtp_encryption') ?: 'ssl') === $ek ? ' selected' : '' ?>><?= e($el) ?></option><?php endforeach; ?></select></div>
+            <div><label for="m-<?= $key ?>-port"><span>Port</span></label><input class="input" id="m-<?= $key ?>-port" type="number" name="smtp_port" value="<?= e($v('smtp_port') ?: '465') ?>" min="1" max="65535" data-f="port"></div>
+          </div>
+          <div class="field"><label for="m-<?= $key ?>-user"><span>Username</span></label><input class="input" id="m-<?= $key ?>-user" name="smtp_username" value="<?= e($v('smtp_username')) ?>" autocomplete="off" placeholder="Same as Send from"><span class="small muted">Usually the full email address. Left empty, the Send from address is used.</span></div>
+          <div class="field"><label for="m-<?= $key ?>-pass"><span>Password</span><?php if ($hasPass): ?> <span class="status status-won">Saved</span><?php endif; ?></label><input class="input" id="m-<?= $key ?>-pass" type="password" name="smtp_password" autocomplete="new-password" placeholder="<?= $hasPass ? 'Leave empty to keep the saved password' : 'Password of this mailbox' ?>"><span class="small muted">Stored encrypted.</span><?php if ($hasPass): ?><label class="check"><input type="checkbox" name="smtp_password_clear" value="1"> <span>Remove the saved password</span></label><?php endif; ?></div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="mbox-part">
+      <legend><span class="mbox-step">2</span> Receiving: where answers and alerts arrive</legend>
+      <div class="form-grid cols-2">
+        <div class="field<?= $alertKey ? '' : ' span-2' ?>"><label for="m-<?= $key ?>-reply"><span>Replies go to</span></label><input class="input" id="m-<?= $key ?>-reply" type="email" name="reply_to" value="<?= e($v('reply_to')) ?>" placeholder="Empty: replies go to the Send from address" data-f="reply"<?= $err('reply_to') ? ' aria-invalid="true"' : '' ?>><span class="small muted">When someone presses Reply on one of these emails, the answer lands here.</span><?php if ($err('reply_to')): ?><span class="field-error"><?= e($err('reply_to')) ?></span><?php endif; ?></div>
+        <?php if ($alertKey): ?>
+        <div class="field"><label for="m-<?= $key ?>-alerts"><span><?= e(['main' => 'Enquiry alerts go to', 'hr' => 'Applications and employee replies go to', 'clients' => 'New client messages go to'][$key]) ?></span></label><textarea class="textarea" id="m-<?= $key ?>-alerts" name="alerts" rows="2" data-f="alerts"<?= $err('alerts') ? ' aria-invalid="true"' : '' ?>><?= e($alertsVal) ?></textarea><span class="small muted">One or more addresses, one per line. <?= $key === 'clients' ? 'Projects with a manager notify the manager instead.' : '' ?></span><?php if ($err('alerts')): ?><span class="field-error"><?= e($err('alerts')) ?></span><?php endif; ?></div>
+        <?php endif; ?>
+      </div>
+    </fieldset>
+    <div class="mbox-save"><button class="btn" type="submit">Save <?= e(strtolower($b['label'])) ?> mailbox</button></div>
   </form>
   <div class="mbox-tools">
     <form method="post" class="filters-bar">
@@ -68,7 +101,8 @@ $gv = fn (string $k) => $posted !== null && ($posted['action'] ?? '') === 'gener
       <input class="input" id="m-<?= $key ?>-test" type="email" name="test_to" value="<?= e($user['email'] ?? '') ?>" required>
       <button class="btn btn-sm btn-outline" type="submit"><?= icon('mail') ?>Send test</button>
     </form>
-    <form method="post" data-confirm="<?= e($key === 'main' ? 'Reset the website mailbox? Emails will use the settings in app/config.php again.' : 'Reset this mailbox? Its settings are cleared and it sends through the website mailbox.') ?>">
+    <?php if ($test && !$test['ok']): ?><p class="small mbox-error"><?= e($test['error']) ?></p><?php endif; ?>
+    <form method="post" data-confirm="<?= e($key === 'main' ? 'Reset the website mailbox? Emails will use the settings in app/config.php again.' : 'Reset this mailbox? Its sending settings are cleared and it sends through the website mailbox.') ?>">
       <?= csrf_field() ?><input type="hidden" name="action" value="box_reset"><input type="hidden" name="box" value="<?= e($key) ?>">
       <button class="btn btn-sm btn-outline" type="submit"><?= icon('close') ?>Reset to <?= $key === 'main' ? 'app/config.php' : 'website mailbox' ?></button>
     </form>
@@ -80,22 +114,6 @@ $gv = fn (string $k) => $posted !== null && ($posted['action'] ?? '') === 'gener
 
 <form method="post" class="settings-form">
   <?= csrf_field() ?><input type="hidden" name="action" value="general">
-  <fieldset class="card form-grid cols-2">
-    <legend>Who receives website emails</legend>
-    <div class="field">
-      <label for="e-leads"><span>Enquiries (contact, consultation, quote, hire)</span></label>
-      <textarea class="textarea" id="e-leads" name="notify_emails" rows="4"<?= isset($errors['notify_emails']) ? ' aria-invalid="true"' : '' ?>><?= e($gv('notify_emails')) ?></textarea>
-      <span class="small muted">One address per line. Now: <?= $leadList ? e(implode(', ', $leadList)) : 'none' ?></span>
-      <?php if (isset($errors['notify_emails'])): ?><span class="field-error"><?= e($errors['notify_emails']) ?></span><?php endif; ?>
-    </div>
-    <div class="field">
-      <label for="e-hr"><span>Job applications</span></label>
-      <textarea class="textarea" id="e-hr" name="notify_emails_hr" rows="4"<?= isset($errors['notify_emails_hr']) ? ' aria-invalid="true"' : '' ?>><?= e($gv('notify_emails_hr')) ?></textarea>
-      <span class="small muted">One address per line. Now: <?= $hrList ? e(implode(', ', $hrList)) : 'none' ?></span>
-      <?php if (isset($errors['notify_emails_hr'])): ?><span class="field-error"><?= e($errors['notify_emails_hr']) ?></span><?php endif; ?>
-    </div>
-  </fieldset>
-
   <fieldset class="card">
     <legend>Automatic replies to visitors</legend>
     <label class="check"><input type="checkbox" name="autoreply_enabled" value="1"<?= ($posted !== null && ($posted['action'] ?? '') === 'general' ? isset($posted['autoreply_enabled']) : setting('autoreply_enabled', '1') === '1') ? ' checked' : '' ?>> <span>Send an automatic, branded reply after every form</span></label>
@@ -111,7 +129,7 @@ $gv = fn (string $k) => $posted !== null && ($posted['action'] ?? '') === 'gener
       <?php endforeach; ?>
     </div>
   </fieldset>
-  <div class="sticky-save"><button class="btn" type="submit">Save recipients and replies</button></div>
+  <div class="sticky-save"><button class="btn" type="submit">Save automatic replies</button></div>
 </form>
 
 <section class="card">

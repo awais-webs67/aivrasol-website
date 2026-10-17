@@ -186,7 +186,7 @@ function portal_send_message(string $id): never
         'project_id' => $p['id'], 'sender_type' => 'client', 'sender_id' => $c['id'], 'sender_name' => $c['contact_name'],
         'body' => $body, 'file_stored' => $file[0], 'file_name' => $file[1], 'file_size' => $file[2], 'read_by_client' => 1,
     ]);
-    $to = $p['manager_email'] ?: implode(',', Mailer::addressList(setting('notify_emails', setting('email_info'))));
+    $to = $p['manager_email'] ?: implode(',', Mailer::alertList('clients'));
     Portal::notify($to, 'staff', (int) $p['id'], 'New message from ' . $c['contact_name'] . ': ' . $p['title'], 'New client message',
         $c['contact_name'] . ($c['company_name'] !== '' ? ' (' . $c['company_name'] . ')' : '') . ' sent a message about "' . $p['title'] . '". Open the project to read and reply.',
         'Open the project', absolute_url('admin/projects/' . $p['id']) . '#chat');
