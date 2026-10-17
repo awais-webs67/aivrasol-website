@@ -179,7 +179,21 @@ final class Mailer
         $ctx = stream_context_create(['ssl' => ['verify_peer' => true, 'verify_peer_name' => true]]);
         $sock = @stream_socket_client($remote, $errno, $errstr, 15, STREAM_CLIENT_CONNECT, $ctx);
         if (!$sock) {
-            throw new RuntimeException("Could not connect to {$cfg['host']}:{$cfg['port']} ($errstr). Check the host, port and encryption.");
+            $why = strtolower($errstr . ' ' . $errno);
+            if (preg_match('/timed out|failed to respond|did not properly respond|10060|110\b/', $why)) {
+                $hint = is_local_site()
+                    ? ' The mail server did not answer. On a test computer this usually means your internet provider, router, antivirus or Windows Firewall blocks email ports. It normally works once the site runs on your hosting. To test from here, try port 587 with TLS, or another network such as a mobile hotspot.'
+                    : ' The mail server did not answer. Try port 587 with TLS, or ask your host whether outgoing SMTP is allowed from the server.';
+            } elseif (preg_match('/certificate|ssl|crypto/', $why)) {
+                $hint = ' The secure connection failed. Use the server name from cPanel (Email Accounts, Connect Devices, "Secure SSL/TLS Settings"), which matches the server certificate.';
+            } elseif (preg_match('/refused|10061|111\b/', $why)) {
+                $hint = ' The server refused the connection on this port. Check the port: 465 for SSL, 587 for TLS.';
+            } elseif (preg_match('/getaddrinfo|name or service|no such host|11001/', $why)) {
+                $hint = ' The server name could not be found. Check the SMTP server spelling.';
+            } else {
+                $hint = ' Check the host, port and encryption.';
+            }
+            throw new RuntimeException("Could not connect to {$cfg['host']}:{$cfg['port']} ($errstr).$hint");
         }
         stream_set_timeout($sock, 20);
         $read = function () use ($sock): string {
