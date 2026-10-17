@@ -52,15 +52,12 @@ $cronOk = $cronAge !== null && $cronAge < 900;
       <label class="field"><span>Send until (hour)</span><input class="input" type="number" name="camp_window_end" min="1" max="24" value="<?= $l['end'] ?>"></label>
       <label class="field"><span>Time zone</span><select class="select" name="camp_timezone"><?php foreach (Campaigns::TIMEZONES as $tz): ?><option value="<?= e($tz) ?>"<?= $l['tz'] === $tz ? ' selected' : '' ?>><?= e($tz) ?></option><?php endforeach; ?></select></label>
       <label class="check"><input type="checkbox" name="camp_weekdays_only" value="1"<?= $l['weekdays'] ? ' checked' : '' ?>> <span>Weekdays only</span></label>
-      <label class="field span-2"><span>Default reply-to email</span><input class="input" type="email" name="camp_reply_to" value="<?= e(setting('camp_reply_to')) ?>" placeholder="<?= e(setting('email_sales') ?: setting('email_info')) ?>"></label>
-      <p class="span-2 small muted"><strong>Separate campaign mailbox (recommended for cold email).</strong> Leave the host empty to use the main mailbox from Email settings.</p>
-      <label class="field"><span>From email</span><input class="input" type="email" name="camp_from_email" value="<?= e(setting('camp_from_email')) ?>" placeholder="awais@aivrasol.co"></label>
-      <label class="field"><span>From name</span><input class="input" name="camp_from_name" value="<?= e(setting('camp_from_name')) ?>" maxlength="80"></label>
-      <label class="field"><span>SMTP host</span><input class="input" name="camp_smtp_host" value="<?= e(setting('camp_smtp_host')) ?>" placeholder="mail.aivrasol.co"></label>
-      <label class="field"><span>Port</span><input class="input" type="number" name="camp_smtp_port" value="<?= e(setting('camp_smtp_port', '465')) ?>"></label>
-      <label class="field"><span>Encryption</span><select class="select" name="camp_smtp_encryption"><?php foreach (['ssl' => 'SSL (port 465)', 'tls' => 'TLS (port 587)', 'none' => 'None'] as $k => $v): ?><option value="<?= $k ?>"<?= setting('camp_smtp_encryption', 'ssl') === $k ? ' selected' : '' ?>><?= $v ?></option><?php endforeach; ?></select></label>
-      <label class="field"><span>Username</span><input class="input" name="camp_smtp_username" value="<?= e(setting('camp_smtp_username')) ?>" autocomplete="off"></label>
-      <label class="field span-2"><span>Password <?= setting('camp_smtp_password') !== '' ? '(saved, leave empty to keep)' : '' ?></span><input class="input" type="password" name="camp_smtp_password" autocomplete="new-password"></label>
+      <?php $cm = Mailer::settings('campaign'); ?>
+      <div class="span-2 camp-box">
+        <p><strong>Campaign mailbox:</strong> <?= Mailer::hasOwn('campaign') ? 'its own mailbox' : 'uses the website mailbox' ?>, from <?= e($cm['from_email'] ?: 'not set') ?><?= ($cm['reply_to'] ?? '') !== '' ? ', replies to ' . e($cm['reply_to']) : '' ?>.</p>
+        <p class="small muted">Sender, reply-to and mail server for campaigns are set in Email settings, with a test button. A separate mailbox is recommended for cold email.</p>
+        <?php if (Auth::can('settings')): ?><a class="btn btn-sm btn-outline" href="<?= e(url('admin/email?box=campaign#box-campaign')) ?>">Campaign mailbox settings</a><?php endif; ?>
+      </div>
       <div class="span-2"><button class="btn btn-sm" type="submit">Save sending settings</button></div>
     </form>
   </section>

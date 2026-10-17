@@ -257,6 +257,10 @@ CREATE TABLE IF NOT EXISTS employees (
   join_date       DATE         NOT NULL,
   end_date        DATE         NULL,
   status          VARCHAR(20)  NOT NULL DEFAULT 'active',
+  approval        VARCHAR(10)  NOT NULL DEFAULT 'approved' COMMENT 'pending when HR adds someone, until an admin approves',
+  created_by      INT UNSIGNED NULL,
+  approved_by     INT UNSIGNED NULL,
+  approved_at     DATETIME     NULL,
   photo           VARCHAR(120) NOT NULL DEFAULT '',
   notes           TEXT         NULL,
   created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -451,6 +455,39 @@ CREATE TABLE IF NOT EXISTS system_checks (
   results    MEDIUMTEXT   NOT NULL,
   created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_sc_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS staff_messages (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  thread_id    INT UNSIGNED NULL COMMENT 'First message of the conversation; NULL on the first message itself',
+  employee_id  INT UNSIGNED NOT NULL,
+  direction    VARCHAR(3)   NOT NULL DEFAULT 'out' COMMENT 'out = company to person, in = their reply',
+  kind         VARCHAR(10)  NOT NULL DEFAULT 'message' COMMENT 'message or notice',
+  subject      VARCHAR(190) NOT NULL,
+  body         TEXT         NOT NULL,
+  sender_id    INT UNSIGNED NULL,
+  read_at      DATETIME     NULL,
+  emailed      TINYINT(1)   NOT NULL DEFAULT 0,
+  created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_sm_employee (employee_id),
+  KEY idx_sm_thread (thread_id),
+  CONSTRAINT fk_sm_employee FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS doc_templates (
+  id             INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  code           VARCHAR(6)   NOT NULL COMMENT 'Short code used in reference numbers, for example EXP',
+  name           VARCHAR(80)  NOT NULL,
+  kind           VARCHAR(12)  NOT NULL DEFAULT 'certificate' COMMENT 'letter (A4 portrait) or certificate (A4 landscape)',
+  title          VARCHAR(80)  NOT NULL,
+  salutation     VARCHAR(120) NOT NULL DEFAULT '',
+  body           TEXT         NOT NULL,
+  needs_end_date TINYINT(1)   NOT NULL DEFAULT 0,
+  details_label  VARCHAR(120) NOT NULL DEFAULT '' COMMENT 'When set, the issuer fills in {details}',
+  is_builtin     TINYINT(1)   NOT NULL DEFAULT 0,
+  is_active      TINYINT(1)   NOT NULL DEFAULT 1,
+  sort_order     INT          NOT NULL DEFAULT 0,
+  updated_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS team_profiles (

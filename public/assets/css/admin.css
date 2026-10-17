@@ -275,3 +275,76 @@ tr.is-current td { background: var(--orange-tint); }
 .tp-actions form { display: inline-flex; gap: 6px; }
 .tp-note { display: flex; gap: 6px; flex-wrap: wrap; }
 .tp-note .input { min-width: 200px; height: 36px; padding: 6px 10px; font-size: 14px; }
+
+/* Mailboxes */
+.mbox { padding: 0; margin-bottom: 14px; }
+.mbox-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; cursor: pointer; list-style: none; }
+.mbox-head::-webkit-details-marker { display: none; }
+.mbox-head > span:first-child { display: grid; gap: 3px; }
+.mbox-head::after { content: ""; flex: none; width: 9px; height: 9px; border-right: 2px solid var(--slate); border-bottom: 2px solid var(--slate); transform: rotate(45deg); transition: transform .2s; }
+.mbox[open] > .mbox-head::after { transform: rotate(-135deg); }
+.mbox[open] > .mbox-head { border-bottom: 1px solid var(--line); }
+.mbox-form { padding: 18px 20px 6px; }
+.mbox-tools { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px 18px; border-top: 1px dashed var(--line); background: var(--grey-soft); border-radius: 0 0 var(--radius-md) var(--radius-md); }
+.mbox-tools .filters-bar { margin: 0; }
+.reply-item { padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); }
+.reply-item > summary { display: grid; gap: 2px; cursor: pointer; }
+.reply-item[open] > summary { margin-bottom: 10px; }
+.camp-box { padding: 14px 16px; background: var(--grey-soft); border-radius: var(--radius); } .camp-box p { margin: 0 0 6px; }
+
+/* People */
+.people-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+@media (min-width: 900px) { .people-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.people-stats .stat-num { font-family: var(--font-display); font-size: 38px; line-height: 1; color: var(--slate); }
+.stat-card.is-alert { border-color: #F2C96B; background: #FFF8E6; }
+.stat-card.is-alert .stat-num { color: #8A6100; }
+.people-filters { flex-wrap: wrap; }
+.list-head .people-filters .input { flex: 2 1 240px; min-width: 200px; }
+.list-head .people-filters .select { flex: 1 1 150px; min-width: 140px; }
+.people-table .pt-check { width: 34px; }
+.people-table tr.is-pending td { background: #FFFBEF; }
+.person { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+.person-pic { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 50%; overflow: hidden; font-size: 14px; font-weight: 600; color: var(--orange-text); background: #FFF1EC; }
+.person-pic img { width: 100%; height: 100%; object-fit: cover; }
+.approval-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; background: #FFF8E6; border-color: #F2C96B; }
+.approval-bar.is-off { background: var(--grey-soft); border-color: var(--line); }
+.inline-role { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.inline-role .select { width: auto; min-width: 180px; }
+.roles-dl { margin: 6px 0 12px; }
+.audit { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+.card-summary.is-plain::after { content: "Show"; }
+details[open] > .card-summary.is-plain::after { content: "Hide"; }
+.people-table td { padding-top: 9px; padding-bottom: 9px; }
+
+/* Messages */
+.tabs-inline { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabs-inline a { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 14px; font-weight: 500; color: var(--slate); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; background: var(--white); }
+.tabs-inline a.is-on { color: var(--white); background: var(--slate); border-color: var(--slate); }
+.thread-list { list-style: none; margin: 0; padding: 0; }
+.thread-list li + li { border-top: 1px solid var(--line); }
+.thread-list a { display: flex; align-items: center; gap: 12px; padding: 12px 6px; text-decoration: none; color: inherit; border-radius: var(--radius); }
+.thread-list a:hover { background: var(--grey-soft); }
+.thread-list .person-pic .icon { width: 18px; height: 18px; }
+.tl-main { flex: 1; min-width: 0; }
+.tl-subject { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--body); }
+.thread-list li.is-unread .tl-subject { font-weight: 600; color: var(--ink); }
+.tl-meta { flex: none; text-align: right; color: var(--muted); }
+.thread-head h2 { margin: 6px 0 4px; font-size: 20px; }
+.msgs { list-style: none; margin: 18px 0; padding: 0; display: grid; gap: 14px; }
+.msg { max-width: 760px; padding: 14px 16px; border-radius: var(--radius-md); background: var(--grey-soft); border: 1px solid var(--line); }
+.msg.is-me { margin-left: auto; background: #FFF4EF; border-color: #FFD6C8; }
+.msg-meta { margin-bottom: 6px; color: var(--muted); }
+.msg-body { font-size: 15px; line-height: 1.65; color: var(--ink); overflow-wrap: anywhere; }
+.reply-box { border-top: 1px solid var(--line); padding-top: 16px; }
+.recipients { margin: 10px 0 6px; }
+
+/* Issuance */
+.tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 12px; }
+.tpl-card { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-md); text-decoration: none; color: var(--ink); transition: border-color .2s, transform .2s; }
+.tpl-card:hover { border-color: var(--orange); transform: translateY(-2px); }
+.tpl-ico { display: grid; place-items: center; width: 42px; height: 42px; flex: none; border-radius: 50%; background: #FFF1EC; color: var(--orange-text); }
+.tpl-ico.tpl-letter { background: #E6F0FB; color: #1F5C99; }
+.tpl-ico .icon { width: 20px; height: 20px; }
+.table tr.is-new td { background: #EEF8F2; }
+.cert-preview-line { margin: 0; padding: 10px 14px; background: var(--grey-soft); border-radius: var(--radius); }
+.temp-pass { margin-top: 14px; } .temp-pass summary { cursor: pointer; color: var(--orange-text); } .temp-pass form { margin: 10px 0 6px; }

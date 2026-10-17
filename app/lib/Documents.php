@@ -72,7 +72,7 @@ final class Documents
     }
 
     /** Placeholder values for letter templates. */
-    public static function placeholders(array $emp, string $endDate): array
+    public static function placeholders(array $emp, string $endDate, string $details = ''): array
     {
         $p = self::pronouns($emp['pronoun']);
         $nid = self::nationalId($emp);
@@ -90,6 +90,7 @@ final class Documents
             '{end_date}' => self::longDate($endDate),
             '{duration}' => self::duration($emp['join_date'], $endDate),
             '{company}' => setting('site_name', 'AivraSol'),
+            '{details}' => $details,
             '{he}' => $p['he'], '{He}' => ucfirst($p['he']),
             '{him}' => $p['him'], '{his}' => $p['his'], '{His}' => ucfirst($p['his']),
         ];
@@ -231,7 +232,10 @@ final class Documents
         // Title
         $pdf->font('Bebas', '', 30, Pdf::SLATE)->textAt($L, 52, $doc['title'], 0, 'L', 11);
         $pdf->fill(Pdf::ORANGE)->Rect($L, 64, 16, 1.4, 'F');
-        $pdf->font('Inter', 'B', 10.5, Pdf::INK)->textAt($L, 73, 'To whom it may concern', 0, 'L', 6);
+        $salutation = (string) ($data['salutation'] ?? 'To whom it may concern');
+        if ($salutation !== '') {
+            $pdf->font('Inter', 'B', 10.5, Pdf::INK)->textAt($L, 73, $salutation, 0, 'L', 6);
+        }
 
         // Body
         $y = 83;
@@ -282,8 +286,82 @@ final class Documents
         return $pdf;
     }
 
+    /* ---------- Certificate: A4 landscape ---------- */
+
+    public static function certificate(array $doc): Pdf
+    {
+        $data = json_decode($doc['data'], true) ?: [];
+        $pdf = new Pdf('L', 'mm', 'A4');
+        $pdf->SetTitle($doc['title'] . ' ' . ($data['name'] ?? ''), true);
+        $pdf->AddPage();
+        $site = setting('site_name', 'AivraSol');
+        $W = 297.0;
+        $H = 210.0;
+
+        // Frame: soft background, slate border, thin orange inner line and corner accents
+        $pdf->fill([255, 251, 249])->Rect(0, 0, $W, $H, 'F');
+        $pdf->fill(Pdf::SLATE)->Rect(0, 0, $W, 9, 'F');
+        $pdf->fill(Pdf::SLATE)->Rect(0, $H - 9, $W, 9, 'F');
+        $pdf->fill(Pdf::ORANGE)->Rect(0, 9, $W, 1.2, 'F');
+        $pdf->fill(Pdf::ORANGE)->Rect(0, $H - 10.2, $W, 1.2, 'F');
+        $pdf->stroke(Pdf::ORANGE, 0.5)->Rect(14, 18, $W - 28, $H - 36);
+        $pdf->stroke([255, 214, 200], 0.3)->Rect(17, 21, $W - 34, $H - 42);
+        // L-shaped orange corners
+        foreach ([[14, 18, 14, 18], [$W - 28, 18, $W - 15.6, 18], [14, $H - 19.6, 14, $H - 32], [$W - 28, $H - 19.6, $W - 15.6, $H - 32]] as [$hx, $hy, $vx, $vy]) {
+            $pdf->fill(Pdf::ORANGE)->Rect($hx, $hy, 14, 1.6, 'F');
+            $pdf->fill(Pdf::ORANGE)->Rect($vx, $vy, 1.6, 14, 'F');
+        }
+        $pdf->Image(self::resource('mark-faint.png'), $W / 2 - 45, 60, 90);
+
+        // Logo, title and name
+        $pdf->Image(self::resource('logo.png'), $W / 2 - 22, 27, 44);
+        $pdf->font('Bebas', '', 40, Pdf::SLATE)->textAt(20, 44, (string) $doc['title'], $W - 40, 'C', 15);
+        $pdf->fill(Pdf::ORANGE)->Rect($W / 2 - 10, 61, 20, 1.4, 'F');
+        $sal = (string) ($data['salutation'] ?? 'This certificate is presented to');
+        if ($sal !== '') {
+            $pdf->font('Inter', 'I', 11, Pdf::BODY)->textAt(20, 68, $sal, $W - 40, 'C', 6);
+        }
+        $pdf->font('Bebas', '', 46, Pdf::INK);
+        $pdf->fitText(30, 78, $W - 60, (string) ($data['name'] ?? ''), 'Bebas', '', 46, 26, 'C', 18);
+        $pdf->stroke([255, 214, 200], 0.4)->Line($W / 2 - 60, 98, $W / 2 + 60, 98);
+        $pdf->font('Inter', '', 11.5, Pdf::SLATE);
+        $body = trim(preg_replace('/\s*\n\s*/', ' ', (string) ($data['body'] ?? '')) ?? '');
+        $pdf->para(48, 104, $W - 96, $body, 6.6, 'C');
+
+        // Signature (left), date and reference (middle), verification (right)
+        $baseY = 160;
+        $sigFile = Upload::privatePath((string) ($data['signature'] ?? ''));
+        $stampFile = Upload::privatePath((string) ($data['stamp'] ?? ''));
+        if ($stampFile) {
+            $pdf->Image($stampFile, 76, $baseY - 18, 24);
+        }
+        if ($sigFile) {
+            $pdf->Image($sigFile, 34, $baseY - 16, 40, 0);
+        }
+        $pdf->stroke(Pdf::INK, 0.3)->Line(30, $baseY + 4, 96, $baseY + 4);
+        $pdf->font('Inter', 'B', 10, Pdf::INK)->textAt(30, $baseY + 6, (string) ($data['signatory_name'] ?? '') ?: 'Authorised signatory', 66, 'C', 5);
+        $pdf->font('Inter', '', 8.8, Pdf::BODY)->textAt(30, $baseY + 11, trim(((string) ($data['signatory_title'] ?? '')) . ', ' . $site, ', '), 66, 'C', 4.5);
+
+        $pdf->font('Inter', 'B', 10, Pdf::INK)->textAt($W / 2 - 40, $baseY + 2, self::longDate($doc['issued_at']), 80, 'C', 5);
+        $pdf->font('Inter', '', 8.8, Pdf::BODY)->textAt($W / 2 - 40, $baseY + 7, 'Date of issue', 80, 'C', 4.5);
+        $pdf->font('Inter', '', 8.4, Pdf::BODY)->textAt($W / 2 - 40, $baseY + 13, 'Ref: ' . $doc['ref_no'], 80, 'C', 4.5);
+
+        $verify = absolute_url('verify/' . $doc['verify_token']);
+        $pdf->fill(Pdf::WHITE)->Rect($W - 62, $baseY - 18, 26, 26, 'F');
+        $pdf->qr($verify, $W - 61, $baseY - 17, 24);
+        $pdf->font('Inter', '', 7.6, Pdf::BODY)->textAt($W - 80, $baseY + 10, 'Scan to check it is genuine', 62, 'C', 4);
+        return $pdf;
+    }
+
+    /** Builds the right PDF for any issued document. */
+    public static function pdf(array $doc): Pdf
+    {
+        $data = json_decode($doc['data'], true) ?: [];
+        return ($data['kind'] ?? 'letter') === 'certificate' ? self::certificate($doc) : self::experienceLetter($doc);
+    }
+
     /** Snapshot saved with an issued letter, so the PDF stays the same even if settings change later. */
-    public static function letterSnapshot(array $emp, string $endDate, string $body): array
+    public static function letterSnapshot(array $emp, string $endDate, string $body, array $extra = []): array
     {
         $sig = [
             'signatory_name' => setting('doc_signatory_name'),
@@ -298,6 +376,6 @@ final class Documents
             'join_date' => $emp['join_date'],
             'end_date' => $endDate,
             'body' => $body,
-        ];
+        ] + $extra;
     }
 }

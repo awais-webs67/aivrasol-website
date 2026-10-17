@@ -217,23 +217,9 @@ function admin_campaign_save_limits(): void
         'camp_rest_days' => $num('camp_rest_days', 0, 30, 2),
         'camp_weekdays_only' => isset($_POST['camp_weekdays_only']) ? '1' : '0',
         'camp_timezone' => in_array($_POST['camp_timezone'] ?? '', Campaigns::TIMEZONES, true) ? $_POST['camp_timezone'] : 'UTC',
-        'camp_reply_to' => filter_var(trim((string) ($_POST['camp_reply_to'] ?? '')), FILTER_VALIDATE_EMAIL) ?: '',
-        'camp_from_email' => filter_var(trim((string) ($_POST['camp_from_email'] ?? '')), FILTER_VALIDATE_EMAIL) ?: '',
-        'camp_from_name' => mb_substr(trim((string) ($_POST['camp_from_name'] ?? '')), 0, 80),
-        'camp_smtp_host' => mb_substr(trim((string) ($_POST['camp_smtp_host'] ?? '')), 0, 190),
-        'camp_smtp_port' => $num('camp_smtp_port', 1, 65535, 465),
-        'camp_smtp_encryption' => in_array($_POST['camp_smtp_encryption'] ?? '', ['ssl', 'tls', 'none'], true) ? $_POST['camp_smtp_encryption'] : 'ssl',
-        'camp_smtp_username' => mb_substr(trim((string) ($_POST['camp_smtp_username'] ?? '')), 0, 190),
     ];
     if ((int) $save['camp_window_end'] <= (int) $save['camp_window_start']) {
         $save['camp_window_end'] = (string) min(24, (int) $save['camp_window_start'] + 1);
-    }
-    if ((string) ($_POST['camp_smtp_password'] ?? '') !== '') {
-        $save['camp_smtp_password'] = Secret::encrypt((string) $_POST['camp_smtp_password']);
-    }
-    if ($save['camp_smtp_host'] !== '' && $save['camp_from_email'] === '') {
-        $save['camp_smtp_host'] = '';
-        flash('error', 'Add the campaign "from" email to use a separate campaign mailbox. The main mailbox is used for now.');
     }
     $stmt = Database::pdo()->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
     foreach ($save as $k => $v) {

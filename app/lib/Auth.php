@@ -9,11 +9,11 @@ final class Auth
     /** Roles and what each one may open. "content" covers every website content editor. */
     public const ROLES = [
         'admin' => ['label' => 'Admin', 'about' => 'Full access to everything', 'caps' => ['*']],
-        'hr' => ['label' => 'HR', 'about' => 'Job applications, employees, ID cards, letters and job posts', 'caps' => ['dashboard', 'applications', 'employees', 'content:jobs', 'profile']],
+        'hr' => ['label' => 'HR', 'about' => 'Job applications, people, messages to the team, certificates, ID cards and job posts. People HR adds need an admin\'s approval', 'caps' => ['dashboard', 'applications', 'employees', 'content:jobs', 'profile']],
         'sales' => ['label' => 'Sales', 'about' => 'Leads, clients and email campaigns', 'caps' => ['dashboard', 'leads', 'clients', 'campaigns', 'profile']],
         'pm' => ['label' => 'Project manager', 'about' => 'Clients, projects, updates, chat and payments', 'caps' => ['dashboard', 'clients', 'projects', 'finance', 'profile']],
         'editor' => ['label' => 'Content editor', 'about' => 'Website content, portfolio and blog', 'caps' => ['dashboard', 'content', 'blog', 'profile']],
-        'employee' => ['label' => 'Employee', 'about' => 'Own profile, ID card and documents only', 'caps' => ['profile']],
+        'employee' => ['label' => 'Employee', 'about' => 'Own profile, ID card, documents and messages only', 'caps' => ['profile']],
     ];
 
     public static function can(string $cap, ?array $user = null): bool

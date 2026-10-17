@@ -18,22 +18,33 @@ $work = array_filter([
     'admin/projects' => ['layers', 'Client projects', 'projects'],
 ], fn ($n) => $can($n[2]));
 $people = array_filter([
-    'admin/employees' => ['users', 'Employees', 'employees'],
-    'admin/documents' => ['file', 'Letters and ID cards', 'settings'],
+    'admin/employees' => ['users', 'People', 'employees'],
+    'admin/messages' => ['mail', 'Messages', 'employees'],
+    'admin/issuance' => ['award', 'Issuance', 'employees'],
     'admin/team-pages' => ['user', 'Team pages', 'users'],
+    'admin/documents' => ['file', 'Document design', 'settings'],
 ], fn ($n) => $can($n[2]));
 $system = array_filter([
     'admin/settings' => ['settings', 'Settings', 'settings'],
-    'admin/email' => ['mail', 'Email', 'settings'],
-    'admin/users' => ['users', 'Team and roles', 'users'],
+    'admin/email' => ['mail', 'Email and mailboxes', 'settings'],
     'admin/backups' => ['download', 'Backups', 'settings'],
     'admin/system' => ['check', 'System check', 'settings'],
+], fn ($n) => $can($n[2]));
+$mine = array_filter([
     'admin/profile' => ['user', 'My profile', 'profile'],
+    'admin/inbox' => ['inbox', 'My messages', 'profile'],
 ], fn ($n) => $can($n[2]));
 $myPage = $can('profile') ? Database::one('SELECT allowed FROM team_profiles WHERE user_id = ?', [$user['id']]) : null;
 if ($myPage && (int) $myPage['allowed']) {
-    $system['admin/portfolio'] = ['layers', 'My portfolio page', 'profile'];
+    $mine['admin/portfolio'] = ['layers', 'My portfolio page', 'profile'];
 }
+require_once APP_PATH . '/admin/messages.php';
+$meEmp = $can('profile') ? Database::one('SELECT id FROM employees WHERE user_id = ?', [$user['id']]) : null;
+$pills = [
+    'admin/employees' => $can('users') ? (int) Database::value("SELECT COUNT(*) FROM employees WHERE approval = 'pending'") : 0,
+    'admin/messages' => $can('employees') ? msg_unread() : 0,
+    'admin/inbox' => $meEmp ? msg_unread((int) $meEmp['id']) : 0,
+];
 $current = trim(request_path(), '/');
 $isOn = fn (string $p) => $p === 'admin' ? $current === 'admin' : str_starts_with($current, $p);
 $unreadChat = $can('projects') ? (int) Database::value("SELECT COUNT(DISTINCT project_id) FROM project_messages WHERE sender_type = 'client' AND read_by_staff = 0") : 0;
@@ -88,14 +99,22 @@ $newLeads = $can('leads') ? (int) Database::value("SELECT COUNT(*) FROM leads WH
       <p class="admin-side-label">People</p>
       <ul>
         <?php foreach ($people as $path => [$ic, $label]): ?>
-        <li><a href="<?= e(url($path)) ?>"<?= $isOn($path) ? ' aria-current="page"' : '' ?>><?= icon($ic) ?><span><?= e($label) ?></span><?php if ($path === 'admin/team-pages' && $teamReview): ?><b class="pill"><?= $teamReview ?></b><?php endif; ?></a></li>
+        <li><a href="<?= e(url($path)) ?>"<?= $isOn($path) ? ' aria-current="page"' : '' ?>><?= icon($ic) ?><span><?= e($label) ?></span><?php if ($path === 'admin/team-pages' && $teamReview): ?><b class="pill"><?= $teamReview ?></b><?php elseif (!empty($pills[$path])): ?><b class="pill"><?= $pills[$path] ?></b><?php endif; ?></a></li>
         <?php endforeach; ?>
       </ul>
       <?php endif; ?>
+      <?php if ($system): ?>
       <p class="admin-side-label">System</p>
       <ul>
         <?php foreach ($system as $path => [$ic, $label]): ?>
         <li><a href="<?= e(url($path)) ?>"<?= $isOn($path) ? ' aria-current="page"' : '' ?>><?= icon($ic) ?><span><?= e($label) ?></span></a></li>
+        <?php endforeach; ?>
+      </ul>
+      <?php endif; ?>
+      <p class="admin-side-label">Me</p>
+      <ul>
+        <?php foreach ($mine as $path => [$ic, $label]): ?>
+        <li><a href="<?= e(url($path)) ?>"<?= $isOn($path) ? ' aria-current="page"' : '' ?>><?= icon($ic) ?><span><?= e($label) ?></span><?php if (!empty($pills[$path])): ?><b class="pill"><?= $pills[$path] ?></b><?php endif; ?></a></li>
         <?php endforeach; ?>
         <li><a href="<?= e(url('/')) ?>" target="_blank" rel="noopener"><?= icon('external') ?><span>View website</span></a></li>
       </ul>

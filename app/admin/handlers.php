@@ -653,110 +653,6 @@ function admin_settings(): string
 
 /* ---------- Users and account ---------- */
 
-function admin_users(): string
-{
-    $user = Auth::require('users');
-    $errors = [];
-    if (is_post()) {
-        admin_csrf();
-        $action = $_POST['action'] ?? '';
-        $id = ctype_digit((string) ($_POST['id'] ?? '')) ? (int) $_POST['id'] : 0;
-        $target = $id ? Database::one('SELECT id, name, email, role, is_active FROM users WHERE id = ?', [$id]) : null;
-        $activeAdmins = (int) Database::value("SELECT COUNT(*) FROM users WHERE role = 'admin' AND is_active = 1");
-        if ($action === 'create') {
-            $name = trim((string) ($_POST['name'] ?? ''));
-            $email = strtolower(trim((string) ($_POST['email'] ?? '')));
-            $password = (string) ($_POST['password'] ?? '');
-            $invite = ($_POST['invite'] ?? '') === '1';
-            $role = isset(Auth::ROLES[$_POST['role'] ?? '']) ? $_POST['role'] : 'editor';
-            if ($name === '' || mb_strlen($name) > 80) $errors[] = 'Please enter a name.';
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Please enter a valid email.';
-            if ($password === '' && !$invite) $errors[] = 'Enter a temporary password, or tick "Email them a link".';
-            if ($password !== '' && ($p = Auth::passwordProblem($password))) $errors[] = $p;
-            if (!$errors) {
-                try {
-                    $newId = Database::insert('users', [
-                        'name' => $name,
-                        'email' => $email,
-                        'password_hash' => Auth::hash($password !== '' ? $password : bin2hex(random_bytes(24))),
-                        'role' => $role,
-                        'must_change_password' => $password !== '' ? 1 : 0,
-                    ]);
-                    Auth::audit((int) $user['id'], 'user_create', $email . ' (' . $role . ')');
-                    $msg = 'User added.';
-                    if ($invite) {
-                        $err = admin_send_password_link(['id' => $newId, 'name' => $name, 'email' => $email, 'role' => $role], true);
-                        $msg = $err === null ? "User added and a set-password link was emailed to $email." : 'User added, but the email failed: ' . $err;
-                    }
-                    flash('success', $msg);
-                    redirect(url('admin/users'));
-                } catch (PDOException $e) {
-                    $errors[] = 'A user with that email already exists.';
-                }
-            }
-        } elseif (!$target) {
-            flash('error', 'User not found.');
-            redirect(url('admin/users'));
-        } elseif ($action === 'toggle') {
-            if ($id === (int) $user['id']) {
-                flash('error', 'You cannot disable your own account.');
-            } elseif ($target['role'] === 'admin' && $target['is_active'] && $activeAdmins <= 1) {
-                flash('error', 'Keep at least one active admin.');
-            } else {
-                Database::run('UPDATE users SET is_active = 1 - is_active WHERE id = ?', [$id]);
-                Auth::audit((int) $user['id'], 'user_toggle', $target['email']);
-                flash('success', $target['is_active'] ? 'User disabled. They are signed out straight away.' : 'User enabled.');
-            }
-            redirect(url('admin/users'));
-        } elseif ($action === 'role') {
-            $role = (string) ($_POST['role'] ?? '');
-            if (!isset(Auth::ROLES[$role])) {
-                flash('error', 'Choose a valid role.');
-            } elseif ($id === (int) $user['id']) {
-                flash('error', 'You cannot change your own role. Ask another admin.');
-            } elseif ($target['role'] === 'admin' && $role !== 'admin' && $activeAdmins <= 1) {
-                flash('error', 'Keep at least one active admin.');
-            } else {
-                Database::run('UPDATE users SET role = ? WHERE id = ?', [$role, $id]);
-                Auth::audit((int) $user['id'], 'user_role', $target['email'] . ' -> ' . $role);
-                flash('success', $target['name'] . ' is now ' . Auth::roleLabel($role) . '.');
-            }
-            redirect(url('admin/users'));
-        } elseif ($action === 'password') {
-            $password = (string) ($_POST['password'] ?? '');
-            if ($p = Auth::passwordProblem($password)) {
-                flash('error', $p);
-            } else {
-                Database::run('UPDATE users SET password_hash = ?, must_change_password = ? WHERE id = ?', [Auth::hash($password), $id === (int) $user['id'] ? 0 : 1, $id]);
-                Auth::clearResetTokens('user', $id);
-                if ($id === (int) $user['id']) {
-                    Auth::refreshSession($id);
-                }
-                Auth::audit((int) $user['id'], 'user_password_set', $target['email']);
-                flash('success', 'Temporary password set. ' . $target['name'] . ' will be asked to change it at the next sign in.');
-            }
-            redirect(url('admin/users'));
-        } elseif ($action === 'link') {
-            if (!$target['is_active']) {
-                flash('error', 'Enable the user first.');
-            } elseif (!Security::rateLimit('user_link', 5, 3600, (string) $id)) {
-                flash('error', 'Too many links sent to this user. Please wait an hour.');
-            } else {
-                $err = admin_send_password_link($target, false);
-                Auth::audit((int) $user['id'], 'user_reset_link', $target['email']);
-                $err === null ? flash('success', 'Password reset link emailed to ' . $target['email'] . '.') : flash('error', 'The email failed: ' . $err);
-            }
-            redirect(url('admin/users'));
-        }
-    }
-    return admin_view('users', [
-        'rows' => Database::all('SELECT id, name, email, role, is_active, must_change_password, last_login_at FROM users ORDER BY is_active DESC, name'),
-        'errors' => $errors,
-        'pageTitle' => 'Team and roles',
-        'audit' => Database::all('SELECT a.action, a.target, a.created_at, u.name FROM audit_log a LEFT JOIN users u ON u.id = a.user_id ORDER BY a.id DESC LIMIT 25'),
-    ]);
-}
-
 function admin_profile(): string
 {
     $user = Auth::require('profile');
@@ -806,79 +702,133 @@ function admin_email(): string
 {
     $user = Auth::require('settings');
     $errors = [];
-    $testResult = null;
+    $openBox = (string) ($_GET['box'] ?? '');
     if (is_post()) {
         admin_csrf();
-        $action = $_POST['action'] ?? '';
+        $action = (string) ($_POST['action'] ?? '');
         if ($action === 'test') {
+            $action = 'box_test';
+        }
+        $box = (string) ($_POST['box'] ?? 'main');
+        if (!isset(Mailer::BOXES[$box])) {
+            $box = 'main';
+        }
+        $stmt = Database::pdo()->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
+        $back = url('admin/email') . '?box=' . $box . '#box-' . $box;
+        if ($action === 'box_test') {
             $to = trim((string) ($_POST['test_to'] ?? ''));
             if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
                 flash('error', 'Enter a valid email address for the test.');
             } elseif (!Security::rateLimit('email_test', 10, 600, (string) $user['id'])) {
                 flash('error', 'Too many test emails. Please wait a few minutes.');
             } else {
-                [$subject, $text, $html] = Emails::test();
-                $err = Mailer::send($to, $subject, $text, $html, null, 'test');
-                $err === null ? flash('success', "Test email sent to $to. Check the inbox and the spam folder.") : flash('error', 'The test email failed: ' . $err);
+                [$subject, $text, $html] = Emails::test(Mailer::BOXES[$box]['label']);
+                $err = Mailer::send($to, $subject, $text, $html, null, 'test', ['profile' => $box]);
+                $cfg = Mailer::settings($box);
+                $via = $cfg['host'] !== '' ? $cfg['host'] . ':' . $cfg['port'] : 'PHP mail()';
+                $err === null ? flash('success', Mailer::BOXES[$box]['label'] . ": test email sent to $to from {$cfg['from_email']} through $via. Check the inbox and the spam folder.") : flash('error', Mailer::BOXES[$box]['label'] . ': the test email failed. ' . $err);
+                Auth::audit((int) $user['id'], 'email_test', $box);
             }
-            redirect(url('admin/email'));
+            redirect($back);
         }
-        $save = [];
-        foreach (['notify_emails' => 'Enquiry recipients', 'notify_emails_hr' => 'Job application recipients'] as $k => $label) {
-            $raw = (string) ($_POST[$k] ?? '');
-            $list = Mailer::addressList($raw);
-            $typed = preg_split('/[\s,;]+/', trim($raw)) ?: [];
-            if (count(array_filter($typed)) !== count($list)) {
-                $errors[$k] = "$label: one or more addresses are not valid.";
-            } elseif (count($list) > 15) {
-                $errors[$k] = "$label: add 15 addresses at most.";
+        if ($action === 'box_reset') {
+            if ($box === 'main') {
+                $stmt->execute(['mail_source', 'config']);
+                foreach (array_diff(Mailer::boxKeys('main'), ['mail_source']) as $k) {
+                    $stmt->execute([$k, '']);
+                }
+                $msg = 'Website mailbox reset. Emails now use the settings in app/config.php.';
+            } else {
+                foreach (Mailer::boxKeys($box) as $k) {
+                    $stmt->execute([$k, '']);
+                }
+                $msg = Mailer::BOXES[$box]['label'] . ' mailbox reset. It now sends through the website mailbox.';
             }
-            $save[$k] = implode("\n", $list);
+            Auth::audit((int) $user['id'], 'email_box_reset', $box);
+            flash('success', $msg);
+            redirect($back);
         }
-        $save['mail_source'] = ($_POST['mail_source'] ?? '') === 'custom' ? 'custom' : 'config';
-        $save['mail_from_email'] = trim((string) ($_POST['mail_from_email'] ?? ''));
-        $save['mail_from_name'] = mb_substr(trim((string) ($_POST['mail_from_name'] ?? '')), 0, 80);
-        $save['smtp_host'] = preg_replace('/[^a-z0-9.\-]/i', '', (string) ($_POST['smtp_host'] ?? '')) ?? '';
-        $save['smtp_port'] = (string) max(1, min(65535, (int) ($_POST['smtp_port'] ?? 465)));
-        $save['smtp_encryption'] = in_array($_POST['smtp_encryption'] ?? '', ['ssl', 'tls', 'none'], true) ? $_POST['smtp_encryption'] : 'ssl';
-        $save['smtp_username'] = mb_substr(trim((string) ($_POST['smtp_username'] ?? '')), 0, 190);
-        if ($save['mail_from_email'] !== '' && !filter_var($save['mail_from_email'], FILTER_VALIDATE_EMAIL)) {
-            $errors['mail_from_email'] = 'The "from" address is not a valid email.';
-        }
-        if ($save['mail_source'] === 'custom' && $save['mail_from_email'] === '') {
-            $errors['mail_from_email'] = 'Add the address emails are sent from.';
-        }
-        $newPassword = (string) ($_POST['smtp_password'] ?? '');
-        if ($newPassword !== '') {
-            $save['smtp_password'] = Secret::encrypt($newPassword);
-        } elseif (!empty($_POST['smtp_password_clear'])) {
-            $save['smtp_password'] = '';
-        }
-        $save['autoreply_enabled'] = isset($_POST['autoreply_enabled']) ? '1' : '0';
-        foreach (array_keys(Emails::TYPES) as $t) {
-            $subj = trim((string) ($_POST["autoreply_{$t}_subject"] ?? ''));
-            $body = trim(str_replace("\r\n", "\n", (string) ($_POST["autoreply_{$t}_body"] ?? '')));
-            if ($subj === '' || $body === '') {
-                $errors["autoreply_$t"] = 'Each automatic reply needs a subject and a message.';
+        if ($action === 'box_save') {
+            $openBox = $box;
+            $p = Mailer::BOXES[$box]['prefix'];
+            $k = fn (string $name) => $box === 'main' ? (['from_email' => 'mail_from_email', 'from_name' => 'mail_from_name', 'reply_to' => 'mail_reply_to'][$name] ?? $name) : $p . $name;
+            $save = [];
+            $own = $box === 'main' ? (($_POST['mail_source'] ?? '') === 'custom') : !empty($_POST['own']);
+            if ($box === 'main') {
+                $save['mail_source'] = $own ? 'custom' : 'config';
             }
-            $save["autoreply_{$t}_subject"] = mb_substr($subj, 0, 150);
-            $save["autoreply_{$t}_body"] = mb_substr($body, 0, 3000);
-        }
-        if (!$errors) {
-            $stmt = Database::pdo()->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
-            foreach ($save as $k => $v) {
-                $stmt->execute([$k, $v]);
+            $save[$k('from_email')] = strtolower(trim((string) ($_POST['from_email'] ?? '')));
+            $save[$k('from_name')] = mb_substr(trim((string) ($_POST['from_name'] ?? '')), 0, 80);
+            $save[$k('reply_to')] = strtolower(trim((string) ($_POST['reply_to'] ?? '')));
+            $host = preg_replace('/[^a-z0-9.\-]/i', '', (string) ($_POST['smtp_host'] ?? '')) ?? '';
+            $save[$k('smtp_host')] = $own ? $host : '';
+            $save[$k('smtp_port')] = (string) max(1, min(65535, (int) ($_POST['smtp_port'] ?? 465)));
+            $save[$k('smtp_encryption')] = in_array($_POST['smtp_encryption'] ?? '', ['ssl', 'tls', 'none'], true) ? $_POST['smtp_encryption'] : 'ssl';
+            $save[$k('smtp_username')] = mb_substr(trim((string) ($_POST['smtp_username'] ?? '')), 0, 190);
+            foreach (['from_email' => 'The "send from" address', 'reply_to' => 'The reply-to address'] as $f => $label) {
+                if ($save[$k($f)] !== '' && !filter_var($save[$k($f)], FILTER_VALIDATE_EMAIL)) {
+                    $errors["$box.$f"] = "$label is not a valid email.";
+                }
             }
-            Auth::audit((int) $user['id'], 'email_settings_update');
-            flash('success', 'Email settings saved. Send a test email to check them.');
-            redirect(url('admin/email'));
+            if ($own && $save[$k('from_email')] === '') {
+                $errors["$box.from_email"] = 'Add the address emails are sent from.';
+            }
+            if ($own && $box !== 'main' && $host === '') {
+                $errors["$box.smtp_host"] = 'Add the SMTP server, or untick "Use its own mailbox".';
+            }
+            $newPassword = (string) ($_POST['smtp_password'] ?? '');
+            if ($newPassword !== '') {
+                $save[$k('smtp_password')] = Secret::encrypt($newPassword);
+            } elseif (!empty($_POST['smtp_password_clear'])) {
+                $save[$k('smtp_password')] = '';
+            }
+            if (!$errors) {
+                foreach ($save as $key => $val) {
+                    $stmt->execute([$key, $val]);
+                }
+                Auth::audit((int) $user['id'], 'email_box_save', $box);
+                flash('success', Mailer::BOXES[$box]['label'] . ' mailbox saved. Send a test email to check it.');
+                redirect($back);
+            }
+        }
+        if ($action === 'general') {
+            $save = [];
+            foreach (['notify_emails' => 'Enquiry recipients', 'notify_emails_hr' => 'Job application recipients'] as $key => $label) {
+                $raw = (string) ($_POST[$key] ?? '');
+                $list = Mailer::addressList($raw);
+                $typed = preg_split('/[\s,;]+/', trim($raw)) ?: [];
+                if (count(array_filter($typed)) !== count($list)) {
+                    $errors[$key] = "$label: one or more addresses are not valid.";
+                } elseif (count($list) > 15) {
+                    $errors[$key] = "$label: add 15 addresses at most.";
+                }
+                $save[$key] = implode("\n", $list);
+            }
+            $save['autoreply_enabled'] = isset($_POST['autoreply_enabled']) ? '1' : '0';
+            foreach (array_keys(Emails::TYPES) as $t) {
+                $subj = trim((string) ($_POST["autoreply_{$t}_subject"] ?? ''));
+                $body = trim(str_replace("\r\n", "\n", (string) ($_POST["autoreply_{$t}_body"] ?? '')));
+                if ($subj === '' || $body === '') {
+                    $errors["autoreply_$t"] = 'Each automatic reply needs a subject and a message.';
+                }
+                $save["autoreply_{$t}_subject"] = mb_substr($subj, 0, 150);
+                $save["autoreply_{$t}_body"] = mb_substr($body, 0, 3000);
+            }
+            if (!$errors) {
+                foreach ($save as $key => $val) {
+                    $stmt->execute([$key, $val]);
+                }
+                Auth::audit((int) $user['id'], 'email_settings_update');
+                flash('success', 'Recipients and automatic replies saved.');
+                redirect(url('admin/email'));
+            }
         }
     }
     return admin_view('email', [
         'pageTitle' => 'Email settings',
         'errors' => $errors,
         'posted' => is_post() ? $_POST : null,
-        'effective' => Mailer::settings(),
+        'openBox' => $openBox,
         'log' => Database::all('SELECT type, recipients, subject, status, error, created_at FROM email_log ORDER BY id DESC LIMIT 30'),
         'user' => $user,
     ]);

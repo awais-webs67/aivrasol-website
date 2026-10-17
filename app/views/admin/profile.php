@@ -10,7 +10,7 @@
     <p class="muted"><?= e($employee['designation']) ?><?= $employee['department'] !== '' ? ', ' . e($employee['department']) : '' ?> · since <?= e(date('M Y', strtotime($employee['join_date']))) ?></p>
   </div>
   <div class="btn-group emp-actions">
-    <a class="btn btn-sm" href="<?= e(url('admin/employees/' . $employee['id'] . '/card')) ?>"><?= icon('download') ?>My ID card (PDF)</a>
+    <?php if ($employee['approval'] === 'approved'): ?><a class="btn btn-sm" href="<?= e(url('admin/employees/' . $employee['id'] . '/card')) ?>"><?= icon('download') ?>My ID card (PDF)</a><?php endif; ?>
   </div>
 </section>
 <?php if ($letters): ?>

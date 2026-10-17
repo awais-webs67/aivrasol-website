@@ -85,6 +85,18 @@ try {
         echo $ran ? "Your existing content was kept.\n" : "Database is already up to date.\n";
     }
 
+    // Ready-made certificate and letter templates, added once. An edited experience letter text is kept.
+    if ((int) $pdo->query('SELECT COUNT(*) FROM doc_templates')->fetchColumn() === 0) {
+        $custom = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'doc_letter_template'")->fetchColumn();
+        foreach (require __DIR__ . '/data/doc_templates.php' as $tpl) {
+            if ($tpl['code'] === 'EXP' && is_string($custom) && trim($custom) !== '') {
+                $tpl['body'] = $custom;
+            }
+            insert_row($pdo, 'doc_templates', $tpl + ['is_builtin' => 1]);
+        }
+        echo "Certificate templates added.\n";
+    }
+
     $add = $pdo->prepare('INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)');
     $before = (int) $pdo->query('SELECT COUNT(*) FROM settings')->fetchColumn();
     foreach (require __DIR__ . '/data/settings.php' as $k => $v) {

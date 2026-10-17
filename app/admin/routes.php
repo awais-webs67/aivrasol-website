@@ -7,6 +7,8 @@ require APP_PATH . '/admin/clients.php';
 require APP_PATH . '/admin/campaigns.php';
 require APP_PATH . '/admin/system.php';
 require APP_PATH . '/admin/team.php';
+require APP_PATH . '/admin/messages.php';
+require APP_PATH . '/admin/issuance.php';
 
 /** @var Router $router */
 $router->any('/admin/login', fn () => admin_login());
@@ -30,7 +32,7 @@ $router->any('/admin/content/{key}/{id}', fn (string $key, string $id) => admin_
 
 $router->any('/admin/settings', fn () => admin_settings());
 $router->any('/admin/email', fn () => admin_email());
-$router->any('/admin/users', fn () => admin_users());
+$router->any('/admin/users', fn () => redirect(url('admin/employees')));
 $router->any('/admin/profile', fn () => admin_profile());
 $router->any('/admin/portfolio', fn () => admin_portfolio());
 $router->get('/admin/portfolio/preview', fn () => admin_portfolio_preview());
@@ -42,9 +44,20 @@ $router->get('/admin/employees', fn () => admin_employees());
 $router->any('/admin/employees/new', fn () => admin_employee_edit());
 $router->any('/admin/employees/{id}', fn (string $id) => admin_employee_edit($id));
 $router->post('/admin/employees/{id}/login', fn (string $id) => admin_employee_login($id));
+$router->get('/admin/messages', fn () => admin_messages());
+$router->any('/admin/messages/new', fn () => admin_message_new());
+$router->any('/admin/messages/{id}', fn (string $id) => msg_thread($id, false));
+$router->get('/admin/inbox', fn () => admin_inbox());
+$router->any('/admin/inbox/{id}', fn (string $id) => msg_thread($id, true));
+$router->post('/admin/employees/{id}/approval', fn (string $id) => admin_employee_approval($id));
 $router->get('/admin/employees/{id}/photo', fn (string $id) => admin_employee_photo($id));
 $router->get('/admin/employees/{id}/card', fn (string $id) => admin_employee_card($id));
-$router->any('/admin/employees/{id}/letter', fn (string $id) => admin_employee_letter($id));
+$router->any('/admin/employees/{id}/letter', fn (string $id) => redirect(url('admin/issuance/new?code=EXP&employee=' . (int) $id)));
+$router->get('/admin/issuance', fn () => admin_issuance());
+$router->any('/admin/issuance/new', fn () => admin_issuance_new());
+$router->any('/admin/issuance/templates', fn () => admin_issuance_templates());
+$router->any('/admin/issuance/templates/new', fn () => admin_issuance_template_edit());
+$router->any('/admin/issuance/templates/{id}', fn (string $id) => admin_issuance_template_edit($id));
 $router->get('/admin/letters/{id}', fn (string $id) => admin_document_pdf($id));
 $router->post('/admin/letters/{id}/revoke', fn (string $id) => admin_document_revoke($id));
 $router->any('/admin/documents', fn () => admin_documents_settings());

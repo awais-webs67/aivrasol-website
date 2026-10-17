@@ -669,4 +669,12 @@
     });
     refresh();
   });
+
+  // "Select all" box in lists such as People.
+  Array.prototype.forEach.call(document.querySelectorAll('[data-check-all]'), function (all) {
+    var table = all.closest('table');
+    all.addEventListener('change', function () {
+      Array.prototype.forEach.call(table.querySelectorAll('tbody input[type=checkbox]'), function (c) { c.checked = all.checked; });
+    });
+  });
 })();

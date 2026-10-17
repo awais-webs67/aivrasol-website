@@ -8,6 +8,7 @@ $err = fn (string $k) => isset($errors[$k]) ? '<span class="field-error">' . e($
 <p class="btn-group">
   <a class="btn btn-sm btn-outline" href="<?= e(url('admin/documents/sample/letter')) ?>" target="_blank" rel="noopener"><?= icon('file') ?>Preview a sample letter</a>
   <a class="btn btn-sm btn-outline" href="<?= e(url('admin/documents/sample/card')) ?>" target="_blank" rel="noopener"><?= icon('user') ?>Preview a sample ID card</a>
+  <a class="btn btn-sm btn-outline" href="<?= e(url('admin/documents/sample/certificate')) ?>" target="_blank" rel="noopener"><?= icon('award') ?>Preview a sample certificate</a>
 </p>
 <form method="post" enctype="multipart/form-data" class="settings-form">
   <?= csrf_field() ?>
@@ -30,15 +31,10 @@ $err = fn (string $k) => isset($errors[$k]) ? '<span class="field-error">' . e($
       <?= $err('doc_stamp') ?>
     </div>
   </fieldset>
-  <fieldset class="card form-grid cols-2">
-    <legend>Experience letter template</legend>
-    <div class="field span-2">
-      <label for="d-tpl"><span>Letter text</span></label>
-      <textarea class="textarea editor" id="d-tpl" name="doc_letter_template" maxlength="6000"><?= e($v('doc_letter_template', Documents::DEFAULT_LETTER)) ?></textarea>
-      <span class="small muted">Placeholders: {name}, {designation}, {department}, {department_part}, {join_date}, {end_date}, {duration}, {employment_type}, {employee_code}, {company}, {father_name}, {national_id}, {id_part}, {he}, {He}, {him}, {his}, {His}. Pronouns follow the setting on each employee.</span>
-      <?= $err('doc_letter_template') ?>
-    </div>
-  </fieldset>
+  <section class="card">
+    <h2>Certificate and letter wording</h2>
+    <p class="muted">The text of each certificate and letter is now kept in <a href="<?= e(url('admin/issuance/templates')) ?>">Issuance, Templates</a>: six ready-made ones (experience, employment verification, internship, appreciation, employee of the month, training) and any you add.</p>
+  </section>
   <fieldset class="card form-grid cols-2">
     <legend>ID cards and numbering</legend>
     <label class="field"><span>Code prefix</span><input class="input" type="text" name="doc_code_prefix" value="<?= e($v('doc_code_prefix', 'AVS')) ?>" maxlength="5"><span class="small muted">Used for new employee IDs and letter numbers, e.g. AVS-0012.</span><?= $err('doc_code_prefix') ?></label>

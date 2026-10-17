@@ -151,4 +151,17 @@ return [
             }
         }
     },
+    '2026_10_30_people' => function (PDO $pdo) use ($hasColumn): void {
+        // Employees and team logins are one list now. HR additions wait for an admin's approval.
+        if (!$hasColumn($pdo, 'employees', 'approval')) {
+            $pdo->exec("ALTER TABLE employees ADD COLUMN approval VARCHAR(10) NOT NULL DEFAULT 'approved' AFTER status,
+                ADD COLUMN created_by INT UNSIGNED NULL AFTER approval, ADD COLUMN approved_by INT UNSIGNED NULL AFTER created_by, ADD COLUMN approved_at DATETIME NULL AFTER approved_by");
+        }
+    },
+    '2026_10_31_staff_messages' => function (PDO $pdo): void {
+        // schema.sql has already created staff_messages (messages and notices to the team).
+    },
+    '2026_11_01_doc_templates' => function (PDO $pdo): void {
+        // schema.sql has already created doc_templates; install.php adds the ready-made ones.
+    },
 ];

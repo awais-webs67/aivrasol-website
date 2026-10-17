@@ -11,24 +11,76 @@ final class Mailer
     private static array $queue = [];
     private static bool $flushRegistered = false;
 
+    /**
+     * Mailboxes. Each part of the business can send from its own address and server, so for example HR mail
+     * comes from hr@ and cold email never touches the main domain. A mailbox without its own server uses the
+     * website mailbox. Keys are stored as {prefix}from_email, {prefix}smtp_host and so on.
+     */
+    public const BOXES = [
+        'main' => ['label' => 'Website and enquiries', 'prefix' => '', 'about' => 'Alerts for new enquiries, automatic replies to visitors, the system check and anything not listed below. The other mailboxes use this one until you give them their own.'],
+        'hr' => ['label' => 'HR and team', 'prefix' => 'hr_', 'about' => 'Replies to job applicants, staff invitations and password links, notices and messages to employees, certificates and team page emails.'],
+        'clients' => ['label' => 'Clients', 'prefix' => 'cl_', 'about' => 'Client portal invitations, password links, project updates and messages to clients.'],
+        'campaign' => ['label' => 'Email campaigns (cold email)', 'prefix' => 'camp_', 'about' => 'Cold email and newsletters. Best on a separate domain or mailbox, so spam reports can never hurt your main address.'],
+    ];
+
+    /** Setting keys that belong to a mailbox (used by Save and Reset). */
+    public static function boxKeys(string $box): array
+    {
+        if ($box === 'main') {
+            return ['mail_source', 'mail_from_email', 'mail_from_name', 'mail_reply_to', 'smtp_host', 'smtp_port', 'smtp_encryption', 'smtp_username', 'smtp_password'];
+        }
+        $p = self::BOXES[$box]['prefix'];
+        return array_map(fn ($k) => $p . $k, ['from_email', 'from_name', 'reply_to', 'smtp_host', 'smtp_port', 'smtp_encryption', 'smtp_username', 'smtp_password']);
+    }
+
+    /** Which mailbox an email type goes through. */
+    public static function boxFor(string $type): string
+    {
+        if (str_starts_with($type, 'campaign')) {
+            return 'campaign';
+        }
+        if (str_starts_with($type, 'client') || str_starts_with($type, 'portal')) {
+            return 'clients';
+        }
+        if (in_array($type, ['invite', 'password_reset', 'team_page', 'team_review'], true) || str_starts_with($type, 'application') || str_starts_with($type, 'staff') || str_starts_with($type, 'hr')) {
+            return 'hr';
+        }
+        return 'main';
+    }
+
+    /** True when a mailbox has its own server instead of borrowing the website mailbox. */
+    public static function hasOwn(string $box): bool
+    {
+        if ($box === 'main') {
+            return setting('mail_source') === 'custom';
+        }
+        $p = self::BOXES[$box]['prefix'] ?? '';
+        return $p !== '' && setting($p . 'smtp_host') !== '' && filter_var(setting($p . 'from_email'), FILTER_VALIDATE_EMAIL);
+    }
+
     /** Effective sending settings and where they came from. */
     public static function settings(string $profile = 'main'): array
     {
-        // Campaigns can use their own mailbox (for example on a second domain) so cold email never affects the main domain.
-        if ($profile === 'campaign' && setting('camp_smtp_host') !== '') {
+        $box = isset(self::BOXES[$profile]) ? $profile : 'main';
+        $p = self::BOXES[$box]['prefix'];
+        $defaultReply = ['main' => setting('mail_reply_to'), 'hr' => setting('email_hr'), 'clients' => setting('email_info'), 'campaign' => ''][$box];
+        $replyTo = $box === 'main' ? setting('mail_reply_to') : (setting($p . 'reply_to') ?: $defaultReply);
+        if ($box !== 'main' && self::hasOwn($box)) {
             return [
-                'source' => 'campaign',
-                'from_email' => setting('camp_from_email'),
-                'from_name' => setting('camp_from_name', setting('site_name', 'AivraSol')),
-                'host' => setting('camp_smtp_host'),
-                'port' => (int) setting('camp_smtp_port', '465'),
-                'encryption' => setting('camp_smtp_encryption', 'ssl') === 'none' ? '' : setting('camp_smtp_encryption', 'ssl'),
-                'username' => setting('camp_smtp_username'),
-                'password' => Secret::decrypt(setting('camp_smtp_password')),
+                'source' => $box,
+                'box' => $box,
+                'from_email' => setting($p . 'from_email'),
+                'from_name' => setting($p . 'from_name', setting('site_name', 'AivraSol')),
+                'reply_to' => $replyTo,
+                'host' => setting($p . 'smtp_host'),
+                'port' => (int) setting($p . 'smtp_port', '465'),
+                'encryption' => setting($p . 'smtp_encryption', 'ssl') === 'none' ? '' : setting($p . 'smtp_encryption', 'ssl'),
+                'username' => setting($p . 'smtp_username'),
+                'password' => Secret::decrypt(setting($p . 'smtp_password')),
             ];
         }
         if (setting('mail_source') === 'custom') {
-            return [
+            $cfg = [
                 'source' => 'admin',
                 'from_email' => setting('mail_from_email', (string) config('mail.from_email', '')),
                 'from_name' => setting('mail_from_name', setting('site_name', 'AivraSol')),
@@ -38,17 +90,23 @@ final class Mailer
                 'username' => setting('smtp_username'),
                 'password' => Secret::decrypt(setting('smtp_password')),
             ];
+        } else {
+            $cfg = [
+                'source' => 'config',
+                'from_email' => (string) config('mail.from_email', ''),
+                'from_name' => (string) config('mail.from_name', 'AivraSol'),
+                'host' => (string) config('mail.host', ''),
+                'port' => (int) config('mail.port', 587),
+                'encryption' => (string) config('mail.encryption', 'tls'),
+                'username' => (string) config('mail.username', ''),
+                'password' => (string) config('mail.password', ''),
+            ];
         }
-        return [
-            'source' => 'config',
-            'from_email' => (string) config('mail.from_email', ''),
-            'from_name' => (string) config('mail.from_name', 'AivraSol'),
-            'host' => (string) config('mail.host', ''),
-            'port' => (int) config('mail.port', 587),
-            'encryption' => (string) config('mail.encryption', 'tls'),
-            'username' => (string) config('mail.username', ''),
-            'password' => (string) config('mail.password', ''),
-        ];
+        // A mailbox without its own server borrows the website one, but keeps its own sender name and reply address.
+        if ($box !== 'main' && setting($p . 'from_name') !== '') {
+            $cfg['from_name'] = setting($p . 'from_name');
+        }
+        return $cfg + ['box' => $box, 'reply_to' => $replyTo];
     }
 
     /** Valid email addresses from a list typed one per line or comma separated. */
@@ -134,7 +192,10 @@ final class Mailer
         if (!$recipients) {
             return self::log($type, '', $subject, 'No valid recipient address.');
         }
-        $cfg = self::settings($options['profile'] ?? 'main');
+        $cfg = self::settings($options['profile'] ?? self::boxFor($type));
+        if ($replyTo === null && ($cfg['reply_to'] ?? '') !== '') {
+            $replyTo = $cfg['reply_to'];
+        }
         $fromEmail = self::clean($cfg['from_email']);
         if (!filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
             return self::log($type, implode(', ', $recipients), $subject, 'The "from" email address is not set. Add it in Admin, Email settings, or in app/config.php.');

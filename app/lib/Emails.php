@@ -132,11 +132,12 @@ final class Emails
         return [$text, render('emails/layout', ['content' => $html, 'preheader' => $title])];
     }
 
-    public static function test(): array
+    public static function test(string $mailbox = ''): array
     {
-        $html = '<h1 style="margin:0 0 14px;font-size:22px;color:#191F24;">Your email settings work</h1>'
-            . self::paragraphs("This is a test email from the " . setting('site_name', 'AivraSol') . " admin panel.\n\nIf you can read this, website enquiries and automatic replies will be delivered.");
-        return ['Test email from your website', "Your email settings work.\n\nWebsite enquiries and automatic replies will be delivered.", render('emails/layout', ['content' => $html, 'preheader' => 'Your email settings work'])];
+        $what = $mailbox !== '' ? "The \"$mailbox\" mailbox" : 'Your email settings';
+        $html = '<h1 style="margin:0 0 14px;font-size:22px;color:#191F24;">' . e($what) . ' works</h1>'
+            . self::paragraphs("This is a test email from the " . setting('site_name', 'AivraSol') . " admin panel.\n\nIf you can read this, emails sent through this mailbox will be delivered.");
+        return ['Test email' . ($mailbox !== '' ? ": $mailbox" : ' from your website'), "$what works.\n\nEmails sent through this mailbox will be delivered.", render('emails/layout', ['content' => $html, 'preheader' => "$what works"])];
     }
 
     /** Visitor names go into emails, so keep them short and free of links. */
