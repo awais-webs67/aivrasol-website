@@ -63,10 +63,10 @@ $whatsapp = setting('whatsapp');
       <h3>Connect with us</h3>
       <ul class="socials">
         <?php if ($whatsapp !== ''): ?>
-        <li><a class="s-whatsapp" href="<?= e(whatsapp_href($whatsapp, setting('whatsapp_message'))) ?>" rel="noopener" target="_blank"><span class="s-ico"><?= icon('whatsapp') ?></span>WhatsApp</a></li>
+        <li><a class="s-whatsapp" href="<?= e(whatsapp_href($whatsapp, setting('whatsapp_message'))) ?>" rel="noopener" target="_blank" aria-label="WhatsApp" title="WhatsApp"><span class="s-ico"><?= icon('whatsapp') ?></span></a></li>
         <?php endif; ?>
         <?php foreach ($socials as $s): ?>
-        <li><a class="s-<?= e($s['icon']) ?>" href="<?= e($s['url']) ?>" rel="noopener" target="_blank"><span class="s-ico"><?= icon($s['icon']) ?></span><?= e($s['label']) ?></a></li>
+        <li><a class="s-<?= e($s['icon']) ?>" href="<?= e($s['url']) ?>" rel="noopener" target="_blank" aria-label="<?= e($s['label']) ?>" title="<?= e($s['label']) ?>"><span class="s-ico"><?= icon($s['icon']) ?></span></a></li>
         <?php endforeach; ?>
       </ul>
     </div>
