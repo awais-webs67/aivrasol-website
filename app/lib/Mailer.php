@@ -175,6 +175,13 @@ final class Mailer
     private static function smtp(array $cfg, string $from, string $to, array $headers, string $body): void
     {
         $enc = $cfg['encryption'];
+        $port = (int) $cfg['port'];
+        // The port decides the kind of encryption, so a mismatch in the settings is fixed here instead of hanging.
+        if ($port === 465) {
+            $enc = 'ssl';
+        } elseif ($enc === 'ssl' && in_array($port, [25, 587, 2525], true)) {
+            $enc = 'tls';
+        }
         $remote = ($enc === 'ssl' ? 'ssl://' : 'tcp://') . $cfg['host'] . ':' . $cfg['port'];
         $ctx = stream_context_create(['ssl' => ['verify_peer' => true, 'verify_peer_name' => true]]);
         $sock = @stream_socket_client($remote, $errno, $errstr, 15, STREAM_CLIENT_CONNECT, $ctx);
@@ -195,7 +202,7 @@ final class Mailer
             }
             throw new RuntimeException("Could not connect to {$cfg['host']}:{$cfg['port']} ($errstr).$hint");
         }
-        stream_set_timeout($sock, 20);
+        stream_set_timeout($sock, 30);
         $read = function () use ($sock): string {
             $data = '';
             while (($line = fgets($sock, 515)) !== false) {
@@ -215,6 +222,9 @@ final class Mailer
                 $what = strtok($command, ' ') ?: 'connect';
                 if ($what === 'AUTH' || str_starts_with((string) $reply, '535')) {
                     throw new RuntimeException('The mail server rejected the username or password.');
+                }
+                if (trim($reply) === '') {
+                    throw new RuntimeException('The mail server accepted the connection but did not reply' . ($what === 'connect' ? ' with a greeting' : ' to ' . $what) . '. Check the port and encryption pair (465 with SSL, or 587 with TLS). If they are right, the server may be slowing down or blocking your IP address: wait 15 minutes, or ask your host to check the firewall (CSF/cPHulk) for your IP.');
                 }
                 throw new RuntimeException('Mail server error after ' . $what . ': ' . trim(mb_substr($reply, 0, 200)));
             }
